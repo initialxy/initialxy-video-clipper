@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+# Pre-commit hook: format staged files, then run full validation
+npx lint-staged
+npm run typecheck
+npm run lint
+npm run build
