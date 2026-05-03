@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
-import { app } from 'electron';
+import electron from 'electron';
+const { app } = electron;
 import fs from 'fs';
 
 let db: Database.Database | null = null;

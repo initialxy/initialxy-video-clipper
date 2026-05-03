@@ -29,3 +29,13 @@ export function getDirectory(filePath: string): string {
   const parts = filePath.split('/');
   return parts.slice(0, -1).join('/');
 }
+
+/** Get the caption file path for a video (<base_name>.txt in same directory) */
+export function getCaptionPath(videoPath: string): string {
+  return videoPath.replace(/\.[^.]+$/, '.txt');
+}
+
+/** Get the thumbnail file path for a video (<path>.thumb.jpg) */
+export function getThumbnailPath(videoPath: string): string {
+  return `${videoPath}.thumb.jpg`;
+}

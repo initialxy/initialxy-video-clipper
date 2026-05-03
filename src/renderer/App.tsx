@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAppState, useAppDispatch } from '@renderer/store/app-state';
 import { useClipCounter } from '@renderer/hooks/useClipCounter';
 import { useGallery } from '@renderer/hooks/useGallery';
 import { useToast } from '@renderer/hooks/useToast';
 import { useVideoPlayer } from '@renderer/hooks/useVideoPlayer';
+import { useConvertSettings } from '@renderer/hooks/useConvertSettings';
 
 import { TopBar } from '@renderer/components/TopBar';
 import { VideoPlayer } from '@renderer/components/VideoPlayer';
@@ -16,7 +17,7 @@ import { DeleteConfirmModal } from '@renderer/components/DeleteConfirmModal';
 function AppContent() {
   const { activeTab, currentVideo, expandedFile } = useAppState();
   const dispatch = useAppDispatch();
-  const { handleClip, handleClipRemaining } = useClipCounter();
+  const { handleClip } = useClipCounter();
   const {
     galleryFiles,
     refreshGallery,
@@ -27,8 +28,8 @@ function AppContent() {
   } = useGallery();
   const { toasts, removeToast, success, error, warning, info } = useToast();
   const { currentTime } = useVideoPlayer();
+  const convertSettings = useConvertSettings();
 
-  const [showBulkConvert, setShowBulkConvert] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   // Define handleClipAction before it's used in useEffect
@@ -46,15 +47,6 @@ function AppContent() {
       error(result.error);
     }
   }, [currentVideo, currentTime, handleClip, warning, success, error, refreshGallery]);
-
-  // Listen for insufficient duration warning
-  useEffect(() => {
-    return window.electronAPI.onClipWarnInsufficient((data) => {
-      warning(
-        `Only ${data.remaining.toFixed(2)}s remaining (requested ${data.requested.toFixed(2)}s)`,
-      );
-    });
-  }, [warning, info, handleClipRemaining, currentTime, success, error, refreshGallery]);
 
   // Listen for convert progress
   useEffect(() => {
@@ -105,7 +97,7 @@ function AppContent() {
       <TopBar
         onClip={handleClipAction}
         onRefreshGallery={refreshGallery}
-        onOpenBulkConvert={() => setShowBulkConvert(true)}
+        onOpenBulkConvert={convertSettings.open}
         onToggleSelectAll={handleToggleSelectAll}
         isAllSelected={isAllSelected}
       />
@@ -139,7 +131,7 @@ function AppContent() {
       </div>
 
       {/* Bulk Convert Drawer */}
-      <BulkConvertDrawer isOpen={showBulkConvert} onClose={() => setShowBulkConvert(false)} />
+      <BulkConvertDrawer onClose={convertSettings.close} />
 
       {/* Delete Confirmation Modal */}
       {deleteTarget && (

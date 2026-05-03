@@ -22,30 +22,30 @@ video-clipper/
 ├── converted/                  # Bulk-converted output (runtime)
 ├── src/
 │   ├── shared/                 # Shared types and utilities (main + preload + renderer)
-│   │   ├── ipc.ts              # IPC channel names, payload types, return types
-│   │   ├── types.ts            # Domain types (VideoInfo, ClipResult, ConvertSettings)
-│   │   └── utils.ts            # Pure utilities (time formatting, path helpers)
+│   │   ├── ipc.ts              # IPC channel names, payload types, return types, IPCRegistry, ElectronAPI
+│   │   ├── types.ts            # Domain types (VideoInfo, ClipResult, ConvertSettings, GalleryFile)
+│   │   └── utils.ts            # Pure utilities (time formatting, path helpers, counter formatting)
 │   ├── main/                   # Electron main process (Node.js)
-│   │   ├── index.ts            # Window creation, app lifecycle, CSP headers
+│   │   ├── index.ts            # Window creation, app lifecycle, CSP headers, Menu.setApplicationMenu(null)
 │   │   ├── ipc-handlers.ts     # IPC route registration (thin delegates to services)
 │   │   ├── ffmpeg.ts           # ffmpeg command builder (pure functions, no side effects)
+│   │   ├── constants.ts        # VIDEO_EXTENSIONS, SETTINGS_KEYS
 │   │   ├── db.ts               # sqlite3 schema, queries, migrations
 │   │   └── services/           # Business logic layer
+│   │       ├── ffmpeg-executor.ts    # Shared runFfmpeg executor (spawns child_process)
+│   │       ├── ffprobe.service.ts    # getVideoInfo, checkFfmpeg (ffprobe parsing)
 │   │       ├── clip.service.ts       # Clip operations (counter, naming, validation)
 │   │       ├── convert.service.ts    # Bulk conversion orchestration
 │   │       ├── gallery.service.ts    # File scanning, thumbnail caching
 │   │       └── caption.service.ts    # Caption file CRUD
 │   ├── preload/
-│   │   └── index.ts            # Context bridge for safe IPC
+│   │   └── index.ts            # Context bridge for safe IPC (types from @shared/ipc)
 │   ├── renderer/               # React frontend
 │   │   ├── index.tsx           # Renderer entry point
 │   │   ├── App.tsx             # Root component with tab routing
 │   │   ├── components/
-│   │   │   ├── ui/             # shadcn/ui generated components
-│   │   │   ├── TopBar.tsx              # Tab bar (left) + action buttons (right)
-│   │   │   ├── TabBar.tsx              # Clip / Gallery tab switcher
-│   │   │   ├── VideoPlayer.tsx         # Main video player with playback controls
-│   │   │   ├── SeekSlider.tsx          # Precision seek slider (0.01s granularity)
+│   │   │   ├── TopBar.tsx              # Tab bar (left) + action buttons (right) + drag-drop
+│   │   │   ├── VideoPlayer.tsx         # Main video player with inline playback controls
 │   │   │   ├── VolumeControl.tsx       # Mute button + volume slider
 │   │   │   ├── GalleryView.tsx         # Grid of clipped videos with thumbnails
 │   │   │   ├── GalleryItem.tsx         # Single gallery card (thumb + caption overlay)
@@ -53,26 +53,26 @@ video-clipper/
 │   │   │   ├── CaptionEditor.tsx       # Text area with debounced autosave
 │   │   │   ├── CaptionOverlay.tsx      # Inline caption overlay for gallery grid cells
 │   │   │   ├── BulkConvertDrawer.tsx   # Slide-out drawer for bulk conversion settings
-│   │   │   ├── ProgressBar.tsx         # Per-file and overall progress display
 │   │   │   ├── Toast.tsx               # Toast notification system
 │   │   │   └── DeleteConfirmModal.tsx  # Confirmation modal for clip deletion
 │   │   ├── hooks/
-│   │   │   ├── useVideoPlayer.ts       # Playback state management (play/pause/seek/volume/mute)
+│   │   │   ├── useVideoPlayer.ts       # Playback state management (play/pause/seek/mute)
 │   │   │   ├── useClipCounter.ts       # Per-source clip counter tracking
 │   │   │   ├── useGallery.ts           # Gallery file scanning & state
 │   │   │   ├── useCaption.ts           # Caption CRUD with debounced save
+│   │   │   ├── useConvertSettings.ts   # Bulk conversion settings (load/save/reset)
 │   │   │   └── useToast.ts             # Toast notification management
 │   │   ├── lib/
-│   │   │   └── utils.ts                # shadcn utility (cn function)
+│   │   │   └── utils.ts                # Utility (cn function)
 │   │   ├── store/
 │   │   │   └── app-state.tsx           # Central state (active tab, current video, clip length, etc.)
 │   │   └── styles/
 │   │       └── globals.css             # Tailwind base + ZFlow theme (dark-first)
-│   └── env.d.ts                # Type declarations (vite/client, CSS modules, ElectronAPI)
+│   └── env.d.ts                # Type declarations (vite/client, CSS modules, ElectronAPI derived from @shared/ipc)
 ├── index.html                  # Root HTML entry point
 ├── vite.config.ts              # Vite build config (renderer + electron plugin)
 ├── tsconfig.json               # TypeScript configuration
-├── eslint.config.js            # ESLint flat config (separate rulesets for main/preload vs renderer)
+├── eslint.config.js            # ESLint flat config (shared TS rules + per-context globals)
 ├── .prettierrc                 # Prettier config with tailwindcss plugin
 ├── components.json             # shadcn/ui configuration
 ├── .husky/pre-commit           # Pre-commit hook (lint-staged → typecheck → lint → build)
@@ -112,9 +112,9 @@ video-clipper/
 
 All types used across process boundaries live here. This eliminates duplication between preload, main, and renderer.
 
-- **`ipc.ts`** — IPC channel names, payload types, return types, and the `IPCRegistry` type that maps each channel to its invoke signature. `ElectronAPI` is derived from this registry, not manually typed.
-- **`types.ts`** — Domain types (`VideoInfo`, `ClipResult`, `ConvertSettings`, `GalleryFile`, etc.).
-- **`utils.ts`** — Pure utilities usable by any process (time formatting `MM:SS.xx`, file path helpers, counter formatting).
+- **`ipc.ts`** — IPC channel names, payload types, return types, `IPCRegistry` type mapping each channel to its invoke signature, and `ElectronAPI` type derived from `IPCRegistry` (not manually typed).
+- **`types.ts`** — Domain types (`VideoInfo`, `ClipResult`, `ConvertSettings`, `GalleryFile`, `ConvertResult`, `ConvertProgress`).
+- **`utils.ts`** — Pure utilities usable by any process (time formatting `MM:SS.xx`, file path helpers, counter formatting, `getCaptionPath`, `getThumbnailPath`).
 
 No barrel files (`index.ts` re-exports) — explicit imports only.
 
@@ -122,15 +122,18 @@ No barrel files (`index.ts` re-exports) — explicit imports only.
 
 ```
 src/main/
-├── index.ts          # Window creation, app lifecycle, CSP headers
+├── index.ts          # Window creation, app lifecycle, CSP headers, Menu.setApplicationMenu(null)
 ├── ipc-handlers.ts   # IPC route registration (thin delegates to services)
 ├── ffmpeg.ts         # ffmpeg command builder (pure functions, no side effects)
+├── constants.ts      # VIDEO_EXTENSIONS, SETTINGS_KEYS
 ├── db.ts             # sqlite3 schema, queries, migrations
 └── services/
-    ├── clip.service.ts      # Clip operations (counter, naming, validation)
-    ├── convert.service.ts   # Bulk conversion orchestration
-    ├── gallery.service.ts   # File scanning, thumbnail caching
-    └── caption.service.ts   # Caption file CRUD
+    ├── ffmpeg-executor.ts    # Shared runFfmpeg executor (spawns child_process)
+    ├── ffprobe.service.ts    # getVideoInfo, checkFfmpeg (ffprobe parsing)
+    ├── clip.service.ts       # Clip operations (counter, naming, validation)
+    ├── convert.service.ts    # Bulk conversion orchestration
+    ├── gallery.service.ts    # File scanning, thumbnail caching
+    └── caption.service.ts    # Caption file CRUD
 ```
 
 **ipc-handlers.ts** is thin — receives IPC payloads, validates them, delegates to services:
@@ -146,6 +149,8 @@ export function buildClipCommand(input: string, output: string, start: number, d
   return ['ffmpeg', '-ss', String(start), '-i', input, '-t', String(duration), '-c', 'copy', '-avoid_negative_ts', 'make_zero', output];
 }
 ```
+
+**ffmpeg-executor.ts** is the shared `runFfmpeg` executor — all services use this single `spawn` implementation (no duplicates).
 
 This makes ffmpeg logic testable and easy to reason about.
 
@@ -177,21 +182,35 @@ Components subscribe to only the slice they need via custom hooks derived from t
 - **No `any` in IPC** — everything typed from one registry
 - **No business logic in IPC handlers** — handlers are thin delegates
 - **No barrel files** — explicit imports only
+- **No duplicated interfaces** — all domain types in `src/shared/types.ts`
+- **No dead code** — unused components/hooks removed, unused state eliminated
 
 ### Build Tool
 
-Vite 8 with `vite-plugin-electron`. The renderer is served from `http://localhost:5173` in dev mode. The main process and preload are bundled separately by the Vite plugin.
+Vite 8 with `vite-plugin-electron`. Vite is used purely as a build tool — compile TypeScript, bundle React, apply Tailwind. No dev server is needed at runtime.
 
-**Dev workflow:**
-- `npm run dev` or `npm run electron:dev` — starts Vite dev server + Electron
-- The renderer loads from `http://localhost:5173` (HMR enabled)
-- Main process and preload are built on-the-fly by vite-plugin-electron
-- In production, the renderer is bundled as static files
+**Build output:**
+- `dist/main/index.js` — Main process (ESM, Node.js built-ins externalized)
+- `dist/preload/index.js` — Preload script (**CommonJS** — Electron requires `require()`, not `import`. Configured via `lib.formats: ['cjs']` in vite config)
+- `dist/index.html` + `dist/assets/` — Bundled React app (outputs to `dist/` root, not `dist/renderer/`)
+
+**Important:** The main process must NOT bundle Node.js built-in modules. Rolldown (Vite 8's bundler) wraps them in a `__require()` shim that fails in ESM context. All Node.js built-ins (`fs`, `path`, `child_process`, `url`, `better-sqlite3`, etc.) must be listed in `rollupOptions.external`.
+
+Electron imports must use `import electron from 'electron'` + destructuring, not named imports, because Electron is a CommonJS module.
+
+**Window creation:**
+- Do NOT use `show: false` + `ready-to-show` pattern — in headless/sandboxed environments the event may never fire. Show the window immediately.
+- Do NOT use `sandbox: true` in `webPreferences` — it can interfere with preload/contextBridge.
+- Call `Menu.setApplicationMenu(null)` in `app.whenReady()` to remove the default Electron menu bar.
+- Dev detection: use `process.env.NODE_ENV === 'development'` only. Do NOT use `!app.isPackaged` — when running via `electron .` (not electron-builder), `isPackaged` is always `false`, causing production builds to incorrectly try loading `http://localhost:5173`.
+
+**npm start** runs `npm run build && electron .` — builds first, then launches Electron. Loads from `dist/`.
+
+**npm run dev** runs the Vite dev server with HMR for renderer-only hot reloading. In dev mode, the main process loads the renderer from `http://localhost:5173`.
 
 **Debugging:**
-- The renderer is debuggable in Chrome via `http://localhost:5173`
-- Electron DevTools open automatically in dev mode
-- For Chrome DevTools MCP, launch Electron with `--remote-debugging-port=9222`
+- For dev mode, open Chrome via `http://localhost:5173`
+- For production builds, launch Electron with `--remote-debugging-port=9222`
 
 ### Theme
 
@@ -207,6 +226,7 @@ Define all IPC channels explicitly in the preload script. Never use `contextIsol
 | `clip:warn-insufficient` | main → renderer | `{ remaining, requested }` | — |
 | `convert:bulk` | renderer → main | `{ files[], settings, outputDir }` | `{ success, results[] }` |
 | `convert:progress` | main → renderer | `{ file, progress, status }` | — |
+| `convert:warn-no-changes` | main → renderer | — | — |
 | `fs:get-video-info` | renderer → main | `{ filePath }` | `{ duration, width, height, codec, fps }` |
 | `fs:extract-thumbnail` | renderer → main | `{ filePath, outputPath }` | `{ success, outputPath }` |
 | `fs:read-caption` | renderer → main | `{ filePath }` | `{ content, exists }` |
@@ -232,7 +252,7 @@ Configured in `tsconfig.json` and `vite.config.ts`:
 
 ### ElectronAPI Interface
 
-The `ElectronAPI` interface is declared in `src/env.d.ts`. The preload script casts the exposed API to this type. Keep them in sync.
+The `ElectronAPI` interface is declared in `src/env.d.ts` and derives its payload/return types from `IPCPayloads`/`IPCReturns` in `src/shared/ipc.ts`. The preload script uses the same shared types. This prevents drift — adding a new IPC channel only requires updating `ipc.ts` and the preload implementation; the types flow automatically through `env.d.ts`.
 
 ---
 
@@ -353,13 +373,13 @@ ffmpeg -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
 - Use React `useState` and `useReducer` for local component state.
 - Use a simple context-based global store for cross-component state (active tab, current video, clip length).
 - Avoid external state management libraries (no Redux, Zustand, etc.) — keep it simple.
+- Extract complex UI logic into custom hooks (e.g., `useConvertSettings`, `useVideoPlayer`).
 
 ### 15. Styling
 
 - Use Tailwind CSS utility classes exclusively. No CSS-in-JS libraries.
 - Dark theme by default (ZFlow theme, dark-first).
 - Responsive within the Electron window (minimum window size: 800x600).
-- shadcn/ui components are available in `src/renderer/components/ui/`.
 
 ---
 
@@ -370,18 +390,18 @@ ffmpeg -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
 - Strict mode enabled. No `any` types unless absolutely unavoidable.
 - Define interfaces for all IPC messages, API responses, and component props.
 - Use `const` enums or string literals for IPC channel names.
-- The `ElectronAPI` interface in `src/env.d.ts` defines the renderer-side type contract.
+- All domain types and IPC types live in `src/shared/` — never duplicate them in service files or preload.
+- The `ElectronAPI` interface in `src/env.d.ts` derives its types from `src/shared/ipc.ts` to prevent drift.
 
 ### React
 
 - Functional components with hooks only. No class components.
 - Keep components focused — one responsibility per component.
 - Extract complex logic into custom hooks.
-- shadcn/ui components are headless primitives styled with Tailwind. Use them as building blocks.
 
 ### ESLint
 
-- Flat config (`eslint.config.js`) with two separate rulesets:
+- Flat config (`eslint.config.js`) with shared TypeScript rules applied globally, plus per-context rules:
   - **Main/Preload**: Node.js globals, TypeScript rules
   - **Renderer**: Browser globals, TypeScript rules, React hooks rules, React Refresh rules
 - Always run `npm run lint:fix` before committing to auto-fix issues.
@@ -414,8 +434,8 @@ All steps must pass for the commit to succeed.
 
 ```bash
 npm install
-npm run dev              # Start Vite dev server + Electron (same as electron:dev)
-npm run electron:dev     # Start Vite dev server + Electron
+npm start                # Build + run Electron (loads from dist/, no dev server)
+npm run dev              # Start Vite dev server only (HMR for renderer, no Electron)
 npm run build            # Type check + Vite build (renderer + main + preload)
 npm run electron:build   # Package as distributable (electron-builder)
 npm run lint             # Run ESLint on all source files
@@ -423,6 +443,8 @@ npm run lint:fix         # Auto-fix ESLint issues
 npm run format           # Format all source files with Prettier
 npm run typecheck        # Run TypeScript type check
 ```
+
+**Important:** `npm start` builds first then runs `electron .`. The app loads all files from `dist/` — no Vite dev server at runtime. This is a standalone desktop app.
 
 ---
 
@@ -442,3 +464,4 @@ Build the app in this sequence:
 10. ~~**Bulk conversion**: Slide-out drawer, optional params with "Same as source", settings persistence via sqlite3, ffmpeg batch processing, progress indicators, no-changes toast warning, caption file copying.~~ ✅ DONE
 11. ~~**ffmpeg check on launch**: Verify ffmpeg availability, show error dialog if missing.~~ ✅ DONE
 12. ~~**Settings persistence**: sqlite3 for bulk conversion settings, clip length default, window size/position.~~ ✅ DONE
+13. **Code quality refactor**: Shared `runFfmpeg` executor, extracted `ffprobe.service`, `useConvertSettings` hook, deduplicated interfaces, derived `ElectronAPI` from `IPCRegistry`, removed dead code (unused components/hooks/state), cleaned up config files. ✅ DONE

@@ -4,73 +4,35 @@ declare module '*.css' {
   // CSS imports are side-effects only
 }
 
-interface ElectronAPI {
-  createClip: (payload: {
-    inputPath: string;
-    outputPath: string;
-    start: number;
-    duration: number;
-  }) => Promise<{ success: boolean; outputPath?: string; error?: string }>;
+import type { IPCPayloads, IPCReturns } from '@shared/ipc';
 
-  bulkConvert: (payload: {
-    files: string[];
-    settings: {
-      codec: string;
-      width: number;
-      height: number;
-      fps: number;
-      bitrate: string;
-    };
-    outputDir: string;
-  }) => Promise<{
-    success: boolean;
-    results?: Array<{ file: string; success: boolean; error?: string }>;
-  }>;
+declare global {
+  interface ElectronAPI {
+    createClip: (payload: IPCPayloads['clip:create']) => Promise<IPCReturns['clip:create']>;
+    bulkConvert: (payload: IPCPayloads['convert:bulk']) => Promise<IPCReturns['convert:bulk']>;
+    getVideoInfo: (filePath: string) => Promise<IPCReturns['fs:get-video-info']>;
+    extractThumbnail: (
+      payload: IPCPayloads['fs:extract-thumbnail'],
+    ) => Promise<IPCReturns['fs:extract-thumbnail']>;
+    readCaption: (filePath: string) => Promise<IPCReturns['fs:read-caption']>;
+    writeCaption: (
+      payload: IPCPayloads['fs:write-caption'],
+    ) => Promise<IPCReturns['fs:write-caption']>;
+    scanOutputs: () => Promise<IPCReturns['fs:scan-outputs']>;
+    deleteClip: (filePath: string) => Promise<IPCReturns['fs:delete-clip']>;
+    handleDragDrop: (filePath: string) => Promise<IPCReturns['app:drag-drop']>;
+    checkFfmpeg: () => Promise<IPCReturns['app:check-ffmpeg']>;
+    openFile: () => Promise<IPCReturns['app:open-file']>;
+    getSetting: (key: string) => Promise<IPCReturns['settings:get']>;
+    setSetting: (key: string, value: string) => Promise<IPCReturns['settings:set']>;
+    onClipWarnInsufficient: (
+      callback: (data: IPCPayloads['clip:warn-insufficient']) => void,
+    ) => () => void;
+    onConvertProgress: (callback: (data: IPCPayloads['convert:progress']) => void) => () => void;
+    onConvertWarnNoChanges: (callback: () => void) => () => void;
+  }
 
-  getVideoInfo: (filePath: string) => Promise<{
-    duration: number;
-    width: number;
-    height: number;
-    codec: string;
-    fps: number;
-  }>;
-
-  extractThumbnail: (payload: {
-    filePath: string;
-    outputPath: string;
-  }) => Promise<{ success: boolean; outputPath?: string }>;
-
-  readCaption: (filePath: string) => Promise<{ content?: string; exists: boolean }>;
-
-  writeCaption: (payload: { filePath: string; content: string }) => Promise<{ success: boolean }>;
-
-  scanOutputs: () => Promise<{
-    files: Array<{ path: string; name: string; size: number; modified: string }>;
-  }>;
-
-  deleteClip: (filePath: string) => Promise<{ success: boolean; error?: string }>;
-
-  handleDragDrop: (filePath: string) => Promise<{ success: boolean }>;
-
-  checkFfmpeg: () => Promise<{ available: boolean; path?: string }>;
-
-  openFile: () => Promise<{ filePath?: string; cancelled: boolean }>;
-
-  getSetting: (key: string) => Promise<{ value?: string }>;
-
-  setSetting: (key: string, value: string) => Promise<{ success: boolean }>;
-
-  onClipWarnInsufficient: (
-    callback: (data: { remaining: number; requested: number }) => void,
-  ) => () => void;
-
-  onConvertProgress: (
-    callback: (data: { file: string; progress: number; status: string }) => void,
-  ) => () => void;
-
-  onConvertWarnNoChanges: (callback: () => void) => () => void;
-}
-
-interface Window {
-  electronAPI: ElectronAPI;
+  interface Window {
+    electronAPI: ElectronAPI;
+  }
 }

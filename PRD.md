@@ -7,8 +7,8 @@ A desktop app for clipping video files (.mp4) to create training data for video 
 **Primary purpose**: Create and manage captioned video clip datasets for video diffusion model training. Caption visibility and quick editing are critical.
 
 **Tech Stack**: Electron + React + TypeScript + Tailwind CSS  
-**External Dependency**: ffmpeg (must be installed on the host machine — checked on app launch)  
-**Persistent Storage**: Node.js built-in `sqlite3` for app settings and preferences
+**External Dependency**: ffmpeg (must be installed on the host machine — checked on app launch via `ffmpeg -version`)  
+**Persistent Storage**: `better-sqlite3` for app settings and preferences
 
 ---
 

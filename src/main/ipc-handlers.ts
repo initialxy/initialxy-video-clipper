@@ -1,9 +1,8 @@
-import { ipcMain, dialog, BrowserWindow } from 'electron';
+import electron from 'electron';
+const { ipcMain, dialog, BrowserWindow } = electron;
+import type { BrowserWindow as BrowserWindowType } from 'electron';
 import fs from 'fs';
 import path from 'path';
-import { spawn } from 'child_process';
-// @ts-expect-error which has no types
-import { which } from 'which';
 
 import { IPC_CHANNELS } from '@shared/ipc';
 import { createClip } from './services/clip.service';
@@ -11,92 +10,12 @@ import { bulkConvert, isNoOpConversion } from './services/convert.service';
 import { scanOutputs, deleteClip, extractThumbnail } from './services/gallery.service';
 import { readCaption, writeCaption } from './services/caption.service';
 import { getSetting, setSetting } from './db';
+import { VIDEO_EXTENSIONS } from './constants';
+import { getVideoInfo, checkFfmpeg } from './services/ffprobe.service';
 
-// Video extensions accepted for drag-drop
-const VIDEO_EXTENSIONS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v', '.mts']);
-
-function getMainWindow(): BrowserWindow | null {
+function getMainWindow(): BrowserWindowType | null {
   const windows = BrowserWindow.getAllWindows();
   return windows[0] ?? null;
-}
-
-/** Extract video info using ffprobe */
-function getVideoInfo(filePath: string): Promise<{
-  duration: number;
-  width: number;
-  height: number;
-  codec: string;
-  fps: number;
-}> {
-  return new Promise((resolve, reject) => {
-    const proc = spawn('ffprobe', [
-      '-v',
-      'quiet',
-      '-print_format',
-      'json',
-      '-show_format',
-      '-show_streams',
-      filePath,
-    ]);
-
-    let stdout = '';
-    let stderr = '';
-
-    proc.stdout.on('data', (chunk: Buffer) => {
-      stdout += chunk.toString();
-    });
-
-    proc.stderr.on('data', (chunk: Buffer) => {
-      stderr += chunk.toString();
-    });
-
-    proc.on('close', (code) => {
-      if (code !== 0) {
-        reject(new Error(stderr || `ffprobe exited with code ${code}`));
-        return;
-      }
-
-      try {
-        const data = JSON.parse(stdout);
-        const videoStream = data.streams?.find(
-          (s: { codec_type: string }) => s.codec_type === 'video',
-        );
-
-        if (!videoStream) {
-          reject(new Error('No video stream found'));
-          return;
-        }
-
-        const duration = parseFloat(data.format?.duration ?? videoStream?.duration ?? '0');
-        const width = parseInt(videoStream.width ?? '0', 10);
-        const height = parseInt(videoStream.height ?? '0', 10);
-        const codec = videoStream.codec_name ?? '';
-
-        // Parse fps from r_frame_rate (e.g., "24000000/1001")
-        const fpsStr = videoStream.r_frame_rate ?? '0/1';
-        const [num, den] = fpsStr.split('/').map(Number);
-        const fps = den !== 0 ? num / den : 0;
-
-        resolve({ duration, width, height, codec, fps: Math.round(fps * 100) / 100 });
-      } catch {
-        reject(new Error('Failed to parse ffprobe output'));
-      }
-    });
-
-    proc.on('error', (err) => {
-      reject(err);
-    });
-  });
-}
-
-/** Check if ffmpeg is available */
-function checkFfmpeg(): { available: boolean; path?: string } {
-  try {
-    const ffmpegPath = which.sync('ffmpeg');
-    return { available: true, path: ffmpegPath };
-  } catch {
-    return { available: false };
-  }
 }
 
 export function registerIpcHandlers(): void {

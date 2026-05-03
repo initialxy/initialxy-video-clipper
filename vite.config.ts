@@ -16,7 +16,39 @@ export default defineConfig({
           build: {
             outDir: 'dist/main',
             rollupOptions: {
-              external: ['electron'],
+              external: [
+                'electron',
+                // Node.js built-ins must NOT be bundled — Rolldown wraps them in __require() which fails in ESM
+                /^node:/,
+                'fs',
+                'fs/promises',
+                'path',
+                'child_process',
+                'os',
+                'url',
+                'util',
+                'stream',
+                'events',
+                'crypto',
+                'buffer',
+                'assert',
+                'constants',
+                'module',
+                'process',
+                'querystring',
+                'string_decoder',
+                'timers',
+                'tty',
+                'vm',
+                'worker_threads',
+                'inspector',
+                'perf_hooks',
+                'dns',
+                'net',
+                'readline',
+                'repl',
+                'better-sqlite3',
+              ],
             },
           },
         },
@@ -24,15 +56,16 @@ export default defineConfig({
       {
         // Preload script
         entry: 'src/preload/index.ts',
-        onstart(args) {
-          // Reload the app when preload is changed
-          args.reload();
-        },
         vite: {
           build: {
             outDir: 'dist/preload',
             rollupOptions: {
               external: ['electron'],
+            },
+            lib: {
+              entry: resolve(__dirname, 'src/preload/index.ts'),
+              formats: ['cjs'],
+              fileName: () => 'index.js',
             },
           },
         },

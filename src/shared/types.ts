@@ -46,19 +46,3 @@ export interface GalleryFile {
   caption?: string;
   thumbnail?: string;
 }
-
-/** Clip counter data */
-export interface ClipCounters {
-  [sourcePath: string]: number;
-}
-
-/** Toast notification */
-export interface Toast {
-  id: string;
-  message: string;
-  type: 'success' | 'error' | 'warning' | 'info';
-  action?: {
-    label: string;
-    handler: () => void;
-  };
-}

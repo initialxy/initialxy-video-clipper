@@ -2,7 +2,6 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 
 export function useCaption(videoPath: string | null) {
   const [caption, setCaption] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const debounceRef = useRef<number | null>(null);
   const lastSavedRef = useRef('');
 
@@ -15,12 +14,10 @@ export function useCaption(videoPath: string | null) {
       return;
     }
 
-    setIsLoading(true);
     window.electronAPI.readCaption(videoPath).then((result) => {
       const content = result.content ?? '';
       setCaption(content);
       lastSavedRef.current = content;
-      setIsLoading(false);
     });
   }, [videoPath]);
 
@@ -55,5 +52,5 @@ export function useCaption(videoPath: string | null) {
     };
   }, []);
 
-  return { caption, isLoading, updateCaption };
+  return { caption, updateCaption };
 }

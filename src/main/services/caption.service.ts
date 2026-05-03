@@ -1,12 +1,12 @@
 import fs from 'fs';
-import path from 'path';
+import { getCaptionPath } from '@shared/utils';
 
 /**
  * Read caption content for a video file.
  * Caption is stored as <video_base_name>.txt in the same directory.
  */
 export function readCaption(videoPath: string): { content?: string; exists: boolean } {
-  const captionPath = videoPath.replace(path.extname(videoPath), '.txt');
+  const captionPath = getCaptionPath(videoPath);
   if (!fs.existsSync(captionPath)) {
     return { exists: false };
   }
@@ -23,10 +23,9 @@ export function readCaption(videoPath: string): { content?: string; exists: bool
  * If content is empty, delete the caption file if it exists.
  */
 export function writeCaption(videoPath: string, content: string): { success: boolean } {
-  const captionPath = videoPath.replace(path.extname(videoPath), '.txt');
+  const captionPath = getCaptionPath(videoPath);
   try {
     if (content.trim() === '') {
-      // Delete caption file if it exists
       if (fs.existsSync(captionPath)) {
         fs.unlinkSync(captionPath);
       }

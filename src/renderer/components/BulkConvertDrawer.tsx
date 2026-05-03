@@ -1,54 +1,38 @@
-import { useState, useCallback, useEffect } from 'react';
 import { X, XCircle } from 'lucide-react';
-import { useAppState, useAppDispatch } from '@renderer/store/app-state';
+import { useAppState } from '@renderer/store/app-state';
+import { useAppDispatch } from '@renderer/store/app-state';
 import { cn } from '@renderer/lib/utils';
+import { useConvertSettings } from '@renderer/hooks/useConvertSettings';
 
 interface BulkConvertDrawerProps {
-  isOpen: boolean;
   onClose: () => void;
 }
 
-export function BulkConvertDrawer({ isOpen, onClose }: BulkConvertDrawerProps) {
+export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
   const { selectedFiles, galleryFiles, isConverting, convertProgress } = useAppState();
   const dispatch = useAppDispatch();
+  const {
+    isOpen,
+    codec,
+    setCodec,
+    width,
+    setWidth,
+    height,
+    setHeight,
+    fps,
+    setFps,
+    bitrate,
+    setBitrate,
+    saveSettings,
+    reset,
+  } = useConvertSettings();
 
-  const [codec, setCodec] = useState('');
-  const [width, setWidth] = useState(0);
-  const [height, setHeight] = useState(0);
-  const [fps, setFps] = useState(0);
-  const [bitrate, setBitrate] = useState('');
+  if (!isOpen) return null;
 
-  // Load saved settings on open
-  useEffect(() => {
-    if (!isOpen) return;
-    const loadSettings = async () => {
-      const [codecRes, widthRes, heightRes, fpsRes, bitrateRes] = await Promise.all([
-        window.electronAPI.getSetting('convert_codec'),
-        window.electronAPI.getSetting('convert_width'),
-        window.electronAPI.getSetting('convert_height'),
-        window.electronAPI.getSetting('convert_fps'),
-        window.electronAPI.getSetting('convert_bitrate'),
-      ]);
-      setCodec(codecRes.value ?? '');
-      setWidth(parseInt(widthRes.value ?? '0', 10) || 0);
-      setHeight(parseInt(heightRes.value ?? '0', 10) || 0);
-      setFps(parseInt(fpsRes.value ?? '0', 10) || 0);
-      setBitrate(bitrateRes.value ?? '');
-    };
-    loadSettings();
-  }, [isOpen]);
-
-  const handleConvert = useCallback(async () => {
+  const handleConvert = async () => {
     if (selectedFiles.size === 0) return;
 
-    // Save settings
-    await Promise.all([
-      window.electronAPI.setSetting('convert_codec', codec),
-      window.electronAPI.setSetting('convert_width', String(width)),
-      window.electronAPI.setSetting('convert_height', String(height)),
-      window.electronAPI.setSetting('convert_fps', String(fps)),
-      window.electronAPI.setSetting('convert_bitrate', bitrate),
-    ]);
+    await saveSettings();
 
     const files = Array.from(selectedFiles);
     dispatch({ type: 'SET_CONVERTING', payload: true });
@@ -65,17 +49,7 @@ export function BulkConvertDrawer({ isOpen, onClose }: BulkConvertDrawerProps) {
     if (result.success) {
       onClose();
     }
-  }, [selectedFiles, codec, width, height, fps, bitrate, dispatch, onClose]);
-
-  const handleReset = useCallback(() => {
-    setCodec('');
-    setWidth(0);
-    setHeight(0);
-    setFps(0);
-    setBitrate('');
-  }, []);
-
-  if (!isOpen) return null;
+  };
 
   return (
     <>
@@ -241,7 +215,7 @@ export function BulkConvertDrawer({ isOpen, onClose }: BulkConvertDrawerProps) {
               {isConverting ? 'Converting...' : `Convert ${selectedFiles.size} files`}
             </button>
             <button
-              onClick={handleReset}
+              onClick={reset}
               className="text-muted-foreground hover:text-foreground hover:bg-muted/50 w-full rounded-md py-2 text-sm transition-colors"
             >
               Reset All

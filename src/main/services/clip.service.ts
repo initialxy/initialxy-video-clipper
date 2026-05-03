@@ -1,8 +1,9 @@
-import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { buildClipCommand } from '@main/ffmpeg';
 import { formatCounter, getBaseName, getExtension } from '@shared/utils';
+import { runFfmpeg } from './ffmpeg-executor';
+import type { ClipResult } from '@shared/types';
 
 const PROJECT_ROOT = process.cwd();
 const OUTPUTS_DIR = path.join(PROJECT_ROOT, 'outputs');
@@ -42,44 +43,10 @@ function getNextClipPath(inputPath: string): { outputPath: string; counter: numb
   return { outputPath: path.join(OUTPUTS_DIR, clipName), counter };
 }
 
-function runFfmpeg(args: string[]): Promise<{ success: boolean; error?: string }> {
-  return new Promise((resolve) => {
-    const [cmd, ...cmdArgs] = args;
-    const proc = spawn(cmd, cmdArgs, {
-      stdio: ['ignore', 'ignore', 'pipe'],
-      windowsHide: true,
-    });
-
-    let stderr = '';
-    proc.stderr.on('data', (chunk: Buffer) => {
-      stderr += chunk.toString();
-    });
-
-    proc.on('close', (code) => {
-      if (code === 0) {
-        resolve({ success: true });
-      } else {
-        resolve({ success: false, error: stderr.slice(-500) || `ffmpeg exited with code ${code}` });
-      }
-    });
-
-    proc.on('error', (err) => {
-      resolve({ success: false, error: err.message });
-    });
-  });
-}
-
 export interface ClipPayload {
   inputPath: string;
   start: number;
   duration: number;
-}
-
-export interface ClipResult {
-  success: boolean;
-  outputPath?: string;
-  error?: string;
-  clipName?: string;
 }
 
 export async function createClip(payload: ClipPayload): Promise<ClipResult> {
@@ -94,8 +61,7 @@ export async function createClip(payload: ClipPayload): Promise<ClipResult> {
   const result = await runFfmpeg(args);
 
   if (result.success) {
-    const clipName = path.basename(outputPath);
-    return { success: true, outputPath, clipName };
+    return { success: true, outputPath };
   }
 
   // Clean up failed output

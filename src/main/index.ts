@@ -1,4 +1,6 @@
-import { app, BrowserWindow, session, ipcMain } from 'electron';
+import electron from 'electron';
+const { app, BrowserWindow, session, ipcMain, Menu } = electron;
+import type { BrowserWindow as BrowserWindowType } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -11,7 +13,7 @@ const __dirname = path.dirname(__filename);
 // Disable GPU acceleration to avoid issues on some systems
 app.disableHardwareAcceleration();
 
-let mainWindow: BrowserWindow | null = null;
+let mainWindow: BrowserWindowType | null = null;
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -23,24 +25,18 @@ function createWindow(): void {
       preload: path.join(__dirname, '..', 'preload', 'index.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
     },
     titleBarStyle: 'default',
-    show: false,
   });
 
-  const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+  const isDev = process.env.NODE_ENV === 'development';
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/dist/index.html'));
+    mainWindow.loadFile(path.join(__dirname, '..', 'index.html'));
   }
-
-  mainWindow.once('ready-to-show', () => {
-    mainWindow?.show();
-  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -61,6 +57,8 @@ if (!gotTheLock) {
 }
 
 app.whenReady().then(() => {
+  Menu.setApplicationMenu(null);
+
   // CSP headers
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({

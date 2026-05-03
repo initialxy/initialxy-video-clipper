@@ -1,87 +1,65 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { IPC_CHANNELS } from '@shared/ipc';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyFunction = (...args: any[]) => any;
+import { IPC_CHANNELS, type IPCPayloads } from '@shared/ipc';
 
 const electronAPI = {
   // Clip
-  createClip: (payload: {
-    inputPath: string;
-    outputPath: string;
-    start: number;
-    duration: number;
-  }) => ipcRenderer.invoke(IPC_CHANNELS.CLIP_CREATE, payload),
+  createClip: (payload: IPCPayloads['clip:create']) => ipcRenderer.invoke('clip:create', payload),
 
   // Conversion
-  bulkConvert: (payload: {
-    files: string[];
-    settings: {
-      codec: string;
-      width: number;
-      height: number;
-      fps: number;
-      bitrate: string;
-    };
-    outputDir: string;
-  }) => ipcRenderer.invoke(IPC_CHANNELS.CONVERT_BULK, payload),
+  bulkConvert: (payload: IPCPayloads['convert:bulk']) =>
+    ipcRenderer.invoke('convert:bulk', payload),
 
   // File system
-  getVideoInfo: (filePath: string) =>
-    ipcRenderer.invoke(IPC_CHANNELS.FS_GET_VIDEO_INFO, { filePath }),
+  getVideoInfo: (filePath: string) => ipcRenderer.invoke('fs:get-video-info', { filePath }),
 
-  extractThumbnail: (payload: { filePath: string; outputPath: string }) =>
-    ipcRenderer.invoke(IPC_CHANNELS.FS_EXTRACT_THUMBNAIL, payload),
+  extractThumbnail: (payload: IPCPayloads['fs:extract-thumbnail']) =>
+    ipcRenderer.invoke('fs:extract-thumbnail', payload),
 
-  readCaption: (filePath: string) => ipcRenderer.invoke(IPC_CHANNELS.FS_READ_CAPTION, { filePath }),
+  readCaption: (filePath: string) => ipcRenderer.invoke('fs:read-caption', { filePath }),
 
-  writeCaption: (payload: { filePath: string; content: string }) =>
-    ipcRenderer.invoke(IPC_CHANNELS.FS_WRITE_CAPTION, payload),
+  writeCaption: (payload: IPCPayloads['fs:write-caption']) =>
+    ipcRenderer.invoke('fs:write-caption', payload),
 
-  scanOutputs: () => ipcRenderer.invoke(IPC_CHANNELS.FS_SCAN_OUTPUTS, {}),
+  scanOutputs: () => ipcRenderer.invoke('fs:scan-outputs', {}),
 
-  deleteClip: (filePath: string) => ipcRenderer.invoke(IPC_CHANNELS.FS_DELETE_CLIP, { filePath }),
+  deleteClip: (filePath: string) => ipcRenderer.invoke('fs:delete-clip', { filePath }),
 
   // App
-  handleDragDrop: (filePath: string) =>
-    ipcRenderer.invoke(IPC_CHANNELS.APP_DRAG_DROP, { filePath }),
+  handleDragDrop: (filePath: string) => ipcRenderer.invoke('app:drag-drop', { filePath }),
 
-  checkFfmpeg: () => ipcRenderer.invoke(IPC_CHANNELS.APP_CHECK_FFMPEG, {}),
+  checkFfmpeg: () => ipcRenderer.invoke('app:check-ffmpeg', {}),
 
-  openFile: () => ipcRenderer.invoke(IPC_CHANNELS.APP_OPEN_FILE, {}),
+  openFile: () => ipcRenderer.invoke('app:open-file', {}),
 
   // Settings
-  getSetting: (key: string) => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET, { key }),
+  getSetting: (key: string) => ipcRenderer.invoke('settings:get', { key }),
 
-  setSetting: (key: string, value: string) =>
-    ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_SET, { key, value }),
+  setSetting: (key: string, value: string) => ipcRenderer.invoke('settings:set', { key, value }),
 
   // Event listeners (one-way: main → renderer)
-  onClipWarnInsufficient: (callback: (data: { remaining: number; requested: number }) => void) => {
-    const listener = (_event: Event, data: { remaining: number; requested: number }) => {
+  onClipWarnInsufficient: (callback: (data: IPCPayloads['clip:warn-insufficient']) => void) => {
+    const listener = (_event: Event, data: IPCPayloads['clip:warn-insufficient']) => {
       callback(data);
     };
-    ipcRenderer.on(IPC_CHANNELS.CLIP_WARN_INSUFFICIENT, listener as AnyFunction);
-    return () =>
-      ipcRenderer.removeListener(IPC_CHANNELS.CLIP_WARN_INSUFFICIENT, listener as AnyFunction);
+    ipcRenderer.on(IPC_CHANNELS.CLIP_WARN_INSUFFICIENT, listener as never);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.CLIP_WARN_INSUFFICIENT, listener as never);
   },
 
-  onConvertProgress: (
-    callback: (data: { file: string; progress: number; status: string }) => void,
-  ) => {
-    const listener = (_event: Event, data: { file: string; progress: number; status: string }) => {
+  onConvertProgress: (callback: (data: IPCPayloads['convert:progress']) => void) => {
+    const listener = (_event: Event, data: IPCPayloads['convert:progress']) => {
       callback(data);
     };
-    ipcRenderer.on(IPC_CHANNELS.CONVERT_PROGRESS, listener as AnyFunction);
-    return () => ipcRenderer.removeListener(IPC_CHANNELS.CONVERT_PROGRESS, listener as AnyFunction);
+    ipcRenderer.on(IPC_CHANNELS.CONVERT_PROGRESS, listener as never);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.CONVERT_PROGRESS, listener as never);
   },
 
   onConvertWarnNoChanges: (callback: () => void) => {
     const listener = () => {
       callback();
     };
-    ipcRenderer.on('convert:warn-no-changes', listener as AnyFunction);
-    return () => ipcRenderer.removeListener('convert:warn-no-changes', listener as AnyFunction);
+    ipcRenderer.on(IPC_CHANNELS.CONVERT_WARN_NO_CHANGES, listener as never);
+    return () =>
+      ipcRenderer.removeListener(IPC_CHANNELS.CONVERT_WARN_NO_CHANGES, listener as never);
   },
 };
 

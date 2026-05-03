@@ -6,7 +6,6 @@ export function useVideoPlayer() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
 
   const duration = currentVideo?.duration ?? 0;
@@ -64,7 +63,6 @@ export function useVideoPlayer() {
     const video = videoRef.current;
     if (!video) return;
     video.volume = vol;
-    setVolume(vol);
     if (vol > 0 && video.muted) {
       video.muted = false;
       setIsMuted(false);
@@ -102,7 +100,6 @@ export function useVideoPlayer() {
     currentTime,
     duration,
     isPlaying,
-    volume,
     isMuted,
     togglePlay,
     seek,

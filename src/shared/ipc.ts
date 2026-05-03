@@ -4,6 +4,7 @@ export const IPC_CHANNELS = {
   CLIP_WARN_INSUFFICIENT: 'clip:warn-insufficient',
   CONVERT_BULK: 'convert:bulk',
   CONVERT_PROGRESS: 'convert:progress',
+  CONVERT_WARN_NO_CHANGES: 'convert:warn-no-changes',
   FS_GET_VIDEO_INFO: 'fs:get-video-info',
   FS_EXTRACT_THUMBNAIL: 'fs:extract-thumbnail',
   FS_READ_CAPTION: 'fs:read-caption',
@@ -119,3 +120,18 @@ export interface IPCRegistry {
     payload: IPCPayloads[typeof IPC_CHANNELS.SETTINGS_SET],
   ) => Promise<IPCReturns[typeof IPC_CHANNELS.SETTINGS_SET]>;
 }
+
+/**
+ * Event listener signature for one-way (main → renderer) channels.
+ */
+export type OnEventListener<T> = (callback: (data: T) => void) => () => void;
+
+/**
+ * Derived ElectronAPI from IPCRegistry.
+ * Invoke methods come from IPCRegistry; event listeners are added for one-way channels.
+ */
+export type ElectronAPI = IPCRegistry & {
+  onClipWarnInsufficient: OnEventListener<IPCPayloads[typeof IPC_CHANNELS.CLIP_WARN_INSUFFICIENT]>;
+  onConvertProgress: OnEventListener<IPCPayloads[typeof IPC_CHANNELS.CONVERT_PROGRESS]>;
+  onConvertWarnNoChanges: OnEventListener<void>;
+};

@@ -1,12 +1,12 @@
-import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { buildThumbnailCommand } from '@main/ffmpeg';
+import { runFfmpeg } from './ffmpeg-executor';
+import { getThumbnailPath } from '@shared/utils';
+import { VIDEO_EXTENSIONS } from '@main/constants';
 
 const PROJECT_ROOT = process.cwd();
 const OUTPUTS_DIR = path.join(PROJECT_ROOT, 'outputs');
-
-const VIDEO_EXTENSIONS = new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v', '.mts']);
 
 export interface ScannedFile {
   path: string;
@@ -58,7 +58,7 @@ export function deleteClip(filePath: string): { success: boolean; error?: string
     }
 
     // Delete the thumbnail if it exists
-    const thumbPath = filePath + '.thumb.jpg';
+    const thumbPath = getThumbnailPath(filePath);
     if (fs.existsSync(thumbPath)) {
       fs.unlinkSync(thumbPath);
     }
@@ -73,30 +73,9 @@ export async function extractThumbnail(
   filePath: string,
   outputPath: string,
 ): Promise<{ success: boolean }> {
-  return new Promise((resolve) => {
-    const args = buildThumbnailCommand(filePath, outputPath);
-    const [cmd, ...cmdArgs] = args;
-    const proc = spawn(cmd, cmdArgs, {
-      stdio: ['ignore', 'ignore', 'pipe'],
-      windowsHide: true,
-    });
-
-    proc.on('close', (code) => {
-      if (code === 0 && fs.existsSync(outputPath)) {
-        resolve({ success: true });
-      } else {
-        resolve({ success: false });
-      }
-    });
-
-    proc.on('error', () => {
-      resolve({ success: false });
-    });
-  });
-}
-
-export function getThumbnailPath(videoPath: string): string {
-  return videoPath + '.thumb.jpg';
+  const args = buildThumbnailCommand(filePath, outputPath);
+  const result = await runFfmpeg(args);
+  return result.success && fs.existsSync(outputPath) ? { success: true } : { success: false };
 }
 
 export function ensureThumbnail(videoPath: string): Promise<string | null> {

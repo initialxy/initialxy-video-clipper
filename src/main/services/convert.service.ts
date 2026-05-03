@@ -1,23 +1,11 @@
-import { spawn } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { buildConvertCommand } from '@main/ffmpeg';
+import { runFfmpeg } from './ffmpeg-executor';
+import { getCaptionPath } from '@shared/utils';
+import type { ConvertSettings, ConvertProgress } from '@shared/types';
 
 const CONVERTED_DIR = path.join(process.cwd(), 'converted');
-
-interface ConvertSettings {
-  codec: string;
-  width: number;
-  height: number;
-  fps: number;
-  bitrate: string;
-}
-
-interface ConvertProgressEvent {
-  file: string;
-  progress: number;
-  status: 'converting' | 'done' | 'error';
-}
 
 export function isNoOpConversion(settings: ConvertSettings): boolean {
   return (
@@ -31,40 +19,10 @@ function ensureConvertedDir(): void {
   }
 }
 
-function runFfmpeg(args: string[]): Promise<{ success: boolean; error?: string }> {
-  return new Promise((resolve) => {
-    const [cmd, ...cmdArgs] = args;
-    const proc = spawn(cmd, cmdArgs, {
-      stdio: ['ignore', 'ignore', 'pipe'],
-      windowsHide: true,
-    });
-
-    let stderr = '';
-    proc.stderr.on('data', (chunk: Buffer) => {
-      stderr += chunk.toString();
-    });
-
-    proc.on('close', (code) => {
-      if (code === 0) {
-        resolve({ success: true });
-      } else {
-        resolve({ success: false, error: stderr.slice(-500) || `ffmpeg exited with code ${code}` });
-      }
-    });
-
-    proc.on('error', (err) => {
-      resolve({ success: false, error: err.message });
-    });
-  });
-}
-
 function copyCaption(inputPath: string, outputName: string): void {
-  const captionPath = inputPath.replace(path.extname(inputPath), '.txt');
+  const captionPath = getCaptionPath(inputPath);
   if (fs.existsSync(captionPath)) {
-    const destCaption = path.join(
-      CONVERTED_DIR,
-      outputName.replace(path.extname(outputName), '.txt'),
-    );
+    const destCaption = getCaptionPath(path.join(CONVERTED_DIR, outputName));
     fs.copyFileSync(captionPath, destCaption);
   }
 }
@@ -72,7 +30,7 @@ function copyCaption(inputPath: string, outputName: string): void {
 export async function bulkConvert(
   files: string[],
   settings: ConvertSettings,
-  onProgress: (event: ConvertProgressEvent) => void,
+  onProgress: (event: ConvertProgress) => void,
 ): Promise<{
   success: boolean;
   results: Array<{ file: string; success: boolean; error?: string }>;
