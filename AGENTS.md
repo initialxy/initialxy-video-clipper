@@ -23,35 +23,44 @@ video-clipper/
 ├── src/
 │   ├── main/                   # Electron main process (Node.js)
 │   │   ├── index.ts            # Main process entry point
-│   │   ├── ipc-handlers.ts     # IPC route handlers
-│   │   └── ffmpeg.ts           # ffmpeg command builder & executor
+│   │   ├── ipc-handlers.ts     # IPC route handlers (create when needed)
+│   │   └── ffmpeg.ts           # ffmpeg command builder & executor (create when needed)
 │   ├── preload/
 │   │   └── index.ts            # Context bridge for safe IPC
-│   └── renderer/               # React frontend
-│       ├── index.tsx           # Renderer entry point
-│       ├── App.tsx             # Root component with view routing
-│       ├── components/
-│       │   ├── TopBar.tsx              # Clip length input, Clip button, view toggle
-│       │   ├── VideoPlayer.tsx         # Main video player with playback controls
-│       │   ├── SeekSlider.tsx          # Precision seek slider (0.01s granularity)
-│       │   ├── GalleryView.tsx         # Grid of clipped videos with thumbnails
-│       │   ├── GalleryItem.tsx         # Single gallery card (thumb + caption)
-│       │   ├── ExpandedPlayer.tsx      # Full-screen video player for gallery items
-│       │   ├── CaptionEditor.tsx       # Text area with debounced autosave
-│       │   ├── BulkConvertPanel.tsx    # Bulk conversion settings modal/panel
-│       │   └── ProgressBar.tsx         # Per-file and overall progress display
-│       ├── hooks/
-│       │   ├── useVideoPlayer.ts       # Playback state management
-│       │   ├── useClipCounter.ts       # Per-source clip counter tracking
-│       │   ├── useGallery.ts           # Gallery file scanning & state
-│       │   └── useCaption.ts           # Caption CRUD with debounced save
-│       ├── store/
-│       │   └── app-state.ts            # Central state (view mode, current video, etc.)
-│       └── styles/
-│           └── globals.css             # Tailwind base + custom utilities
-├── electron-builder.config.js  # Electron build configuration
+│   ├── renderer/               # React frontend
+│   │   ├── index.tsx           # Renderer entry point
+│   │   ├── App.tsx             # Root component with view routing
+│   │   ├── components/
+│   │   │   ├── ui/             # shadcn/ui generated components
+│   │   │   ├── TopBar.tsx              # Clip length input, Clip button, view toggle
+│   │   │   ├── VideoPlayer.tsx         # Main video player with playback controls
+│   │   │   ├── SeekSlider.tsx          # Precision seek slider (0.01s granularity)
+│   │   │   ├── GalleryView.tsx         # Grid of clipped videos with thumbnails
+│   │   │   ├── GalleryItem.tsx         # Single gallery card (thumb + caption)
+│   │   │   ├── ExpandedPlayer.tsx      # Full-screen video player for gallery items
+│   │   │   ├── CaptionEditor.tsx       # Text area with debounced autosave
+│   │   │   ├── BulkConvertPanel.tsx    # Bulk conversion settings modal/panel
+│   │   │   └── ProgressBar.tsx         # Per-file and overall progress display
+│   │   ├── hooks/
+│   │   │   ├── useVideoPlayer.ts       # Playback state management
+│   │   │   ├── useClipCounter.ts       # Per-source clip counter tracking
+│   │   │   ├── useGallery.ts           # Gallery file scanning & state
+│   │   │   └── useCaption.ts           # Caption CRUD with debounced save
+│   │   ├── lib/
+│   │   │   └── utils.ts                # shadcn utility (cn function)
+│   │   ├── store/
+│   │   │   └── app-state.ts            # Central state (view mode, current video, etc.)
+│   │   └── styles/
+│   │       └── globals.css             # Tailwind base + custom utilities
+│   └── env.d.ts                # Type declarations (vite/client, CSS modules, ElectronAPI)
+├── index.html                  # Root HTML entry point
+├── vite.config.ts              # Vite build config (renderer + electron plugin)
 ├── tsconfig.json               # TypeScript configuration
-├── tailwind.config.js          # Tailwind CSS configuration
+├── eslint.config.js            # ESLint flat config (separate rulesets for main/preload vs renderer)
+├── .prettierrc                 # Prettier config with tailwindcss plugin
+├── components.json             # shadcn/ui configuration
+├── .husky/pre-commit           # Pre-commit hook (lint-staged → typecheck → lint → build)
+├── .gitignore
 ├── package.json
 ├── PRD.md
 └── AGENTS.md
@@ -79,6 +88,21 @@ video-clipper/
 └─────────────────────────────────────────────┘
 ```
 
+### Build Tool
+
+Vite 8 with `vite-plugin-electron`. The renderer is served from `http://localhost:5173` in dev mode. The main process and preload are bundled separately by the Vite plugin.
+
+**Dev workflow:**
+- `npm run dev` or `npm run electron:dev` — starts Vite dev server + Electron
+- The renderer loads from `http://localhost:5173` (HMR enabled)
+- Main process and preload are built on-the-fly by vite-plugin-electron
+- In production, the renderer is bundled as static files
+
+**Debugging:**
+- The renderer is debuggable in Chrome via `http://localhost:5173`
+- Electron DevTools open automatically in dev mode
+- For Chrome DevTools MCP, launch Electron with `--remote-debugging-port=9222`
+
 ### IPC Channels
 
 Define all IPC channels explicitly in the preload script. Never use `contextIsolation: false`.
@@ -95,6 +119,20 @@ Define all IPC channels explicitly in the preload script. Never use `contextIsol
 | `fs:write-caption` | renderer → main | `{ filePath, content }` | `{ success }` |
 | `fs:scan-outputs` | renderer → main | `{}` | `{ files[] }` |
 | `app:drag-drop` | renderer → main | `{ filePath }` | `{ success }` |
+
+### TypeScript Path Aliases
+
+Configured in `tsconfig.json` and `vite.config.ts`:
+
+| Alias | Resolves To |
+|-------|-------------|
+| `@renderer/*` | `src/renderer/*` |
+| `@main/*` | `src/main/*` |
+| `@preload/*` | `src/preload/*` |
+
+### ElectronAPI Interface
+
+The `ElectronAPI` interface is declared in `src/env.d.ts`. The preload script casts the exposed API to this type. Keep them in sync.
 
 ---
 
@@ -169,6 +207,7 @@ ffmpeg -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
 - Use Tailwind CSS utility classes exclusively. No CSS-in-JS libraries.
 - Dark theme by default (suitable for video editing workflows).
 - Responsive within the Electron window (minimum window size: 800x600).
+- shadcn/ui components are available in `src/renderer/components/ui/`.
 
 ---
 
@@ -179,12 +218,32 @@ ffmpeg -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
 - Strict mode enabled. No `any` types unless absolutely unavoidable.
 - Define interfaces for all IPC messages, API responses, and component props.
 - Use `const` enums or string literals for IPC channel names.
+- The `ElectronAPI` interface in `src/env.d.ts` defines the renderer-side type contract.
 
 ### React
 
 - Functional components with hooks only. No class components.
 - Keep components focused — one responsibility per component.
 - Extract complex logic into custom hooks.
+- shadcn/ui components are headless primitives styled with Tailwind. Use them as building blocks.
+
+### ESLint
+
+- Flat config (`eslint.config.js`) with two separate rulesets:
+  - **Main/Preload**: Node.js globals, TypeScript rules
+  - **Renderer**: Browser globals, TypeScript rules, React hooks rules, React Refresh rules
+- Always run `npm run lint:fix` before committing to auto-fix issues.
+
+### Pre-commit Hooks
+
+Configured via husky + lint-staged. On `git commit`:
+
+1. **lint-staged** — formats and lints only staged files
+2. **typecheck** — full TypeScript type check (`tsc --noEmit`)
+3. **lint** — full ESLint check on all source files
+4. **build** — full Vite build to verify everything compiles
+
+All steps must pass for the commit to succeed.
 
 ### Error Handling
 
@@ -203,9 +262,14 @@ ffmpeg -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
 
 ```bash
 npm install
-npm run electron:dev     # Start Electron in dev mode
-npm run build            # Build for production
-npm run electron:build   # Package as distributable
+npm run dev              # Start Vite dev server + Electron (same as electron:dev)
+npm run electron:dev     # Start Vite dev server + Electron
+npm run build            # Type check + Vite build (renderer + main + preload)
+npm run electron:build   # Package as distributable (electron-builder)
+npm run lint             # Run ESLint on all source files
+npm run lint:fix         # Auto-fix ESLint issues
+npm run format           # Format all source files with Prettier
+npm run typecheck        # Run TypeScript type check
 ```
 
 ---
@@ -214,8 +278,8 @@ npm run electron:build   # Package as distributable
 
 Build the app in this sequence:
 
-1. **Project scaffold**: Electron + React + TypeScript + Tailwind setup.
-2. **Main process**: Window creation, IPC channel definitions, preload script.
+1. ~~**Project scaffold**: Electron + React + TypeScript + Tailwind setup.~~ ✅ DONE
+2. ~~**Main process**: Window creation, IPC channel definitions, preload script.~~ ✅ DONE
 3. **Video player**: Drag-and-drop loading, play/pause, precision seek slider, time display.
 4. **Clip extraction**: Clip length input, Clip button with `C` hotkey, ffmpeg integration, counter persistence, insufficient-duration warning.
 5. **Gallery view**: File scanning, thumbnail generation, grid layout, caption display.

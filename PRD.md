@@ -14,7 +14,7 @@ A desktop app for clipping video files (.mp4) to create training data for video 
 ### 1. Video Loading
 
 - **Drag & drop**: Drop any video file from the filesystem into the app window to load it.
-- **Load new video**: Closing the current video and dropping a new one resets the seek pointer to 0. The clip length setting is preserved across video loads.
+- **Load new video**: Dropping a new video file replaces the currently loaded video. The seek pointer resets to 0. The clip length setting is preserved across video loads.
 - Supported formats: Any format ffmpeg can read (primarily .mp4, but not limited to).
 
 ### 2. Playback Controls
@@ -31,7 +31,7 @@ A desktop app for clipping video files (.mp4) to create training data for video 
   - Clips from the current seek position to `seek_position + clip_length`.
   - Saves to `outputs/` directory with naming convention: `<original_name>_c<NNN>.<ext>` where `<NNN>` is a zero-padded 3-digit incremental counter (e.g., `v001_c001.mp4`, `v001_c002.mp4`).
   - The counter is per-source-video and persists across sessions (tracks the last used number).
-- **Insufficient remaining duration**: If `clip_length` extends beyond the video's end, warn the user and offer to clip the remaining duration instead (from current seek position to end of video).
+- **Insufficient remaining duration**: If `clip_length` extends beyond the video's end, show an inline toast notification offering to clip the remaining duration instead (from current seek position to end of video). The toast auto-dismisses after 3 seconds.
 - **Encoding preservation**: The clipped video must preserve the original video's:
   - Container format (extension)
   - Video codec
@@ -65,7 +65,7 @@ A desktop app for clipping video files (.mp4) to create training data for video 
   - Select All: A checkbox or button to select all files in the gallery.
 - **Conversion settings panel**:
   - **Codec**: Dropdown to select output video codec (e.g., `libx264`, `libx265`, `libsvtav1`, `mpeg4`).
-  - **Resolution**: Width and height inputs. The app auto-crops and resizes without distorting the aspect ratio (letterbox/pillarbox with crop to target, not stretch).
+  - **Resolution**: Width and height inputs. The app crops to fill the target resolution without stretching (no letterboxing/pillarboxing).
   - **Frame rate**: Numeric input for target fps (e.g., 24, 30, 60).
   - **Bitrate**: Numeric input for target bitrate (e.g., `5000k`, `10M`).
 - **Execution**:
@@ -191,3 +191,5 @@ video-clipper/
 - No video editing beyond clipping (no trimming, merging, or effects).
 - No support for non-video files.
 - No command-line interface.
+- No audio-only output.
+- No subtitle support.
