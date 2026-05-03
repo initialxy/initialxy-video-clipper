@@ -1,11 +1,9 @@
 /// <reference types="vite/client" />
 
-// CSS side-effect imports
 declare module '*.css' {
-  // No named exports — CSS imports are side-effects only
+  // CSS imports are side-effects only
 }
 
-// Electron API exposed via preload script
 interface ElectronAPI {
   createClip: (payload: {
     inputPath: string;
@@ -17,9 +15,9 @@ interface ElectronAPI {
   bulkConvert: (payload: {
     files: string[];
     settings: {
+      codec: string;
       width: number;
       height: number;
-      codec: string;
       fps: number;
       bitrate: string;
     };
@@ -50,7 +48,17 @@ interface ElectronAPI {
     files: Array<{ path: string; name: string; size: number; modified: string }>;
   }>;
 
+  deleteClip: (filePath: string) => Promise<{ success: boolean; error?: string }>;
+
   handleDragDrop: (filePath: string) => Promise<{ success: boolean }>;
+
+  checkFfmpeg: () => Promise<{ available: boolean; path?: string }>;
+
+  openFile: () => Promise<{ filePath?: string; cancelled: boolean }>;
+
+  getSetting: (key: string) => Promise<{ value?: string }>;
+
+  setSetting: (key: string, value: string) => Promise<{ success: boolean }>;
 
   onClipWarnInsufficient: (
     callback: (data: { remaining: number; requested: number }) => void,
@@ -59,6 +67,8 @@ interface ElectronAPI {
   onConvertProgress: (
     callback: (data: { file: string; progress: number; status: string }) => void,
   ) => () => void;
+
+  onConvertWarnNoChanges: (callback: () => void) => () => void;
 }
 
 interface Window {

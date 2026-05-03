@@ -65,7 +65,7 @@ video-clipper/
 │   │   ├── lib/
 │   │   │   └── utils.ts                # shadcn utility (cn function)
 │   │   ├── store/
-│   │   │   └── app-state.ts            # Central state (active tab, current video, clip length, etc.)
+│   │   │   └── app-state.tsx           # Central state (active tab, current video, clip length, etc.)
 │   │   └── styles/
 │   │       └── globals.css             # Tailwind base + ZFlow theme (dark-first)
 │   └── env.d.ts                # Type declarations (vite/client, CSS modules, ElectronAPI)
@@ -433,12 +433,12 @@ Build the app in this sequence:
 1. ~~**Project scaffold**: Electron + React + TypeScript + Tailwind + shadcn setup.~~ ✅ DONE
 2. ~~**Main process**: Window creation, IPC channel definitions, preload script.~~ ✅ DONE
 3. ~~**Theme**: ZFlow dark-first theme application.~~ ✅ DONE
-4. **Tab navigation**: Top bar with Clip/Gallery tabs, action buttons per tab.
-5. **Video player**: Drag-and-drop loading, open file dialog, play/pause, mute/volume, precision seek slider, time display, global keyboard shortcuts.
-6. **Clip extraction**: Clip length input, Clip button with `C` hotkey, ffmpeg integration, counter persistence, toast on success, insufficient-duration warning toast, no re-encode.
-7. **Gallery view**: File scanning, thumbnail generation, dynamic square grid layout (500px min), caption overlay with inline editing, delete with confirmation modal, gallery refresh.
-8. **Expanded player**: Click thumbnail to open, playback with sound, seek/volume controls, caption editor below video, close on Escape.
-9. **Caption editing**: Debounced autosave, `.txt` file CRUD, inline overlay editor in gallery, full editor in expanded view.
-10. **Bulk conversion**: Slide-out drawer, optional params with "Same as source", settings persistence via sqlite3, ffmpeg batch processing, progress indicators, no-changes toast warning, caption file copying.
-11. **ffmpeg check on launch**: Verify ffmpeg availability, show error dialog if missing.
-12. **Settings persistence**: sqlite3 for bulk conversion settings, clip length default, window size/position.
+4. ~~**Tab navigation**: Top bar with Clip/Gallery tabs, action buttons per tab.~~ ✅ DONE
+5. ~~**Video player**: Drag-and-drop loading, open file dialog, play/pause, mute/volume, precision seek slider, time display, global keyboard shortcuts.~~ ✅ DONE
+6. ~~**Clip extraction**: Clip length input, Clip button with `C` hotkey, ffmpeg integration, counter persistence, toast on success, insufficient-duration warning toast, no re-encode.~~ ✅ DONE
+7. ~~**Gallery view**: File scanning, thumbnail generation, dynamic square grid layout (500px min), caption overlay with inline editing, delete with confirmation modal, gallery refresh.~~ ✅ DONE
+8. ~~**Expanded player**: Click thumbnail to open, playback with sound, seek/volume controls, caption editor below video, close on Escape.~~ ✅ DONE
+9. ~~**Caption editing**: Debounced autosave, `.txt` file CRUD, inline overlay editor in gallery, full editor in expanded view.~~ ✅ DONE
+10. ~~**Bulk conversion**: Slide-out drawer, optional params with "Same as source", settings persistence via sqlite3, ffmpeg batch processing, progress indicators, no-changes toast warning, caption file copying.~~ ✅ DONE
+11. ~~**ffmpeg check on launch**: Verify ffmpeg availability, show error dialog if missing.~~ ✅ DONE
+12. ~~**Settings persistence**: sqlite3 for bulk conversion settings, clip length default, window size/position.~~ ✅ DONE

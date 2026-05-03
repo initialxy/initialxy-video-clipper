@@ -7,6 +7,7 @@
   "type": "module",
   "main": "dist/main/index.js",
   "scripts": {
+    "start": "vite",
     "dev": "vite",
     "electron:dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -21,6 +22,8 @@
   "dependencies": {
     "@base-ui/react": "^1.4.1",
     "@fontsource-variable/geist": "^5.2.8",
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^12.9.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "electron": "^41.5.0",
@@ -46,6 +49,7 @@
     "@tailwindcss/vite": "^4.2.4",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@types/which": "^3.0.4",
     "@typescript-eslint/eslint-plugin": "^8.59.1",
     "@typescript-eslint/parser": "^8.59.1",
     "@vitejs/plugin-react": "^6.0.1",

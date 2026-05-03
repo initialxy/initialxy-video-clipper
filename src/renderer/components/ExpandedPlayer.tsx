@@ -1,0 +1,67 @@
+import { useEffect } from 'react';
+import { X } from 'lucide-react';
+import { useCaption } from '@renderer/hooks/useCaption';
+import { CaptionEditor } from './CaptionEditor';
+import { useAppDispatch } from '@renderer/store/app-state';
+
+interface ExpandedPlayerProps {
+  filePath: string;
+  onClose: () => void;
+}
+
+export function ExpandedPlayer({ filePath, onClose }: ExpandedPlayerProps) {
+  const dispatch = useAppDispatch();
+  const { caption, updateCaption } = useCaption(filePath);
+
+  // Load video into expanded player
+  useEffect(() => {
+    window.electronAPI.getVideoInfo(filePath).then((info) => {
+      dispatch({
+        type: 'SET_VIDEO',
+        payload: { path: filePath, ...info },
+      });
+    });
+  }, [filePath, dispatch]);
+
+  // Handle Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6">
+      {/* Close button */}
+      <div className="flex justify-end">
+        <button
+          onClick={onClose}
+          className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md p-2 transition-colors"
+          title="Close (Escape)"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Video player */}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="mb-3 flex flex-1 items-center justify-center overflow-hidden rounded-lg bg-black">
+          <video
+            src={`file://${filePath}`}
+            className="max-h-full max-w-full"
+            controls
+            autoPlay
+            playsInline
+          />
+        </div>
+      </div>
+
+      {/* Caption editor below video */}
+      <CaptionEditor caption={caption} onChange={updateCaption} label="Caption" />
+    </div>
+  );
+}

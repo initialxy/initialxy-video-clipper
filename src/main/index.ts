@@ -1,6 +1,8 @@
-import { app, BrowserWindow, session } from 'electron';
+import { app, BrowserWindow, session, ipcMain } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+import { registerIpcHandlers } from './ipc-handlers';
 
 // Resolve __dirname in ES module context
 const __filename = fileURLToPath(import.meta.url);
@@ -24,21 +26,18 @@ function createWindow(): void {
       sandbox: true,
     },
     titleBarStyle: 'default',
-    show: false, // Hide until ready
+    show: false,
   });
 
-  // In development, load from Vite dev server. In production, load built files.
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
-    // Open DevTools in dev mode
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/dist/index.html'));
   }
 
-  // Show window when DOM is ready to avoid flashing
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
   });
@@ -62,7 +61,7 @@ if (!gotTheLock) {
 }
 
 app.whenReady().then(() => {
-  // Allow hosting content from localhost in dev mode
+  // CSP headers
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
@@ -72,6 +71,14 @@ app.whenReady().then(() => {
         ],
       },
     });
+  });
+
+  // Register all IPC handlers
+  registerIpcHandlers();
+
+  // Handle insufficient duration warning
+  ipcMain.on('clip:warn-insufficient', (_event, data) => {
+    mainWindow?.webContents.send('clip:warn-insufficient', data);
   });
 
   createWindow();
@@ -88,8 +95,3 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
-
-// IPC handlers will be registered here as we build out features
-// Placeholder for now — import and register handlers as they're created
-// import { registerIpcHandlers } from './ipc-handlers';
-// registerIpcHandlers(ipcMain);

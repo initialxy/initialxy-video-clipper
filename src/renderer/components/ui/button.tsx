@@ -40,7 +40,7 @@ const buttonVariants = cva(
   },
 );
 
-function Button({
+export function Button({
   className,
   variant = 'default',
   size = 'default',
@@ -55,4 +55,5 @@ function Button({
   );
 }
 
-export { Button, buttonVariants };
+// eslint-disable-next-line react-refresh/only-export-components
+export { buttonVariants };
