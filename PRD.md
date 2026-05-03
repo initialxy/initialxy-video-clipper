@@ -64,10 +64,12 @@ A desktop app for clipping video files (.mp4) to create training data for video 
   - Multi-select: Click individual items to select/deselect.
   - Select All: A checkbox or button to select all files in the gallery.
 - **Conversion settings panel**:
-  - **Codec**: Dropdown to select output video codec (e.g., `libx264`, `libx265`, `libsvtav1`, `mpeg4`).
-  - **Resolution**: Width and height inputs. The app crops to fill the target resolution without stretching (no letterboxing/pillarboxing).
-  - **Frame rate**: Numeric input for target fps (e.g., 24, 30, 60).
-  - **Bitrate**: Numeric input for target bitrate (e.g., `5000k`, `10M`).
+  - Each parameter is **optional** — the user may change only what they need while keeping everything else from the source.
+  - **Codec**: Dropdown with a `"Same as source"` option (default). Other options: `libx264`, `libx265`, `libsvtav1`, `mpeg4`. A "clear" button resets to source.
+  - **Resolution**: Width and height inputs with a `"Same as source"` toggle. When set, the app crops to fill the target resolution without stretching (no letterboxing/pillarbox). A "clear" button resets to source.
+  - **Frame rate**: Numeric input for target fps (e.g., 24, 30, 60) with a `"Same as source"` toggle. A "clear" button resets to source.
+  - **Bitrate**: Numeric input for target bitrate (e.g., `5000k`, `10M`) with a `"Same as source"` toggle. A "clear" button resets to source.
+  - **No changes warning**: If **all** parameters are left at `"Same as source"`, show an inline toast notification warning the user that files will simply be copied to `converted/` without any actual transcoding. The toast auto-dismisses after 3 seconds.
 - **Execution**:
   - Converts all selected files using the specified settings.
   - Outputs to `converted/` directory.
