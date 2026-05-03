@@ -24,34 +24,41 @@ video-clipper/
 │   ├── main/                   # Electron main process (Node.js)
 │   │   ├── index.ts            # Main process entry point
 │   │   ├── ipc-handlers.ts     # IPC route handlers (create when needed)
-│   │   └── ffmpeg.ts           # ffmpeg command builder & executor (create when needed)
+│   │   ├── ffmpeg.ts           # ffmpeg command builder & executor (create when needed)
+│   │   └── db.ts               # sqlite3 settings persistence (create when needed)
 │   ├── preload/
 │   │   └── index.ts            # Context bridge for safe IPC
 │   ├── renderer/               # React frontend
 │   │   ├── index.tsx           # Renderer entry point
-│   │   ├── App.tsx             # Root component with view routing
+│   │   ├── App.tsx             # Root component with tab routing
 │   │   ├── components/
 │   │   │   ├── ui/             # shadcn/ui generated components
-│   │   │   ├── TopBar.tsx              # Clip length input, Clip button, view toggle
+│   │   │   ├── TopBar.tsx              # Tab bar (left) + action buttons (right)
+│   │   │   ├── TabBar.tsx              # Clip / Gallery tab switcher
 │   │   │   ├── VideoPlayer.tsx         # Main video player with playback controls
 │   │   │   ├── SeekSlider.tsx          # Precision seek slider (0.01s granularity)
+│   │   │   ├── VolumeControl.tsx       # Mute button + volume slider
 │   │   │   ├── GalleryView.tsx         # Grid of clipped videos with thumbnails
-│   │   │   ├── GalleryItem.tsx         # Single gallery card (thumb + caption)
+│   │   │   ├── GalleryItem.tsx         # Single gallery card (thumb + caption overlay)
 │   │   │   ├── ExpandedPlayer.tsx      # Full-screen video player for gallery items
 │   │   │   ├── CaptionEditor.tsx       # Text area with debounced autosave
-│   │   │   ├── BulkConvertPanel.tsx    # Bulk conversion settings modal/panel
-│   │   │   └── ProgressBar.tsx         # Per-file and overall progress display
+│   │   │   ├── CaptionOverlay.tsx      # Inline caption overlay for gallery grid cells
+│   │   │   ├── BulkConvertDrawer.tsx   # Slide-out drawer for bulk conversion settings
+│   │   │   ├── ProgressBar.tsx         # Per-file and overall progress display
+│   │   │   ├── Toast.tsx               # Toast notification system
+│   │   │   └── DeleteConfirmModal.tsx  # Confirmation modal for clip deletion
 │   │   ├── hooks/
-│   │   │   ├── useVideoPlayer.ts       # Playback state management
+│   │   │   ├── useVideoPlayer.ts       # Playback state management (play/pause/seek/volume/mute)
 │   │   │   ├── useClipCounter.ts       # Per-source clip counter tracking
 │   │   │   ├── useGallery.ts           # Gallery file scanning & state
-│   │   │   └── useCaption.ts           # Caption CRUD with debounced save
+│   │   │   ├── useCaption.ts           # Caption CRUD with debounced save
+│   │   │   └── useToast.ts             # Toast notification management
 │   │   ├── lib/
 │   │   │   └── utils.ts                # shadcn utility (cn function)
 │   │   ├── store/
-│   │   │   └── app-state.ts            # Central state (view mode, current video, etc.)
+│   │   │   └── app-state.ts            # Central state (active tab, current video, clip length, etc.)
 │   │   └── styles/
-│   │       └── globals.css             # Tailwind base + custom utilities
+│   │       └── globals.css             # Tailwind base + ZFlow theme (dark-first)
 │   └── env.d.ts                # Type declarations (vite/client, CSS modules, ElectronAPI)
 ├── index.html                  # Root HTML entry point
 ├── vite.config.ts              # Vite build config (renderer + electron plugin)
@@ -76,12 +83,14 @@ video-clipper/
 │  - IPC handlers (clip, convert, fs ops)     │
 │  - ffmpeg child process spawning            │
 │  - File system access                       │
+│  - sqlite3 settings persistence             │
+│  - ffmpeg availability check on launch      │
 └──────────────┬──────────────────────────────┘
                │ IPC (contextBridge)
 ┌──────────────▼──────────────────────────────┐
 │           Electron Renderer Process         │
 │                                             │
-│  - React UI tree                            │
+│  - React UI tree (tab-based navigation)     │
 │  - HTML5 <video> playback                   │
 │  - User input handling                      │
 │  - State management                         │
@@ -103,6 +112,10 @@ Vite 8 with `vite-plugin-electron`. The renderer is served from `http://localhos
 - Electron DevTools open automatically in dev mode
 - For Chrome DevTools MCP, launch Electron with `--remote-debugging-port=9222`
 
+### Theme
+
+ZFlow theme from tweakcn, dark-first (`:root` = dark, `.light` = light override). Uses oklch color palette with purple primary accent. Inter font (sans), JetBrains Mono (mono), Source Serif 4 (serif).
+
 ### IPC Channels
 
 Define all IPC channels explicitly in the preload script. Never use `contextIsolation: false`.
@@ -118,7 +131,12 @@ Define all IPC channels explicitly in the preload script. Never use `contextIsol
 | `fs:read-caption` | renderer → main | `{ filePath }` | `{ content, exists }` |
 | `fs:write-caption` | renderer → main | `{ filePath, content }` | `{ success }` |
 | `fs:scan-outputs` | renderer → main | `{}` | `{ files[] }` |
+| `fs:delete-clip` | renderer → main | `{ filePath }` | `{ success, error? }` |
 | `app:drag-drop` | renderer → main | `{ filePath }` | `{ success }` |
+| `app:check-ffmpeg` | renderer → main | `{}` | `{ available, path? }` |
+| `app:open-file` | renderer → main | `{}` | `{ filePath?, cancelled }` |
+| `settings:get` | renderer → main | `{ key }` | `{ value }` |
+| `settings:set` | renderer → main | `{ key, value }` | `{ success }` |
 
 ### TypeScript Path Aliases
 
@@ -140,23 +158,24 @@ The `ElectronAPI` interface is declared in `src/env.d.ts`. The preload script ca
 
 ### 1. ffmpeg Commands
 
-**Clipping (stream copy — preserves all original properties):**
+**Clipping (stream copy ONLY — no re-encode ever):**
 ```bash
 ffmpeg -ss <START> -i <INPUT> -t <DURATION> -c copy -avoid_negative_ts make_zero <OUTPUT>
 ```
 - `-ss` before `-i` for fast seeking (may not be frame-exact).
-- For frame-exact cuts, move `-ss` after `-i` (slower but precise).
 - Use `-c copy` to preserve codec, bitrate, resolution, framerate, audio.
 - `-avoid_negative_ts make_zero` prevents timestamp issues.
+- **CRITICAL**: Clip mode must NEVER re-encode. Cut at nearest keyframe boundary. Preserving original encoding is paramount.
 
-**Bulk conversion:**
+**Bulk conversion (each param is optional — omit if "Same as source"):**
 ```bash
 ffmpeg -i <INPUT> \
-  -vf "scale=W:H:force_original_aspect_ratio=decrease,crop=W:H" \
-  -c:v <CODEC> -r <FPS> -b:v <BITRATE> \
+  [-vf "scale=W:H:force_original_aspect_ratio=decrease,crop=W:H"] \
+  [-c:v <CODEC>] [-r <FPS>] [-b:v <BITRATE>] \
   -c:a copy \
   <OUTPUT>
 ```
+- If all params are "Same as source", skip ffmpeg entirely and copy the file directly (`cp`).
 
 **Thumbnail extraction:**
 ```bash
@@ -190,22 +209,73 @@ ffmpeg -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
 - Check for cached thumbnail before re-extracting.
 - Thumbnails should be generated at a reasonable size (e.g., 320px wide, maintaining aspect ratio).
 
-### 6. Drag and Drop
+### 6. Gallery Grid Layout
 
+- Each grid cell is **square** (1:1 aspect ratio).
+- Minimum cell size: **500x500px** when viewport allows.
+- Cell size adjusts dynamically based on viewport width. Calculate max columns that fit, then distribute evenly.
+- Thumbnail rendered as `object-fit: cover` (cropped to fill the square cell).
+- Lower half of each cell has a dark overlay with caption text on top.
+- Long captions truncated with ellipsis (`...`).
+- Clicking the lower half converts it to an inline text editor.
+
+### 7. Drag and Drop
+
+- Only available in Clip mode. Gallery mode does not accept drops.
 - Handle both file system paths (in Electron) and file objects (in browser dev mode).
 - On successful drop, load the video into the player, reset seek to 0, keep clip length setting.
 - Accept only video MIME types or known extensions (.mp4, .mov, .avi, .mkv, .webm).
+- Provide an "Open File" button as fallback in Clip mode top bar.
 
-### 7. State Management
+### 8. Playback Controls
+
+- Play/Pause: button or spacebar (global, even when not focused on player).
+- Mute/Unmute: button or `M` key.
+- Volume slider: inline slider next to mute button.
+- No skip buttons (`<<` / `>>`).
+
+### 9. Toast Notifications
+
+- Used for: clip saved confirmation, insufficient duration warning, no-changes conversion warning, errors.
+- Auto-dismiss after 3 seconds.
+- Can include action buttons (e.g., "Clip remaining" for insufficient duration).
+
+### 10. Settings Persistence
+
+- Use Node.js built-in `sqlite3` for persistent storage.
+- Store: bulk conversion settings (codec, resolution, fps, bitrate), clip length default, window size/position.
+- Settings are loaded on app start and saved on change.
+- Bulk conversion drawer remembers last-used settings.
+
+### 11. ffmpeg Check on Launch
+
+- On app startup, verify ffmpeg is available in PATH.
+- If not found, show an error dialog and prevent the app from functioning until resolved.
+
+### 12. Delete Clip
+
+- On hover over a gallery cell, show a red trash can icon in the top-right corner.
+- Click opens a confirmation modal.
+- On confirm, delete both the video file and its `.txt` caption file (if exists).
+- Gallery grid refreshes after deletion.
+
+### 13. Tab Navigation
+
+- Two tabs: **Clip** (left) and **Gallery** (right) in the top bar.
+- Clip mode: video player, seek, clip extraction, drag-and-drop, open file.
+- Gallery mode: grid view, captions, bulk convert, delete, refresh.
+- Action buttons in the top bar change based on the active tab.
+
+### 14. State Management
 
 - Use React `useState` and `useReducer` for local component state.
-- Use a simple context-based global store for cross-component state (current view, loaded video, clip length).
+- Use a simple context-based global store for cross-component state (active tab, current video, clip length).
 - Avoid external state management libraries (no Redux, Zustand, etc.) — keep it simple.
 
-### 8. Styling
+### 15. Styling
 
 - Use Tailwind CSS utility classes exclusively. No CSS-in-JS libraries.
-- Dark theme by default (suitable for video editing workflows).
+- Dark theme by default (ZFlow theme, dark-first).
 - Responsive within the Electron window (minimum window size: 800x600).
 - shadcn/ui components are available in `src/renderer/components/ui/`.
 
@@ -247,7 +317,7 @@ All steps must pass for the commit to succeed.
 
 ### Error Handling
 
-- ffmpeg failures: Capture stderr, parse for meaningful errors, display to user.
+- ffmpeg failures: Capture stderr, parse for meaningful errors, display to user via toast.
 - File operation failures: Show inline error messages, never crash the app.
 - Network/IPC failures: Graceful degradation with retry options where applicable.
 
@@ -278,11 +348,15 @@ npm run typecheck        # Run TypeScript type check
 
 Build the app in this sequence:
 
-1. ~~**Project scaffold**: Electron + React + TypeScript + Tailwind setup.~~ ✅ DONE
+1. ~~**Project scaffold**: Electron + React + TypeScript + Tailwind + shadcn setup.~~ ✅ DONE
 2. ~~**Main process**: Window creation, IPC channel definitions, preload script.~~ ✅ DONE
-3. **Video player**: Drag-and-drop loading, play/pause, precision seek slider, time display.
-4. **Clip extraction**: Clip length input, Clip button with `C` hotkey, ffmpeg integration, counter persistence, insufficient-duration warning.
-5. **Gallery view**: File scanning, thumbnail generation, grid layout, caption display.
-6. **Caption editing**: Text input with debounced autosave, `.txt` file creation.
-7. **Expanded player**: Click-to-enlarge, playback with sound, seek controls.
-8. **Bulk conversion**: Multi-select, settings panel, ffmpeg batch processing, progress indicators, caption file copying.
+3. ~~**Theme**: ZFlow dark-first theme application.~~ ✅ DONE
+4. **Tab navigation**: Top bar with Clip/Gallery tabs, action buttons per tab.
+5. **Video player**: Drag-and-drop loading, open file dialog, play/pause, mute/volume, precision seek slider, time display, global keyboard shortcuts.
+6. **Clip extraction**: Clip length input, Clip button with `C` hotkey, ffmpeg integration, counter persistence, toast on success, insufficient-duration warning toast, no re-encode.
+7. **Gallery view**: File scanning, thumbnail generation, dynamic square grid layout (500px min), caption overlay with inline editing, delete with confirmation modal, gallery refresh.
+8. **Expanded player**: Click thumbnail to open, playback with sound, seek/volume controls, caption editor below video, close on Escape.
+9. **Caption editing**: Debounced autosave, `.txt` file CRUD, inline overlay editor in gallery, full editor in expanded view.
+10. **Bulk conversion**: Slide-out drawer, optional params with "Same as source", settings persistence via sqlite3, ffmpeg batch processing, progress indicators, no-changes toast warning, caption file copying.
+11. **ffmpeg check on launch**: Verify ffmpeg availability, show error dialog if missing.
+12. **Settings persistence**: sqlite3 for bulk conversion settings, clip length default, window size/position.

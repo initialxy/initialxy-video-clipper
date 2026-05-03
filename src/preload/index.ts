@@ -23,9 +23,16 @@ export const IPC_CHANNELS = {
   FS_READ_CAPTION: 'fs:read-caption',
   FS_WRITE_CAPTION: 'fs:write-caption',
   FS_SCAN_OUTPUTS: 'fs:scan-outputs',
+  FS_DELETE_CLIP: 'fs:delete-clip',
 
   // App
   APP_DRAG_DROP: 'app:drag-drop',
+  APP_CHECK_FFMPEG: 'app:check-ffmpeg',
+  APP_OPEN_FILE: 'app:open-file',
+
+  // Settings
+  SETTINGS_GET: 'settings:get',
+  SETTINGS_SET: 'settings:set',
 } as const;
 
 /**
@@ -67,9 +74,22 @@ const electronAPI = {
 
   scanOutputs: () => ipcRenderer.invoke(IPC_CHANNELS.FS_SCAN_OUTPUTS, {}),
 
+  // File system
+  deleteClip: (filePath: string) => ipcRenderer.invoke(IPC_CHANNELS.FS_DELETE_CLIP, { filePath }),
+
   // App
   handleDragDrop: (filePath: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.APP_DRAG_DROP, { filePath }),
+
+  checkFfmpeg: () => ipcRenderer.invoke(IPC_CHANNELS.APP_CHECK_FFMPEG, {}),
+
+  openFile: () => ipcRenderer.invoke(IPC_CHANNELS.APP_OPEN_FILE, {}),
+
+  // Settings
+  getSetting: (key: string) => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET, { key }),
+
+  setSetting: (key: string, value: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_SET, { key, value }),
 
   // Event listeners (one-way: main → renderer)
   onClipWarnInsufficient: (callback: (data: { remaining: number; requested: number }) => void) => {
