@@ -21,11 +21,20 @@ video-clipper/
 ├── outputs/                    # Clipped video output (runtime)
 ├── converted/                  # Bulk-converted output (runtime)
 ├── src/
+│   ├── shared/                 # Shared types and utilities (main + preload + renderer)
+│   │   ├── ipc.ts              # IPC channel names, payload types, return types
+│   │   ├── types.ts            # Domain types (VideoInfo, ClipResult, ConvertSettings)
+│   │   └── utils.ts            # Pure utilities (time formatting, path helpers)
 │   ├── main/                   # Electron main process (Node.js)
-│   │   ├── index.ts            # Main process entry point
-│   │   ├── ipc-handlers.ts     # IPC route handlers (create when needed)
-│   │   ├── ffmpeg.ts           # ffmpeg command builder & executor (create when needed)
-│   │   └── db.ts               # sqlite3 settings persistence (create when needed)
+│   │   ├── index.ts            # Window creation, app lifecycle, CSP headers
+│   │   ├── ipc-handlers.ts     # IPC route registration (thin delegates to services)
+│   │   ├── ffmpeg.ts           # ffmpeg command builder (pure functions, no side effects)
+│   │   ├── db.ts               # sqlite3 schema, queries, migrations
+│   │   └── services/           # Business logic layer
+│   │       ├── clip.service.ts       # Clip operations (counter, naming, validation)
+│   │       ├── convert.service.ts    # Bulk conversion orchestration
+│   │       ├── gallery.service.ts    # File scanning, thumbnail caching
+│   │       └── caption.service.ts    # Caption file CRUD
 │   ├── preload/
 │   │   └── index.ts            # Context bridge for safe IPC
 │   ├── renderer/               # React frontend
@@ -97,6 +106,78 @@ video-clipper/
 └─────────────────────────────────────────────┘
 ```
 
+### Architecture Design
+
+#### Shared Types Layer (`src/shared/`)
+
+All types used across process boundaries live here. This eliminates duplication between preload, main, and renderer.
+
+- **`ipc.ts`** — IPC channel names, payload types, return types, and the `IPCRegistry` type that maps each channel to its invoke signature. `ElectronAPI` is derived from this registry, not manually typed.
+- **`types.ts`** — Domain types (`VideoInfo`, `ClipResult`, `ConvertSettings`, `GalleryFile`, etc.).
+- **`utils.ts`** — Pure utilities usable by any process (time formatting `MM:SS.xx`, file path helpers, counter formatting).
+
+No barrel files (`index.ts` re-exports) — explicit imports only.
+
+#### Main Process Service Layer
+
+```
+src/main/
+├── index.ts          # Window creation, app lifecycle, CSP headers
+├── ipc-handlers.ts   # IPC route registration (thin delegates to services)
+├── ffmpeg.ts         # ffmpeg command builder (pure functions, no side effects)
+├── db.ts             # sqlite3 schema, queries, migrations
+└── services/
+    ├── clip.service.ts      # Clip operations (counter, naming, validation)
+    ├── convert.service.ts   # Bulk conversion orchestration
+    ├── gallery.service.ts   # File scanning, thumbnail caching
+    └── caption.service.ts   # Caption file CRUD
+```
+
+**ipc-handlers.ts** is thin — receives IPC payloads, validates them, delegates to services:
+```typescript
+ipcMain.handle('clip:create', async (_event, payload) => {
+  return clipService.createClip(payload);
+});
+```
+
+**ffmpeg.ts** is a pure command builder — no child_process calls:
+```typescript
+export function buildClipCommand(input: string, output: string, start: number, duration: number): string[] {
+  return ['ffmpeg', '-ss', String(start), '-i', input, '-t', String(duration), '-c', 'copy', '-avoid_negative_ts', 'make_zero', output];
+}
+```
+
+This makes ffmpeg logic testable and easy to reason about.
+
+#### Renderer State Management
+
+**app-state.ts** uses React context + `useReducer` for global state:
+- `activeTab` ('clip' | 'gallery')
+- `currentVideo` (path, duration, info)
+- `clipLength` (number)
+- `galleryFiles` (array)
+- `selectedFiles` (Set)
+
+Components subscribe to only the slice they need via custom hooks derived from the context.
+
+#### Key Design Decisions
+
+| Concern | Approach | Why |
+|---------|----------|-----|
+| IPC types | Single `src/shared/ipc.ts` | No drift between preload/main/renderer |
+| ffmpeg | Pure command builder + separate executor | Testable, no side effects in builder |
+| Business logic | Service layer in main process | Separates IPC plumbing from domain logic |
+| State | React context + useReducer | Simple, no external deps, per PRD |
+| Settings | sqlite3 in main, accessed via IPC | Only main process touches disk |
+| Shared utils | `src/shared/utils.ts` | Time formatting, path helpers used by both processes |
+
+#### What This Avoids
+
+- **No circular dependencies** — shared layer has zero imports from app code
+- **No `any` in IPC** — everything typed from one registry
+- **No business logic in IPC handlers** — handlers are thin delegates
+- **No barrel files** — explicit imports only
+
 ### Build Tool
 
 Vite 8 with `vite-plugin-electron`. The renderer is served from `http://localhost:5173` in dev mode. The main process and preload are bundled separately by the Vite plugin.
@@ -147,6 +228,7 @@ Configured in `tsconfig.json` and `vite.config.ts`:
 | `@renderer/*` | `src/renderer/*` |
 | `@main/*` | `src/main/*` |
 | `@preload/*` | `src/preload/*` |
+| `@shared/*` | `src/shared/*` |
 
 ### ElectronAPI Interface
 

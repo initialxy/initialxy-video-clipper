@@ -44,6 +44,7 @@ export default defineConfig({
       '@renderer': resolve(__dirname, 'src/renderer'),
       '@main': resolve(__dirname, 'src/main'),
       '@preload': resolve(__dirname, 'src/preload'),
+      '@shared': resolve(__dirname, 'src/shared'),
     },
   },
   clearScreen: false,
