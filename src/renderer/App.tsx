@@ -27,7 +27,7 @@ function AppContent() {
     deleteFile,
   } = useGallery();
   const { toasts, removeToast, success, error, warning, info } = useToast();
-  const { currentTime, getCurrentTime } = useVideoPlayer();
+  const { getCurrentTime } = useVideoPlayer();
   const convertSettings = useConvertSettings();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -46,7 +46,7 @@ function AppContent() {
     } else if (result.error && result.error !== 'Insufficient remaining duration') {
       error(result.error);
     }
-  }, [currentVideo, currentTime, handleClip, warning, success, error, refreshGallery]);
+  }, [currentVideo, getCurrentTime, handleClip, warning, success, error, refreshGallery]);
 
   // Listen for convert progress
   useEffect(() => {
