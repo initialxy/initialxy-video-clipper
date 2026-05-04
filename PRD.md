@@ -6,9 +6,10 @@ A desktop app for clipping video files (.mp4) to create training data for video 
 
 **Primary purpose**: Create and manage captioned video clip datasets for video diffusion model training. Caption visibility and quick editing are critical.
 
-**Tech Stack**: Electron + React + TypeScript + Tailwind CSS  
+**Tech Stack**: Electron + React + TypeScript + Tailwind CSS + shadcn/ui  
 **External Dependency**: ffmpeg (must be installed on the host machine — checked on app launch via `ffmpeg -version`)  
-**Persistent Storage**: Node.js built-in `node:sqlite` for app settings and preferences
+**Persistent Storage**: JSON file for settings persistence (clip length, bulk convert settings)  
+**Toast Notifications**: Sonner for toast notifications
 
 ---
 
@@ -16,9 +17,9 @@ A desktop app for clipping video files (.mp4) to create training data for video 
 
 ### 1. Tab Navigation
 
-The app has a tab bar on the **left side of the top bar** with two modes:
-- **Clip** — video editor with player, seek, and clip extraction
-- **Gallery** — grid view of all clipped videos with captions
+The app has a tab bar on the **left side of the top bar** with two modes using shadcn Tabs component:
+- **Video** (with Video icon) — video editor with player, seek, and clip extraction
+- **Gallery** (with Images icon) — grid view of all clipped videos with captions
 
 Action buttons for the active tab appear on the **right side of the top bar**.
 

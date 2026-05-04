@@ -116,7 +116,6 @@ export function TopBar({
                 value={clipLengthInput}
                 onChange={handleClipLengthChange}
                 className="w-14 bg-transparent text-center text-sm tabular-nums outline-none"
-                disabled={!currentVideo}
               />
               <span className="text-muted-foreground text-xs">s</span>
             </div>

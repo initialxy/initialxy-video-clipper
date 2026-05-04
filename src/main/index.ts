@@ -10,8 +10,12 @@ import { registerIpcHandlers } from './ipc-handlers';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Enable remote debugging in development mode (for MCP server / Chrome DevTools)
-const isDev = process.env.NODE_ENV === 'development';
+// Enable remote debugging for MCP server / Chrome DevTools
+// Check both NODE_ENV and command line flag
+const isDev =
+  process.env.NODE_ENV === 'development' ||
+  process.argv.includes('--remote-debugging-port=9222') ||
+  process.argv.includes('--remote-debugging-port');
 if (isDev) {
   app.commandLine.appendSwitch('remote-debugging-port', '9222');
 }
