@@ -19,11 +19,15 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@base-ui/react": "^1.4.1",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "electron": "^41.5.0",
     "lucide-react": "^1.14.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0"
   },
   "lint-staged": {
@@ -45,7 +49,6 @@
     "@typescript-eslint/parser": "^8.59.1",
     "@vitejs/plugin-react": "^6.0.1",
     "electron-builder": "^26.8.1",
-    "shadcn": "^4.6.0",
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
@@ -54,6 +57,7 @@
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.8.0",
+    "shadcn": "^4.6.0",
     "tailwindcss": "^4.2.4",
     "vite": "^8.0.10",
     "vite-plugin-electron": "^0.29.1"

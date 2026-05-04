@@ -1,0 +1,21 @@
+1. Open works, but drag and drop doesn't work. No where in the app can I actually drop the file.
+2. If a video is smaller than the viewport available, it only shows in its original size. The video should just best-fit the given area.
+3. volume button just expands to the left, which shrinks the timeline / seek bar. This is bad experience as it changes the seek location. The volume button should show a *vertical* bar when hovered over (this vertical elemetns hould include the volume icon). When clicking on the volume icon, it should mute/unmute. Currently nothing happens.
+4. volume button is smaller than the play button, which feels inconsistent.
+5. When a video is opened, there's no way to close / remove it. It would be nice to have a way to return to a "clean" state.
+6. length is not persistently saved in settings. If I changed it to 5s, it should remain so when I restart the app.
+7. video seek handle does not update with enough granularty when video is playing. This is critically bad, since I want to be able to clip the video at the EXACT time, which means I can either drag it to seek the video or let it play. It only seems to update every 0.14s. I know as a fact that the video I'm playing has 24fps, which means it should have much higher update granularity.
+8. We had this UX issue before where YOU are confused between tab and action button. The left top tabs simply DON'T look like tabs. Can we use shadcn's Tabs widget https://ui.shadcn.com/docs/components/radix/tabs with icons? It should be visually clear that these are tabs NOT action buttons.
+9. The tabs on left top corner, let's just rename them as "Video" and "Gallery" to make then textually distinct from "Save Clip".
+10. "Save Clip" should have an icon. probably the sissor icon. Since Open has an icon, it feels inconsistent.
+11. After going to gallery then back to Clip (rename as Video), the seek bar loses its location and now back to the beginning of the video.
+12. In gallery view, when a video is expanded, then I click on the Clip/Video tab, the gallery expanded video is still playing, overlaying on top of clip/video tab. Very confusing experience.
+13. In gallery view, the delete icon needs to be clicked *twice* to initiate a delete confirmation. Why?
+14. In gallery view, when the delete button's trash icon is NOT center/middle aligned. We can probably fix this by simply making this button a bit larger, which is ok
+15. In gallery view, the thumnail of the video should expand and "cover" the enter square cell, where caption should have a translarent shade on TOP of the thumbnail.
+16. When the caption box is clicked for editing, cursor should always be moved to the *end* of the existing text.
+17. It is extremely unintuitive to SELECT videos. Because clicking on the top half of the thumbnail simply plays the video. Clicking on the bottom half edits thumbmail. To select a video we have to click on caption twice? That's BAD UX. If I clicked on caption twice, that usually means I want to move my text edit cursor to edit the caption. We should do this differently. When mouse hover on a thumbnail, it should show a select box on the left top corner and the delete button on the right top corner. Clicking on the left top corner select box is what selects this video.
+18. Why is our toast not using shadcn's sonner? https://ui.shadcn.com/docs/components/radix/sonner
+19. When in expanded video clip, resizing the caption text are is very difficult, so don't even allow it. Instead, just add an "expand" button (with icon instead of text). When clicked, it makes the text area reasonably taller for easier text entry.
+20. Bulk Convert absolutely does not work. When I select videos then click on "Bulk Convert" nothing happens. We are supposed to have a bottom slider that comes up that shows me what convertion settings I can have, then click on a "convert" button to start conversion.
+21. In Clip/Video view, the "c" hot key works (I believe you had trouble with testing hotkey in the dev MCP, so you may not able to test this). But not when I just clicked on the seek handle. In which case, pressing 'c' simply focuses on the seek handle without clipping.

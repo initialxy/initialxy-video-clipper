@@ -1,13 +1,15 @@
-import { Play, Pause } from 'lucide-react';
+import { Play, Pause, X } from 'lucide-react';
 import { useVideoPlayer } from '@renderer/hooks/useVideoPlayer';
 import { VolumeControl } from './VolumeControl';
 import { formatTime } from '@shared/utils';
+import { cn } from '@renderer/lib/utils';
 
 interface VideoPlayerProps {
   className?: string;
+  onClose?: () => void;
 }
 
-export function VideoPlayer({ className }: VideoPlayerProps) {
+export function VideoPlayer({ className, onClose }: VideoPlayerProps) {
   const {
     videoRef,
     currentTime,
@@ -24,12 +26,12 @@ export function VideoPlayer({ className }: VideoPlayerProps) {
   } = useVideoPlayer();
 
   return (
-    <div className={`flex flex-col ${className ?? ''}`}>
+    <div className={cn('flex flex-col', className)}>
       {/* Video area */}
-      <div className="relative flex flex-1 items-center justify-center overflow-hidden rounded-lg bg-black">
+      <div className="relative flex-1 overflow-hidden rounded-lg bg-black">
         <video
           ref={videoRef}
-          className="max-h-full max-w-full"
+          className="h-full w-full object-contain"
           onClick={togglePlay}
           onTimeUpdate={onTimeUpdate}
           onPlay={onPlay}
@@ -37,6 +39,18 @@ export function VideoPlayer({ className }: VideoPlayerProps) {
           onEnded={onPause}
           playsInline
         />
+        {onClose && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="text-muted-foreground/80 hover:text-foreground hover:bg-muted/50 absolute top-2 right-2 rounded-md p-1.5 transition-colors"
+            title="Remove video"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Controls bar */}

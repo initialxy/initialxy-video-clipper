@@ -259,3 +259,33 @@ input[type='range']::-moz-range-thumb {
     @apply font-sans;
   }
 }
+
+/* Sonner toast styling */
+[data-style='default'] [data-swipe='dismiss'] {
+  background: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
+[data-style='default'] [data-icon] {
+  color: var(--foreground);
+}
+
+[data-style='default'] [data-button] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+[data-style='default'] [data-button]:hover {
+  background: var(--accent);
+}
+
+[data-style='default'] [data-close-button] {
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+[data-style='default'] [data-close-button]:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}

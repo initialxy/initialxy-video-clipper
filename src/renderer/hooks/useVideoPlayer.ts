@@ -7,6 +7,8 @@ export function useVideoPlayer() {
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const animFrameRef = useRef<number | null>(null);
+  const isSeekingRef = useRef(false);
 
   const duration = currentVideo?.duration ?? 0;
 
@@ -28,16 +30,48 @@ export function useVideoPlayer() {
     return () => video.removeEventListener('loadedmetadata', onLoadedMetadata);
   }, [currentVideo, currentVideo?.path]);
 
-  // Track time updates
-  const onTimeUpdate = useCallback(() => {
+  // Smooth time update using requestAnimationFrame during playback
+  const updateTime = useCallback(() => {
     const video = videoRef.current;
     if (video) {
       setCurrentTime(video.currentTime);
     }
   }, []);
 
-  const onPlay = useCallback(() => setIsPlaying(true), []);
-  const onPause = useCallback(() => setIsPlaying(false), []);
+  const startAnimationLoop = useCallback(() => {
+    const loop = () => {
+      updateTime();
+      animFrameRef.current = requestAnimationFrame(loop);
+    };
+    animFrameRef.current = requestAnimationFrame(loop);
+  }, [updateTime]);
+
+  const stopAnimationLoop = useCallback(() => {
+    if (animFrameRef.current !== null) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+  }, []);
+
+  const onPlay = useCallback(() => {
+    setIsPlaying(true);
+    startAnimationLoop();
+  }, [startAnimationLoop]);
+
+  const onPause = useCallback(() => {
+    setIsPlaying(false);
+    stopAnimationLoop();
+  }, [stopAnimationLoop]);
+
+  const onTimeUpdate = useCallback(() => {
+    // Only update during seeking (not during playback animation loop)
+    if (isSeekingRef.current) {
+      const video = videoRef.current;
+      if (video) {
+        setCurrentTime(video.currentTime);
+      }
+    }
+  }, []);
 
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
@@ -53,8 +87,13 @@ export function useVideoPlayer() {
     (time: number) => {
       const video = videoRef.current;
       if (!video) return;
+      isSeekingRef.current = true;
       video.currentTime = Math.max(0, Math.min(time, duration));
       setCurrentTime(video.currentTime);
+      // Reset seeking flag after a short delay to allow timeupdate to fire
+      setTimeout(() => {
+        isSeekingRef.current = false;
+      }, 100);
     },
     [duration],
   );
@@ -87,8 +126,13 @@ export function useVideoPlayer() {
   // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't capture when typing in inputs
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      // Don't capture when typing in inputs (except range inputs for seek)
+      const target = e.target;
+      if (
+        target instanceof HTMLTextAreaElement ||
+        (target instanceof HTMLInputElement && target.type !== 'range')
+      )
+        return;
 
       if (e.code === 'Space') {
         e.preventDefault();
@@ -102,6 +146,13 @@ export function useVideoPlayer() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [togglePlay, toggleMute]);
+
+  // Cleanup animation frame on unmount
+  useEffect(() => {
+    return () => {
+      stopAnimationLoop();
+    };
+  }, [stopAnimationLoop]);
 
   return {
     videoRef,

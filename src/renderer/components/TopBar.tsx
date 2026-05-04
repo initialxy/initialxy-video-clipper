@@ -1,7 +1,11 @@
-import { useState, useCallback, type ChangeEvent, type DragEvent } from 'react';
-import { FolderOpen, RefreshCw, CheckSquare, Square, Download } from 'lucide-react';
+import { useState, useCallback, useEffect, useRef, type ChangeEvent } from 'react';
+import { FolderOpen, RefreshCw, CheckSquare, Square, Download, Scissors } from 'lucide-react';
+import { Video, Images } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs';
 import { useAppState, useAppDispatch, type ActiveTab } from '@renderer/store/app-state';
 import { cn } from '@renderer/lib/utils';
+
+const CLIP_LENGTH_KEY = 'clip_length';
 
 interface TopBarProps {
   onClip: () => void;
@@ -21,6 +25,27 @@ export function TopBar({
   const { activeTab, clipLength, currentVideo } = useAppState();
   const dispatch = useAppDispatch();
   const [clipLengthInput, setClipLengthInput] = useState(String(clipLength));
+  const prevClipLength = useRef(clipLength);
+
+  // Sync local input with global state
+  useEffect(() => {
+    if (prevClipLength.current !== clipLength) {
+      prevClipLength.current = clipLength;
+      setClipLengthInput(String(clipLength));
+    }
+  }, [clipLength]);
+
+  // Persist clip length to settings
+  const prevInputRef = useRef(clipLengthInput);
+  useEffect(() => {
+    if (prevInputRef.current !== clipLengthInput) {
+      prevInputRef.current = clipLengthInput;
+      const val = parseFloat(clipLengthInput);
+      if (!isNaN(val) && val > 0) {
+        window.electronAPI.setSetting(CLIP_LENGTH_KEY, String(val));
+      }
+    }
+  }, [clipLengthInput]);
 
   const handleTabChange = useCallback(
     (tab: ActiveTab) => {
@@ -52,66 +77,21 @@ export function TopBar({
     }
   }, [dispatch]);
 
-  const handleDrop = useCallback(
-    async (e: DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (activeTab !== 'clip') return;
-
-      const file = e.dataTransfer.files[0];
-      if (!file) return;
-
-      const path = (file as File & { path?: string }).path ?? '';
-      if (!path) return;
-
-      const result = await window.electronAPI.handleDragDrop(path);
-      if (result.success) {
-        const info = await window.electronAPI.getVideoInfo(path);
-        dispatch({
-          type: 'SET_VIDEO',
-          payload: { path, ...info },
-        });
-      }
-    },
-    [activeTab, dispatch],
-  );
-
-  const handleDragOver = useCallback((e: DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, []);
-
   return (
-    <div
-      className="border-border/50 bg-background/80 flex items-center justify-between border-b px-4 py-2 backdrop-blur-sm"
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
-    >
+    <div className="border-border/50 bg-background/80 flex items-center justify-between border-b px-4 py-2 backdrop-blur-sm">
       {/* Left: Tabs */}
-      <div className="flex items-center gap-1">
-        <button
-          onClick={() => handleTabChange('clip')}
-          className={cn(
-            'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-            activeTab === 'clip'
-              ? 'bg-primary/20 text-primary'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
-          )}
-        >
-          Clip
-        </button>
-        <button
-          onClick={() => handleTabChange('gallery')}
-          className={cn(
-            'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-            activeTab === 'gallery'
-              ? 'bg-primary/20 text-primary'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
-          )}
-        >
-          Gallery
-        </button>
-      </div>
+      <Tabs value={activeTab} onValueChange={(v) => handleTabChange(v as ActiveTab)}>
+        <TabsList className="h-8">
+          <TabsTrigger value="clip" className="gap-1.5">
+            <Video className="h-4 w-4" />
+            <span>Video</span>
+          </TabsTrigger>
+          <TabsTrigger value="gallery" className="gap-1.5">
+            <Images className="h-4 w-4" />
+            <span>Gallery</span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Right: Action buttons */}
       <div className="flex items-center gap-2">
@@ -152,7 +132,8 @@ export function TopBar({
               )}
               title="Save Clip (C)"
             >
-              Save Clip
+              <Scissors className="mr-1 h-4 w-4" />
+              <span>Clip</span>
             </button>
           </>
         )}

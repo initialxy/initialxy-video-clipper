@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type DragEvent } from 'react';
 import { useAppState, useAppDispatch } from '@renderer/store/app-state';
 import { useClipCounter } from '@renderer/hooks/useClipCounter';
 import { useGallery } from '@renderer/hooks/useGallery';
-import { useToast } from '@renderer/hooks/useToast';
 import { useVideoPlayer } from '@renderer/hooks/useVideoPlayer';
 import { useConvertSettings } from '@renderer/hooks/useConvertSettings';
 
@@ -11,58 +10,137 @@ import { VideoPlayer } from '@renderer/components/VideoPlayer';
 import { GalleryView } from '@renderer/components/GalleryView';
 import { ExpandedPlayer } from '@renderer/components/ExpandedPlayer';
 import { BulkConvertDrawer } from '@renderer/components/BulkConvertDrawer';
-import { ToastContainer } from '@renderer/components/Toast';
 import { DeleteConfirmModal } from '@renderer/components/DeleteConfirmModal';
+import { Toaster } from '@renderer/components/ui/sonner';
+import { cn } from '@renderer/lib/utils';
 
 function AppContent() {
   const { activeTab, currentVideo, expandedFile } = useAppState();
   const dispatch = useAppDispatch();
   const { handleClip } = useClipCounter();
-  const {
-    galleryFiles,
-    refreshGallery,
-    toggleFileSelection,
-    selectAll,
-    isAllSelected,
-    deleteFile,
-  } = useGallery();
-  const { toasts, removeToast, success, error, warning, info } = useToast();
+  const { galleryFiles, refreshGallery, selectAll, isAllSelected, deleteFile } = useGallery();
   const { getCurrentTime } = useVideoPlayer();
   const convertSettings = useConvertSettings();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
-  // Define handleClipAction before it's used in useEffect
+  const handleDrop = useCallback(
+    async (filePath: string) => {
+      const info = await window.electronAPI.getVideoInfo(filePath);
+      dispatch({
+        type: 'SET_VIDEO',
+        payload: { path: filePath, ...info },
+      });
+      dispatch({ type: 'SET_TAB', payload: 'clip' });
+    },
+    [dispatch],
+  );
+
+  const handleDragOver = useCallback(
+    (e: DragEvent) => {
+      e.preventDefault();
+      if (activeTab === 'clip') {
+        setIsDragOver(true);
+      }
+    },
+    [activeTab],
+  );
+
+  const handleDragLeave = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDropMain = useCallback(
+    (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      if (activeTab !== 'clip') return;
+
+      const items = e.dataTransfer.items;
+      if (items) {
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].kind === 'file') {
+            const entry = items[i].webkitGetAsEntry();
+            if (entry?.isFile) {
+              const file = items[i].getAsFile();
+              if (file) {
+                const path = (file as unknown as Record<string, unknown>).path as string;
+                if (path) {
+                  handleDrop(path);
+                  return;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        const path = (files[0] as unknown as Record<string, unknown>).path as string;
+        if (path) {
+          handleDrop(path);
+        }
+      }
+    },
+    [activeTab, handleDrop],
+  );
+
   const handleClipAction = useCallback(async () => {
     if (!currentVideo) return;
 
-    const result = await handleClip(getCurrentTime(), (remaining, requested) => {
-      warning(`Only ${remaining.toFixed(2)}s remaining (requested ${requested.toFixed(2)}s)`);
+    const result = await handleClip(getCurrentTime(), (_remaining, requested) => {
+      const clipRemaining = currentVideo.duration - getCurrentTime();
+      if (clipRemaining > 0 && clipRemaining < requested) {
+        window.electronAPI
+          .createClip({
+            inputPath: currentVideo.path,
+            outputPath: '',
+            start: getCurrentTime(),
+            duration: clipRemaining,
+          })
+          .then((clipResult) => {
+            if (clipResult.success) {
+              refreshGallery();
+            }
+          });
+      }
     });
 
     if (result.success) {
-      success('Clip saved!');
       refreshGallery();
-    } else if (result.error && result.error !== 'Insufficient remaining duration') {
-      error(result.error);
     }
-  }, [currentVideo, getCurrentTime, handleClip, warning, success, error, refreshGallery]);
+  }, [currentVideo, getCurrentTime, handleClip, refreshGallery]);
 
-  // Listen for convert progress
   useEffect(() => {
     return window.electronAPI.onConvertProgress((data) => {
       dispatch({ type: 'SET_CONVERT_PROGRESS', payload: data.progress });
     });
   }, [dispatch]);
 
-  // Listen for no-changes warning
   useEffect(() => {
     return window.electronAPI.onConvertWarnNoChanges(() => {
-      warning('No conversion settings changed — files will be copied as-is.');
+      if (!currentVideo) return;
+      const clipRemaining = currentVideo.duration - getCurrentTime();
+      if (clipRemaining > 0) {
+        window.electronAPI
+          .createClip({
+            inputPath: currentVideo.path,
+            outputPath: '',
+            start: getCurrentTime(),
+            duration: clipRemaining,
+          })
+          .then((clipResult) => {
+            if (clipResult.success) {
+              refreshGallery();
+            }
+          });
+      }
     });
-  }, [warning]);
+  }, [currentVideo, getCurrentTime, refreshGallery]);
 
-  // Handle clip key shortcut
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (activeTab !== 'clip') return;
@@ -80,8 +158,7 @@ function AppContent() {
     if (!deleteTarget) return;
     await deleteFile(deleteTarget);
     setDeleteTarget(null);
-    info('Clip deleted');
-  }, [deleteTarget, deleteFile, info]);
+  }, [deleteTarget, deleteFile]);
 
   const handleToggleSelectAll = useCallback(() => {
     selectAll(!isAllSelected);
@@ -89,6 +166,10 @@ function AppContent() {
 
   const handleCloseExpanded = useCallback(() => {
     dispatch({ type: 'SET_EXPANDED_FILE', payload: null });
+  }, [dispatch]);
+
+  const handleCloseVideo = useCallback(() => {
+    dispatch({ type: 'SET_VIDEO', payload: null });
   }, [dispatch]);
 
   return (
@@ -103,13 +184,21 @@ function AppContent() {
       />
 
       {/* Main Content */}
-      <div className="flex min-h-0 flex-1">
+      <div
+        className={cn(
+          'flex min-h-0 flex-1 transition-colors',
+          isDragOver && 'border-primary/50 bg-primary/5',
+        )}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDropMain}
+      >
         {expandedFile ? (
           <ExpandedPlayer filePath={expandedFile} onClose={handleCloseExpanded} />
         ) : activeTab === 'clip' ? (
           <div className="flex flex-1 flex-col p-4">
             {currentVideo ? (
-              <VideoPlayer className="flex-1" />
+              <VideoPlayer className="flex-1" onClose={handleCloseVideo} />
             ) : (
               <div className="flex flex-1 items-center justify-center">
                 <div className="text-muted-foreground text-center">
@@ -122,7 +211,6 @@ function AppContent() {
         ) : (
           <div className="flex min-h-0 flex-1 flex-col">
             <GalleryView
-              onSelectFile={(path) => toggleFileSelection(path)}
               onOpenExpanded={(path) => dispatch({ type: 'SET_EXPANDED_FILE', payload: path })}
               onDeleteFile={(path) => setDeleteTarget(path)}
             />
@@ -142,8 +230,7 @@ function AppContent() {
         />
       )}
 
-      {/* Toast Notifications */}
-      <ToastContainer toasts={toasts} onDismiss={removeToast} />
+      <Toaster />
     </div>
   );
 }

@@ -1,4 +1,12 @@
-import { createContext, useContext, useReducer, type ReactNode, type Dispatch } from 'react';
+import {
+  createContext,
+  useContext,
+  useReducer,
+  type ReactNode,
+  type Dispatch,
+  useEffect,
+  useRef,
+} from 'react';
 
 export type ActiveTab = 'clip' | 'gallery';
 
@@ -32,6 +40,8 @@ type AppAction =
   | { type: 'SET_EXPANDED_FILE'; payload: string | null }
   | { type: 'SET_CONVERTING'; payload: boolean }
   | { type: 'SET_CONVERT_PROGRESS'; payload: number };
+
+const CLIP_LENGTH_KEY = 'clip_length';
 
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
@@ -83,8 +93,26 @@ const AppStateContext = createContext<AppState>(initialState);
 const AppDispatchContext = createContext<Dispatch<AppAction>>(() => {});
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  // Use a function to serialize/deserialize Set for useReducer
   const [state, dispatch] = useReducer(appReducer, initialState);
+
+  // Load clip length from settings on mount
+  useEffect(() => {
+    window.electronAPI.getSetting(CLIP_LENGTH_KEY).then((res) => {
+      const val = parseFloat(res.value ?? '10');
+      if (!isNaN(val) && val > 0) {
+        dispatch({ type: 'SET_CLIP_LENGTH', payload: val });
+      }
+    });
+  }, []);
+
+  // Save clip length to settings when it changes
+  const prevClipLength = useRef(state.clipLength);
+  useEffect(() => {
+    if (prevClipLength.current !== state.clipLength) {
+      prevClipLength.current = state.clipLength;
+      window.electronAPI.setSetting(CLIP_LENGTH_KEY, String(state.clipLength));
+    }
+  }, [state.clipLength]);
 
   return (
     <AppStateContext.Provider value={state}>

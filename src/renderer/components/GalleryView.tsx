@@ -1,16 +1,16 @@
 import { useState, useMemo, useRef, useLayoutEffect } from 'react';
-import { useAppState } from '@renderer/store/app-state';
+import { useAppState, useAppDispatch } from '@renderer/store/app-state';
 import { GalleryItem } from './GalleryItem';
 import { cn } from '@renderer/lib/utils';
 
 interface GalleryViewProps {
-  onSelectFile: (path: string) => void;
   onOpenExpanded: (path: string) => void;
   onDeleteFile: (path: string) => void;
 }
 
-export function GalleryView({ onSelectFile, onOpenExpanded, onDeleteFile }: GalleryViewProps) {
-  const { galleryFiles, selectedFiles } = useAppState();
+export function GalleryView({ onOpenExpanded, onDeleteFile }: GalleryViewProps) {
+  const { galleryFiles } = useAppState();
+  const dispatch = useAppDispatch();
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -58,10 +58,9 @@ export function GalleryView({ onSelectFile, onOpenExpanded, onDeleteFile }: Gall
           <GalleryItem
             key={file.path}
             file={file}
-            isSelected={selectedFiles.has(file.path)}
-            onSelect={() => onSelectFile(file.path)}
             onOpenExpanded={() => onOpenExpanded(file.path)}
             onDelete={() => onDeleteFile(file.path)}
+            onToggleSelect={() => dispatch({ type: 'TOGGLE_FILE_SELECTION', payload: file.path })}
           />
         ))}
       </div>

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, type MouseEvent, type ChangeEvent } from 'react';
+import { useState, useCallback, useRef, useEffect, type MouseEvent, type ChangeEvent } from 'react';
 
 interface CaptionOverlayProps {
   caption: string;
@@ -11,6 +11,7 @@ export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps
   const [editText, setEditText] = useState(caption);
   const debounceRef = useRef<number | null>(null);
   const lastSavedRef = useRef(caption);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleClick = useCallback(
     (e: MouseEvent) => {
@@ -30,7 +31,6 @@ export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps
     }
   }, [editText, onSave]);
 
-  // Debounced save on text change
   const handleChange = useCallback(
     (e: ChangeEvent<HTMLTextAreaElement>) => {
       const newText = e.target.value;
@@ -51,17 +51,28 @@ export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps
     [onSave],
   );
 
-  // Cleanup debounce on unmount
   const handleUnmount = useCallback(() => {
     if (debounceRef.current !== null) {
       clearTimeout(debounceRef.current);
     }
   }, []);
 
+  // Focus at end when editing starts
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(
+        textareaRef.current.value.length,
+        textareaRef.current.value.length,
+      );
+    }
+  }, [isEditing]);
+
   if (isEditing) {
     return (
       <div className="bg-background/95 h-1/2 w-full p-2" onBlur={handleUnmount}>
         <textarea
+          ref={textareaRef}
           value={editText}
           onChange={handleChange}
           onBlur={handleBlur}

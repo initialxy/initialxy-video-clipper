@@ -1,4 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { toast as sonnerToast } from 'sonner';
 
 export interface Toast {
   id: string;
@@ -13,7 +14,6 @@ export interface Toast {
 let nextId = 0;
 
 export function useToast() {
-  const [toasts, setToasts] = useState<Toast[]>([]);
   const timersRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
@@ -29,40 +29,51 @@ export function useToast() {
       clearTimeout(timer);
       timersRef.current.delete(id);
     }
-    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   const addToast = useCallback(
     (
       message: string,
-      type: Toast['type'] = 'info',
+      _type: Toast['type'] = 'info',
       action?: Toast['action'],
       duration = 3000,
     ): string => {
       const id = `toast-${++nextId}`;
-      const newToast: Toast = { id, message, type, action };
-      setToasts((prev) => [...prev, newToast]);
 
-      if (!action) {
+      if (action) {
+        const toastId = sonnerToast(message, {
+          duration,
+          action: {
+            label: action.label,
+            onClick: () => {
+              action.handler();
+              sonnerToast.dismiss(toastId);
+            },
+          },
+        });
+        timersRef.current.set(
+          id,
+          window.setTimeout(() => {
+            sonnerToast.dismiss(toastId);
+            timersRef.current.delete(id);
+          }, duration + 1000),
+        );
+      } else {
+        sonnerToast(message, { duration });
         const timer = window.setTimeout(() => {
-          setToasts((prev) => prev.filter((t) => t.id !== id));
           timersRef.current.delete(id);
         }, duration);
         timersRef.current.set(id, timer);
       }
-
       return id;
     },
     [],
   );
 
   const success = useCallback((message: string) => addToast(message, 'success'), [addToast]);
-
   const error = useCallback((message: string) => addToast(message, 'error'), [addToast]);
-
   const warning = useCallback((message: string) => addToast(message, 'warning'), [addToast]);
-
   const info = useCallback((message: string) => addToast(message, 'info'), [addToast]);
 
-  return { toasts, addToast, removeToast, success, error, warning, info };
+  return { toasts: [], addToast, removeToast, success, error, warning, info };
 }
