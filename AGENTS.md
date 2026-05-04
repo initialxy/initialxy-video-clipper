@@ -233,9 +233,12 @@ Electron imports must use `import electron from 'electron'` + destructuring, not
 - MCP server auto-detects the Electron app on port 9222.
 - To debug: run `npm exec electron . --remote-debugging-port=9222` or use the MCP server's auto-detection.
 
-**Dev-mode debug hook:**
-- In dev mode (`import.meta.env.DEV`), the renderer exposes `window.__loadVideo(filePath)` for programmatic video loading during automated testing.
-- This avoids manual file dialogs when driving the test plan via MCP.
+**Programmatic video loading (`__loadVideo`):**
+- The renderer always exposes `window.__loadVideo(filePath)` for programmatic video loading during automated testing.
+- This bypasses the "Open File" dialog which cannot be driven by MCP — instead load a video directly by path.
+- Usage via MCP: `electron_send_command_to_electron` → `command: "eval"` → `args: { code: "window.__loadVideo('/path/to/video.mp4')" }`
+- The hook calls `electronAPI.getVideoInfo(filePath)` internally to probe the video, then dispatches `SET_VIDEO` to load it into the player.
+- Example test video: `sample_video.mp4` at the project root.
 
 ### Theme
 
@@ -529,14 +532,14 @@ npm run typecheck        # Run TypeScript type check
 
 1. **Kill everything**: `pkill -9 electron` — always use `-9` (not `-f`, which will kill the MCP server).
 2. **Build**: `npm run build` — compile the app first.
-3. **Launch with debugging**: Run `npm run start:debug &` in the **background** (note the trailing `&`). **CRITICAL: Electron MUST always be launched in the background.** If launched in the foreground, it will block the shell thread and get killed by the harness timeout.
+3. **Launch with debugging**: Run `npm run start:debug > /dev/null 2>&1 &` in the **background** (note the trailing `> /dev/null 2>&1 &`). **CRITICAL: Electron MUST always be launched in the background.** If launched in the foreground, it will block the shell thread and get killed by the harness timeout.
 4. **Wait**: Give Electron 3-5 seconds to fully start and open the debug port.
 5. **Verify**: `electron_get_electron_window_info` — expect `"automationReady": true`. If it fails, check that port 9222 is responding with `curl -s http://127.0.0.1:9222/json/version`.
 
 ### When Electron Needs Restart Mid-Session
 
 1. Kill: `pkill -9 electron`
-2. Rebuild + relaunch: `npm run start:debug &` (**must include `&`**)
+2. Rebuild + relaunch: `npm run start:debug > /dev/null 2>&1 &` (**must include `> /dev/null 2>&1 &`**)
 3. Wait 3-5 seconds for Electron to start.
 4. Verify port 9222 is responding: `curl -s http://127.0.0.1:9222/json/version`
 4. If MCP tool still fails (returns "No Electron applications found" or "Not connected" despite port 9222 being up), the MCP server was killed and needs reload: ask the user to restart from their harness.
@@ -545,9 +548,19 @@ npm run typecheck        # Run TypeScript type check
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| "No Electron applications found" | Electron not running | `npm run start:debug` |
+| "No Electron applications found" | Electron not running | `npm run start:debug > /dev/null 2>&1 &` |
 | "Not connected" | MCP server not reconnected | Verify that port is up and ask user to reload electron MCP |
-| Port 9222 down | Electron crashed | Rebuild + `npm run start:debug` |
+| Port 9222 down | Electron crashed | Rebuild + `npm run start:debug > /dev/null 2>&1 &` |
+
+### Loading a Video for Testing
+
+The "Open File" button opens a native file dialog which MCP cannot drive. Use `window.__loadVideo(filePath)` instead:
+
+```
+electron_send_command_to_electron → command: "eval" → args: { code: "window.__loadVideo('/path/to/video.mp4')" }
+```
+
+This calls `electronAPI.getVideoInfo(filePath)` internally to probe the video, then dispatches `SET_VIDEO` to load it into the player. A test video is available at `sample_video.mp4` at the project root.
 
 ### Navigation Strategy
 

@@ -105,7 +105,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
               <label className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
                 Resolution
               </label>
-              {(width || height) && (
+              {width || height ? (
                 <button
                   onClick={() => {
                     setWidth(0);
@@ -116,7 +116,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
                 >
                   <X className="h-3.5 w-3.5" />
                 </button>
-              )}
+              ) : null}
             </div>
             <div className="flex items-center gap-2">
               <input
