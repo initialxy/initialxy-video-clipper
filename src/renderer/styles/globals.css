@@ -247,6 +247,51 @@ input[type='range']::-moz-range-thumb {
   border-radius: 50%;
 }
 
+/* Vertical range slider styling */
+input[type='range'].vertical-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 6px;
+  height: 80px;
+  background: transparent;
+}
+
+input[type='range'].vertical-slider::-webkit-slider-runnable-track {
+  width: 6px;
+  background: hsl(240 5% 20%);
+  border-radius: 3px;
+}
+
+input[type='range'].vertical-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-left: -5px;
+  background: var(--primary);
+  border-radius: 50%;
+}
+
+input[type='range'].vertical-slider::-webkit-slider-thumb:hover {
+  background: var(--ring);
+}
+
+input[type='range'].vertical-slider::-moz-range-track {
+  width: 6px;
+  background: hsl(240 5% 20%);
+  border-radius: 3px;
+}
+
+input[type='range'].vertical-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: var(--primary);
+  border-radius: 50%;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

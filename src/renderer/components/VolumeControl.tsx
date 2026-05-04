@@ -45,35 +45,37 @@ export function VolumeControl({ isMuted, toggleMute, setVolumeLevel }: VolumeCon
   return (
     <div
       ref={containerRef}
-      className="relative flex items-center"
+      className="relative flex h-9 w-9 flex-col items-center"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <button
-        onClick={handleToggleMute}
-        className="text-foreground hover:bg-muted/50 rounded-md p-2.5 transition-colors"
-        title={isMuted ? 'Unmute (M)' : 'Mute (M)'}
-      >
-        <VolumeIcon className="h-5 w-5" />
-      </button>
+      {/* Inner container — absolute, contains slider + icon */}
       <div
         className={cn(
-          'absolute top-1/2 left-full translate-x-2 -translate-y-1/2 transition-all duration-150',
-          showSlider ? 'opacity-100' : 'pointer-events-none opacity-0',
+          'bg-background absolute bottom-0 flex flex-col items-center rounded-lg',
+          showSlider && 'outline-border pt-3 outline',
         )}
       >
-        <div className="flex h-24 flex-col items-center gap-1">
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            value={effectiveVolume}
-            onChange={handleVolumeChange}
-            className="accent-primary h-20 w-1.5"
-            style={{ WebkitAppearance: 'slider-vertical' }}
-          />
-        </div>
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.01}
+          value={effectiveVolume}
+          onChange={handleVolumeChange}
+          className="vertical-slider"
+          style={{
+            height: showSlider ? '80px' : '0px',
+            overflow: showSlider ? 'visible' : 'hidden',
+          }}
+        />
+        <button
+          onClick={handleToggleMute}
+          className="text-foreground hover:bg-muted/50 rounded-md p-2 transition-colors"
+          title={isMuted ? 'Unmute (M)' : 'Mute (M)'}
+        >
+          <VolumeIcon className="h-5 w-5" />
+        </button>
       </div>
     </div>
   );

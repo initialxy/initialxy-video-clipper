@@ -124,14 +124,14 @@ export function TopBar({
               onClick={onClip}
               disabled={!currentVideo}
               className={cn(
-                'rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
+                'flex items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
                 currentVideo
                   ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                   : 'bg-muted/50 text-muted-foreground cursor-not-allowed',
               )}
               title="Save Clip (C)"
             >
-              <Scissors className="mr-1 h-4 w-4" />
+              <Scissors className="h-4 w-4" />
               <span>Clip</span>
             </button>
           </>

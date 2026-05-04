@@ -75,7 +75,7 @@ export function VideoPlayer({ className, onClose }: VideoPlayerProps) {
           step={0.01}
           value={currentTime}
           onChange={(e) => seek(parseFloat(e.target.value))}
-          className="accent-primary h-1 flex-1"
+          className="accent-primary h-1 flex-1 pl-2"
         />
 
         {/* Time display */}
