@@ -53,7 +53,7 @@ function AppContent() {
   }, []);
 
   const handleDropMain = useCallback(
-    (e: DragEvent) => {
+    async (e: DragEvent) => {
       e.preventDefault();
       setIsDragOver(false);
       if (activeTab !== 'clip') return;
@@ -66,9 +66,9 @@ function AppContent() {
             if (entry?.isFile) {
               const file = items[i].getAsFile();
               if (file) {
-                const path = (file as unknown as Record<string, unknown>).path as string;
+                const path = window.electronAPI.getPathForFile(file);
                 if (path) {
-                  handleDrop(path);
+                  await handleDrop(path);
                   return;
                 }
               }
@@ -79,9 +79,9 @@ function AppContent() {
 
       const files = e.dataTransfer.files;
       if (files.length > 0) {
-        const path = (files[0] as unknown as Record<string, unknown>).path as string;
+        const path = window.electronAPI.getPathForFile(files[0]);
         if (path) {
-          handleDrop(path);
+          await handleDrop(path);
         }
       }
     },

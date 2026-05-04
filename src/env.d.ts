@@ -8,6 +8,7 @@ import type { IPCPayloads, IPCReturns } from '@shared/ipc';
 
 declare global {
   interface ElectronAPI {
+    getPathForFile: (file: File) => string;
     createClip: (payload: IPCPayloads['clip:create']) => Promise<IPCReturns['clip:create']>;
     bulkConvert: (payload: IPCPayloads['convert:bulk']) => Promise<IPCReturns['convert:bulk']>;
     getVideoInfo: (filePath: string) => Promise<IPCReturns['fs:get-video-info']>;

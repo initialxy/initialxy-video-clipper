@@ -1,7 +1,10 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge, ipcRenderer, webUtils } from 'electron';
 import { IPC_CHANNELS, type IPCPayloads } from '@shared/ipc';
 
 const electronAPI = {
+  // File path helper (replaces deprecated File.path)
+  getPathForFile: (file: File) => webUtils.getPathForFile(file),
+
   // Clip
   createClip: (payload: IPCPayloads['clip:create']) => ipcRenderer.invoke('clip:create', payload),
 
