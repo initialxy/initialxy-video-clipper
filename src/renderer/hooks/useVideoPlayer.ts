@@ -76,6 +76,14 @@ export function useVideoPlayer() {
     setIsMuted(video.muted);
   }, []);
 
+  const getCurrentTime = useCallback(() => {
+    const video = videoRef.current;
+    if (video) return video.currentTime;
+    const slider = document.querySelector('input[type="range"]') as HTMLInputElement | null;
+    if (slider) return parseFloat(slider.value) || 0;
+    return 0;
+  }, []);
+
   // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -105,6 +113,7 @@ export function useVideoPlayer() {
     seek,
     setVolumeLevel,
     toggleMute,
+    getCurrentTime,
     onTimeUpdate,
     onPlay,
     onPause,

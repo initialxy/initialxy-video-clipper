@@ -150,9 +150,9 @@ export function TopBar({
                   ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                   : 'bg-muted/50 text-muted-foreground cursor-not-allowed',
               )}
-              title="Clip (C)"
+              title="Save Clip (C)"
             >
-              Clip
+              Save Clip
             </button>
           </>
         )}

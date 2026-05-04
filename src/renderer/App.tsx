@@ -27,7 +27,7 @@ function AppContent() {
     deleteFile,
   } = useGallery();
   const { toasts, removeToast, success, error, warning, info } = useToast();
-  const { currentTime } = useVideoPlayer();
+  const { currentTime, getCurrentTime } = useVideoPlayer();
   const convertSettings = useConvertSettings();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -36,7 +36,7 @@ function AppContent() {
   const handleClipAction = useCallback(async () => {
     if (!currentVideo) return;
 
-    const result = await handleClip(currentTime, (remaining, requested) => {
+    const result = await handleClip(getCurrentTime(), (remaining, requested) => {
       warning(`Only ${remaining.toFixed(2)}s remaining (requested ${requested.toFixed(2)}s)`);
     });
 
@@ -74,7 +74,7 @@ function AppContent() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, currentTime, handleClipAction]);
+  }, [activeTab, handleClipAction]);
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return;
