@@ -8,6 +8,7 @@
   "main": "dist/main/index.js",
   "scripts": {
     "start": "npm run build && electron .",
+    "start:debug": "npm run build && electron . --remote-debugging-port=9222",
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "electron:build": "electron-builder",

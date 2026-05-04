@@ -517,6 +517,33 @@ npm run typecheck        # Run TypeScript type check
 
 ---
 
+## Electron MCP Setup (For Debugging & Testing)
+
+> **Use the Electron MCP server (`electron-mcp-server`), NOT the chrome-devtools MCP.** The chrome-devtools MCP lacks Electron-specific context and cannot interact with Electron's native features.
+
+### Routine Debug Workflow
+
+1. **Kill everything**: `pkill -9 electron` — always use `-9` (not `-f`, which will kill the MCP server).
+3. **Launch with debugging**: `npm run start:debug` (runs `npm run build && electron . --remote-debugging-port=9222`). Always run it in a *background process*.
+5. **Verify**: `electron_get_electron_window_info` — expect `"automationReady": true`
+
+### When Electron Needs Restart Mid-Session
+
+1. Kill: `pkill -9 electron`
+2. Rebuild + relaunch: `npm run start:debug`
+3. Verify port 9222 is responding: `curl -s http://127.0.0.1:9222/json/version`
+4. If MCP tool still fails (returns "No Electron applications found" or "Not connected" despite port 9222 being up), the MCP server was killed and needs reload: ask the user to restart from their harness.
+
+### Troubleshooting
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| "No Electron applications found" | Electron not running | `npm run start:debug` |
+| "Not connected" | MCP server not reconnected | Verify that port is up and ask user to reload electron MCP |
+| Port 9222 down | Electron crashed | Rebuild + `npm run start:debug` |
+
+---
+
 ## Implementation Order
 
 Build the app in this sequence:
