@@ -524,14 +524,17 @@ npm run typecheck        # Run TypeScript type check
 ### Routine Debug Workflow
 
 1. **Kill everything**: `pkill -9 electron` — always use `-9` (not `-f`, which will kill the MCP server).
-3. **Launch with debugging**: `npm run start:debug` (runs `npm run build && electron . --remote-debugging-port=9222`). Always run it in a *background process*.
-5. **Verify**: `electron_get_electron_window_info` — expect `"automationReady": true`
+2. **Build**: `npm run build` — compile the app first.
+3. **Launch with debugging**: Run `npm run start:debug &` in the **background** (note the trailing `&`). **CRITICAL: Electron MUST always be launched in the background.** If launched in the foreground, it will block the shell thread and get killed by the harness timeout.
+4. **Wait**: Give Electron 3-5 seconds to fully start and open the debug port.
+5. **Verify**: `electron_get_electron_window_info` — expect `"automationReady": true`. If it fails, check that port 9222 is responding with `curl -s http://127.0.0.1:9222/json/version`.
 
 ### When Electron Needs Restart Mid-Session
 
 1. Kill: `pkill -9 electron`
-2. Rebuild + relaunch: `npm run start:debug`
-3. Verify port 9222 is responding: `curl -s http://127.0.0.1:9222/json/version`
+2. Rebuild + relaunch: `npm run start:debug &` (**must include `&`**)
+3. Wait 3-5 seconds for Electron to start.
+4. Verify port 9222 is responding: `curl -s http://127.0.0.1:9222/json/version`
 4. If MCP tool still fails (returns "No Electron applications found" or "Not connected" despite port 9222 being up), the MCP server was killed and needs reload: ask the user to restart from their harness.
 
 ### Troubleshooting
@@ -541,6 +544,10 @@ npm run typecheck        # Run TypeScript type check
 | "No Electron applications found" | Electron not running | `npm run start:debug` |
 | "Not connected" | MCP server not reconnected | Verify that port is up and ask user to reload electron MCP |
 | Port 9222 down | Electron crashed | Rebuild + `npm run start:debug` |
+
+### Navigation Strategy
+
+When driving the Electron app via MCP tools, **prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by_text`** over `electron_take_screenshot` for navigation tasks. `get_page_structure` returns structured data about all interactive elements (buttons, inputs, links) with their text, state, and properties — far more token-efficient than images when the goal is simply to navigate the UI. Use `electron_take_screenshot` only when you need to validate the exact visual appearance or layout of the UI.
 
 ---
 
