@@ -194,7 +194,7 @@ Vite 8 with `vite-plugin-electron`. Vite is used purely as a build tool — comp
 - `dist/preload/index.js` — Preload script (**CommonJS** — Electron requires `require()`, not `import`. Configured via `lib.formats: ['cjs']` in vite config)
 - `dist/index.html` + `dist/assets/` — Bundled React app (outputs to `dist/` root, not `dist/renderer/`)
 
-**Important:** The main process must NOT bundle Node.js built-in modules. Rolldown (Vite 8's bundler) wraps them in a `__require()` shim that fails in ESM context. All Node.js built-ins (`fs`, `path`, `child_process`, `url`, `better-sqlite3`, etc.) must be listed in `rollupOptions.external`.
+**Important:** The main process must NOT bundle Node.js built-in modules. Rolldown (Vite 8's bundler) wraps them in a `__require()` shim that fails in ESM context. All Node.js built-ins (`fs`, `path`, `child_process`, `url`, `node:sqlite`, etc.) must be listed in `rollupOptions.external`.
 
 Electron imports must use `import electron from 'electron'` + destructuring, not named imports, because Electron is a CommonJS module.
 
@@ -204,13 +204,24 @@ Electron imports must use `import electron from 'electron'` + destructuring, not
 - Call `Menu.setApplicationMenu(null)` in `app.whenReady()` to remove the default Electron menu bar.
 - Dev detection: use `process.env.NODE_ENV === 'development'` only. Do NOT use `!app.isPackaged` — when running via `electron .` (not electron-builder), `isPackaged` is always `false`, causing production builds to incorrectly try loading `http://localhost:5173`.
 
+**Dev mode renderer loading:**
+- The app loads from `dist/` files in both dev and production (not from Vite dev server at `http://localhost:5173`).
+- This is intentional: using `loadFile` instead of `loadURL` allows the renderer to load local `file://` resources (videos, thumbnails) without CORS issues.
+- For HMR during development, run `npm run build` before each Electron launch, or use `npm run dev` for renderer-only hot reloading without Electron.
+
 **npm start** runs `npm run build && electron .` — builds first, then launches Electron. Loads from `dist/`.
 
-**npm run dev** runs the Vite dev server with HMR for renderer-only hot reloading. In dev mode, the main process loads the renderer from `http://localhost:5173`.
+**npm run dev** runs the Vite dev server with HMR for renderer-only hot reloading. Does NOT launch Electron.
 
-**Debugging:**
-- For dev mode, open Chrome via `http://localhost:5173`
-- For production builds, launch Electron with `--remote-debugging-port=9222`
+**Debugging with MCP / Chrome DevTools:**
+- Launch Electron with `--remote-debugging-port=9222` flag for Chrome DevTools / MCP server integration.
+- The main process automatically enables remote debugging in dev mode via `app.commandLine.appendSwitch('remote-debugging-port', '9222')`.
+- MCP server auto-detects the Electron app on port 9222.
+- To debug: run `npm exec electron . --remote-debugging-port=9222` or use the MCP server's auto-detection.
+
+**Dev-mode debug hook:**
+- In dev mode (`import.meta.env.DEV`), the renderer exposes `window.__loadVideo(filePath)` for programmatic video loading during automated testing.
+- This avoids manual file dialogs when driving the test plan via MCP.
 
 ### Theme
 

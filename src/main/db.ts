@@ -1,22 +1,26 @@
-import Database from 'better-sqlite3';
+import { DatabaseSync } from 'node:sqlite';
 import path from 'path';
 import electron from 'electron';
 const { app } = electron;
 import fs from 'fs';
 
-let db: Database.Database | null = null;
+let db: DatabaseSync | null = null;
 
-export function getDb(): Database.Database {
-  if (db) return db;
-
-  const dbPath = path.join(app.getPath('userData'), 'settings.db');
+function ensureDbDir(dbPath: string): void {
   const dir = path.dirname(dbPath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
+}
 
-  db = new Database(dbPath);
-  db.pragma('journal_mode = WAL');
+export function getDb(): DatabaseSync {
+  if (db) return db;
+
+  const dbPath = path.join(app.getPath('userData'), 'settings.db');
+  ensureDbDir(dbPath);
+
+  db = new DatabaseSync(dbPath);
+  db.exec('PRAGMA journal_mode = WAL');
 
   // Settings table
   db.exec(`

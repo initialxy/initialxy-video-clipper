@@ -10,6 +10,12 @@ import { registerIpcHandlers } from './ipc-handlers';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Enable remote debugging in development mode (for MCP server / Chrome DevTools)
+const isDev = process.env.NODE_ENV === 'development';
+if (isDev) {
+  app.commandLine.appendSwitch('remote-debugging-port', '9222');
+}
+
 // Disable GPU acceleration to avoid issues on some systems
 app.disableHardwareAcceleration();
 
@@ -29,14 +35,11 @@ function createWindow(): void {
     titleBarStyle: 'default',
   });
 
-  const isDev = process.env.NODE_ENV === 'development';
-
-  if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
-    mainWindow.webContents.openDevTools();
-  } else {
-    mainWindow.loadFile(path.join(__dirname, '..', 'index.html'));
-  }
+  // Load from dist/ in both dev and production.
+  // Using loadFile (not loadURL from Vite dev server) so local file:// resources
+  // (videos, thumbnails) can be loaded without CORS issues. For HMR during dev,
+  // run `npm run build` before each Electron launch.
+  mainWindow.loadFile(path.join(__dirname, '..', 'index.html'));
 
   mainWindow.on('closed', () => {
     mainWindow = null;

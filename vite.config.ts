@@ -47,7 +47,6 @@ export default defineConfig({
                 'net',
                 'readline',
                 'repl',
-                'better-sqlite3',
               ],
             },
           },

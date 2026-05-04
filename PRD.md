@@ -8,7 +8,7 @@ A desktop app for clipping video files (.mp4) to create training data for video 
 
 **Tech Stack**: Electron + React + TypeScript + Tailwind CSS  
 **External Dependency**: ffmpeg (must be installed on the host machine — checked on app launch via `ffmpeg -version`)  
-**Persistent Storage**: `better-sqlite3` for app settings and preferences
+**Persistent Storage**: Node.js built-in `node:sqlite` for app settings and preferences
 
 ---
 

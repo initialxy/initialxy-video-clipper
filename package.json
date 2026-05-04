@@ -19,8 +19,6 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@types/better-sqlite3": "^7.6.13",
-    "better-sqlite3": "^12.9.0",
     "clsx": "^2.1.1",
     "electron": "^41.5.0",
     "lucide-react": "^1.14.0",

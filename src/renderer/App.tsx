@@ -149,6 +149,22 @@ function AppContent() {
 }
 
 function App() {
+  const dispatch = useAppDispatch();
+
+  // Dev-mode debug hook: window.__loadVideo('/path/to/video.mp4')
+  // Allows automated testing without manual file dialogs
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      (window as unknown as Record<string, unknown>).__loadVideo = async (filePath: string) => {
+        const info = await window.electronAPI.getVideoInfo(filePath);
+        dispatch({
+          type: 'SET_VIDEO',
+          payload: { path: filePath, ...info },
+        });
+      };
+    }
+  }, [dispatch]);
+
   return <AppContent />;
 }
 
