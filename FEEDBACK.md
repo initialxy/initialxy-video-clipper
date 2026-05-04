@@ -1,6 +1,4 @@
-1. bulk video convert side pane's CODEC selector is really ugly. Why are we not using shadcn's select component? https://ui.shadcn.com/docs/components/radix/select. Furthermore, why is only the codec selector a different color than the other input fields? They should all have the same look and feel.
-2. When a new video is opened in video tab, it starts at 1 second. Why? A newly opened video should start at 0.
-3. When seeking or playing a video to a certain point in timeline, go to gallery view, then back to video tab, the video timeline is now reset to 1s. The timeline should be preserved when switching between gallery and video tab.
-4. In gallery view, when clicking on caption text input and focus on it, the darkened overlay background becomes lighter. This is opposite of what I asked for. It should become LESS transparent, so that text becomes easier to read in edit mode.
-5. In gallery mode, I want the action buttons to be Delete, Convert instead of Convert, Delete. 
-6. In Gallery view, when I expand a video clip, the spacing around the now expanded video is DIFFERENT from the video in Video tab. They should be the same. Use the video tab's spacing as standard.
+1. When seeking or playing a video to a certain point in timeline, go to gallery view, then back to video tab, the video timeline is now reset to 0s. The timeline should be preserved when switching between gallery and video tab.
+2. In gallery view, bulk select then bulk delete has no confirmation. It needs a confirmation dialog.
+3. Visual inconsistencies in the bulk conver side pane. Codec selector is visually shorter than the rest of the input fields. When something is selected, there's no need to show the `x` button on top of it, which feels out of place. Since it alsready has "Same as source" as a selection.
+4. bulk conver side pane, title needs more bottom margin, which is inconsistent with the rest.
