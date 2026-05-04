@@ -8,7 +8,7 @@ import {
   useRef,
 } from 'react';
 
-export type ActiveTab = 'clip' | 'gallery';
+export type ActiveTab = 'video' | 'gallery';
 
 export interface VideoState {
   path: string;
@@ -87,7 +87,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
 }
 
 const initialState: AppState = {
-  activeTab: 'clip',
+  activeTab: 'video',
   currentVideo: null,
   clipLength: 10.0,
   galleryFiles: [],

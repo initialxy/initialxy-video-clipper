@@ -9,6 +9,11 @@ export function useVideoPlayer(savedTime?: number) {
   const [isMuted, setIsMuted] = useState(false);
   const animFrameRef = useRef<number | null>(null);
   const isSeekingRef = useRef(false);
+  const savedTimeRef = useRef(savedTime);
+
+  useEffect(() => {
+    savedTimeRef.current = savedTime;
+  }, [savedTime]);
 
   const duration = currentVideo?.duration ?? 0;
 
@@ -24,14 +29,18 @@ export function useVideoPlayer(savedTime?: number) {
 
     const onLoadedMetadata = () => {
       const restoreTime =
-        savedTime !== undefined && savedTime > 0 && savedTime < video.duration ? savedTime : 0;
+        savedTimeRef.current !== undefined &&
+        savedTimeRef.current > 0 &&
+        savedTimeRef.current < video.duration
+          ? savedTimeRef.current
+          : 0;
       video.currentTime = restoreTime;
       setCurrentTime(restoreTime);
     };
 
     video.addEventListener('loadedmetadata', onLoadedMetadata);
     return () => video.removeEventListener('loadedmetadata', onLoadedMetadata);
-  }, [currentVideo, currentVideo?.path, savedTime]);
+  }, [currentVideo, currentVideo?.path]);
 
   // Smooth time update using requestAnimationFrame during playback
   const updateTime = useCallback(() => {

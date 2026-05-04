@@ -34,20 +34,9 @@ export function ExpandedPlayer({ filePath, onClose }: ExpandedPlayerProps) {
 
   return (
     <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6">
-      {/* Close button */}
-      <div className="flex justify-end">
-        <button
-          onClick={onClose}
-          className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md p-2 transition-colors"
-          title="Close (Escape)"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-
       {/* Video player */}
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="mb-3 flex flex-1 items-center justify-center overflow-hidden rounded-lg bg-black">
+        <div className="relative mb-3 flex flex-1 items-center justify-center overflow-hidden rounded-lg bg-black">
           <video
             ref={videoRef}
             src={`file://${filePath}`}
@@ -56,6 +45,13 @@ export function ExpandedPlayer({ filePath, onClose }: ExpandedPlayerProps) {
             autoPlay
             playsInline
           />
+          <button
+            onClick={onClose}
+            className="text-muted-foreground/80 hover:text-foreground hover:bg-muted/50 absolute top-2 right-2 rounded-md p-1.5 transition-colors"
+            title="Close (Escape)"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       </div>
 

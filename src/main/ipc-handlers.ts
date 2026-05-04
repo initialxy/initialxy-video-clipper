@@ -7,7 +7,12 @@ import path from 'path';
 import { IPC_CHANNELS } from '@shared/ipc';
 import { createClip } from './services/clip.service';
 import { bulkConvert, isNoOpConversion } from './services/convert.service';
-import { scanOutputs, deleteClip, extractThumbnail } from './services/gallery.service';
+import {
+  scanOutputs,
+  deleteClip,
+  extractThumbnail,
+  bulkDeleteFiles,
+} from './services/gallery.service';
 import { readCaption, writeCaption } from './services/caption.service';
 import { getSetting, setSetting } from './db';
 import { VIDEO_EXTENSIONS } from './constants';
@@ -96,6 +101,11 @@ export function registerIpcHandlers(): void {
   // fs:delete-clip
   ipcMain.handle(IPC_CHANNELS.FS_DELETE_CLIP, async (_event, payload) => {
     return deleteClip(payload.filePath);
+  });
+
+  // fs:bulk-delete
+  ipcMain.handle(IPC_CHANNELS.FS_BULK_DELETE, async (_event, payload) => {
+    return bulkDeleteFiles(payload.paths);
   });
 
   // app:drag-drop

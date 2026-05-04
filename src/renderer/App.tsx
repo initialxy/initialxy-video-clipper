@@ -16,11 +16,11 @@ import { Toaster } from '@renderer/components/ui/sonner';
 import { cn } from '@renderer/lib/utils';
 
 function AppContent() {
-  const { activeTab, currentVideo, expandedFile } = useAppState();
+  const { activeTab, currentVideo, expandedFile, savedTime, selectedFiles } = useAppState();
   const dispatch = useAppDispatch();
   const { handleClip } = useClipCounter();
   const { galleryFiles, refreshGallery, selectAll, isAllSelected, deleteFile } = useGallery();
-  const { getCurrentTime } = useVideoPlayer();
+  const { getCurrentTime } = useVideoPlayer(savedTime);
   const convertSettings = useConvertSettings();
   const { success: toastSuccess, error: toastError, addToast } = useToast();
 
@@ -28,7 +28,7 @@ function AppContent() {
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleTabChange = useCallback(
-    (tab: 'clip' | 'gallery') => {
+    (tab: 'video' | 'gallery') => {
       if (tab === 'gallery' && currentVideo) {
         dispatch({ type: 'SET_SAVED_TIME', payload: getCurrentTime() });
       }
@@ -44,7 +44,7 @@ function AppContent() {
         type: 'SET_VIDEO',
         payload: { path: filePath, ...info },
       });
-      dispatch({ type: 'SET_TAB', payload: 'clip' });
+      dispatch({ type: 'SET_TAB', payload: 'video' });
     },
     [dispatch],
   );
@@ -52,7 +52,7 @@ function AppContent() {
   const handleDragOver = useCallback(
     (e: DragEvent) => {
       e.preventDefault();
-      if (activeTab === 'clip') {
+      if (activeTab === 'video') {
         setIsDragOver(true);
       }
     },
@@ -68,7 +68,7 @@ function AppContent() {
     async (e: DragEvent) => {
       e.preventDefault();
       setIsDragOver(false);
-      if (activeTab !== 'clip') return;
+      if (activeTab !== 'video') return;
 
       const items = e.dataTransfer.items;
       if (items) {
@@ -172,7 +172,7 @@ function AppContent() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (activeTab !== 'clip') return;
+      if (activeTab !== 'video') return;
       const target = e.target;
       if (target instanceof HTMLTextAreaElement) return;
       if (
@@ -203,6 +203,19 @@ function AppContent() {
     selectAll(!isAllSelected);
   }, [selectAll, isAllSelected]);
 
+  const handleBulkDelete = useCallback(async () => {
+    if (selectedFiles.size === 0) return;
+    const paths = Array.from(selectedFiles);
+    const result = await window.electronAPI.bulkDelete({ paths });
+    if (result.success) {
+      dispatch({ type: 'SELECT_ALL_FILES', payload: false });
+      refreshGallery();
+      toastSuccess(`${paths.length} file(s) deleted`);
+    } else if (result.errors?.length) {
+      toastError(`${result.errors.length} file(s) failed to delete`);
+    }
+  }, [selectedFiles, dispatch, refreshGallery, toastSuccess, toastError]);
+
   const handleCloseExpanded = useCallback(() => {
     dispatch({ type: 'SET_EXPANDED_FILE', payload: null });
   }, [dispatch]);
@@ -223,6 +236,7 @@ function AppContent() {
           convertSettings.open();
         }}
         onToggleSelectAll={handleToggleSelectAll}
+        onBulkDelete={handleBulkDelete}
         isAllSelected={isAllSelected}
       />
 
@@ -238,7 +252,7 @@ function AppContent() {
       >
         {expandedFile ? (
           <ExpandedPlayer filePath={expandedFile} onClose={handleCloseExpanded} />
-        ) : activeTab === 'clip' ? (
+        ) : activeTab === 'video' ? (
           <div className="flex min-h-0 flex-1 flex-col p-4">
             {currentVideo ? (
               <VideoPlayer className="flex-1" onClose={handleCloseVideo} />

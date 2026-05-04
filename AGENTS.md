@@ -157,7 +157,7 @@ This makes ffmpeg logic testable and easy to reason about.
 #### Renderer State Management
 
 **app-state.tsx** uses React context + `useReducer` for global state:
-- `activeTab` ('clip' | 'gallery')
+- `activeTab` ('video' | 'gallery')
 - `currentVideo` (path, duration, info) — the video loaded in the Video tab
 - `clipLength` (number) — default clip duration in seconds
 - `galleryFiles` (array) — scanned output files
@@ -168,11 +168,11 @@ This makes ffmpeg logic testable and easy to reason about.
 
 Components subscribe to only the slice they need via custom hooks derived from the context.
 
-**Tab switch behavior:** When switching from clip to gallery tab, the current video's playback position is saved to `savedTime` via `SET_SAVED_TIME` action (dispatched from App.tsx before `SET_TAB`). When the video tab is reactivated and VideoPlayer mounts, `useVideoPlayer(savedTime)` restores the playback position. The original `currentVideo` state is preserved across tab switches — switching tabs does NOT load a different video.
+**Tab switch behavior:** When switching from video to gallery tab, the current video's playback position is saved to `savedTime` via `SET_SAVED_TIME` action (dispatched from App.tsx before `SET_TAB`). When the video tab is reactivated and VideoPlayer mounts, `useVideoPlayer(savedTime)` restores the playback position. The original `currentVideo` state is preserved across tab switches — switching tabs does NOT load a different video.
 
 **Key state preservation:**
 - `currentVideo` persists across tab switches (never reset by tab change)
-- `savedTime` captures `currentTime` before leaving clip tab
+- `savedTime` captures `currentTime` before leaving video tab
 - VideoPlayer restores `savedTime` on mount via `video.currentTime = savedTime`
 - ExpandedPlayer does NOT dispatch `SET_VIDEO` (was overwriting video tab state)
 
@@ -197,6 +197,7 @@ Components subscribe to only the slice they need via custom hooks derived from t
 - **No duplicated interfaces** — all domain types in `src/shared/types.ts`
 - **No dead code** — unused components/hooks removed, unused state eliminated
 - **No ExpandedPlayer SET_VIDEO** — prevents gallery expansion from overwriting video tab state
+- **No `galleryFiles` in BulkConvertDrawer** — removed unused import, uses `selectedFiles` from app state only
 
 ### Build Tool
 
@@ -274,6 +275,7 @@ Define all IPC channels explicitly in the preload script. Never use `contextIsol
 | `fs:write-caption` | renderer → main | `{ filePath, content }` | `{ success }` |
 | `fs:scan-outputs` | renderer → main | `{}` | `{ files[] }` |
 | `fs:delete-clip` | renderer → main | `{ filePath }` | `{ success, error? }` |
+| `fs:bulk-delete` | renderer → main | `{ paths: string[] }` | `{ success, errors: string[] }` |
 | `app:drag-drop` | renderer → main | `{ filePath }` | `{ success }` |
 | `app:check-ffmpeg` | renderer → main | `{}` | `{ available, path? }` |
 | `app:open-file` | renderer → main | `{}` | `{ filePath?, cancelled }` |
@@ -364,11 +366,11 @@ ffmpeg -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
 
 ### 7. Drag and Drop
 
-- Only available in Clip mode. Gallery mode does not accept drops.
+- Only available in Video mode. Gallery mode does not accept drops.
 - Handle both file system paths (in Electron) and file objects (in browser dev mode).
 - On successful drop, load the video into the player, reset seek to 0, keep clip length setting.
 - Accept only video MIME types or known extensions (.mp4, .mov, .avi, .mkv, .webm).
-- Provide an "Open File" button as fallback in Clip mode top bar.
+- Provide an "Open File" button as fallback in Video mode top bar.
 
 ### 8. Playback Controls
 
@@ -408,7 +410,7 @@ ffmpeg -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
 
 - Two tabs: **Video** (with Video icon, left) and **Gallery** (with Images icon, right) in the top bar.
 - Video mode: video player, seek, clip extraction, drag-and-drop, open file.
-- Gallery mode: grid view, captions, bulk convert, delete, refresh.
+- Gallery mode: grid view, captions, bulk convert, bulk delete, refresh.
 - Action buttons in the top bar change based on the active tab.
 - Switching tabs closes the expanded player and stops video playback.
 - **Tab switch saves playback position**: Before dispatching `SET_TAB`, App.tsx dispatches `SET_SAVED_TIME` with the current video time. This ensures the video resumes at the same position when returning to the Video tab.
@@ -431,7 +433,7 @@ ffmpeg -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
 
 Both focused (editing) and unfocused (display) states must be visually consistent:
 - **Unfocused**: Outer div `h-full w-full bg-black/60 p-3` with inner `<p>` using `text-sm leading-relaxed`.
-- **Focused**: Outer div `h-full w-full bg-background/95` with `<textarea>` using `h-full w-full resize-none bg-transparent p-3 text-sm leading-relaxed text-foreground outline-none`.
+- **Focused**: Outer div `h-full w-full bg-black/50` with `<textarea>` using `h-full w-full resize-none bg-transparent p-3 text-sm leading-relaxed text-foreground outline-none`.
 - Both states use `p-3` padding and `leading-relaxed` line-height for consistent text vertical position.
 - Never use `flex items-stretch` with `h-full` on textarea — it can cause vertical alignment shifts. Use direct `h-full` on the container instead.
 
@@ -448,7 +450,9 @@ Both focused (editing) and unfocused (display) states must be visually consisten
 
 - Accepts `savedTime` parameter: `useVideoPlayer(savedTime?: number)`.
 - On video load (when `currentVideo` changes), restores `savedTime` if it's a valid position within the video duration.
-- The `loadedmetadata` event handler checks: `savedTime !== undefined && savedTime > 0 && savedTime < video.duration` before seeking.
+- Uses `savedTimeRef` to avoid re-running the `loadedmetadata` listener on every `savedTime` state update.
+- The `loadedmetadata` event handler checks: `savedTimeRef.current !== undefined && savedTimeRef.current > 0 && savedTimeRef.current < video.duration` before seeking.
+- `savedTime` is NOT a dependency of the `loadedmetadata` useEffect — only `currentVideo` and `currentVideo?.path`.
 
 ---
 
@@ -570,4 +574,5 @@ Build the app in this sequence:
 13. ~~**Code quality refactor**: Shared `runFfmpeg` executor, extracted `ffprobe.service`, `useConvertSettings` hook, deduplicated interfaces, derived `ElectronAPI` from `IPCRegistry`, removed dead code (unused components/hooks/state), cleaned up config files.~~ ✅ DONE
 14. ~~**UI polish & UX improvements**: Sonner toast notifications, shadcn Tabs/Sheet/Button widgets, vertical volume slider on hover, drag-drop on main content area, close button on video player, scissors icon on Clip button, renamed tabs to Video/Gallery with icons, hover selection UX for gallery, clip length persistence via settings, requestAnimationFrame for smooth seek, stop video on expanded player close, cursor at end on caption edit start.~~ ✅ DONE
 15. ~~**Bug fixes**: Bulk convert drawer state management (moved `isOpen` from hook to app state), larger gallery select/delete buttons, full-cover gallery thumbnails, removed caption input focus ring, vertical chevron icons for caption editor, tab switch closes expanded player, correct Select All checkbox icons, toast notification integration, 'c' hotkey works after seeking, video player sizing with min-h-0 and object-contain.~~ ✅ DONE
-16. **UI polish & bug fixes**: Video playback position preservation across tab switches (savedTime state + restore on mount), CaptionOverlay consistent styling (h-full, leading-relaxed, p-3 in both states), BulkConvertDrawer resolution inputs show empty when unset (0 treated as unset, no confusing "0" display), Sonner toast dark theme via toastOptions, bulk convert button disabled when no files selected, tab switch saves current time before dispatching SET_TAB.
+16. ~~**UI polish & bug fixes**: Video playback position preservation across tab switches (savedTime state + restore on mount), CaptionOverlay consistent styling (h-full, leading-relaxed, p-3 in both states), BulkConvertDrawer resolution inputs show empty when unset (0 treated as unset, no confusing "0" display), Sonner toast dark theme via toastOptions, bulk convert button disabled when no files selected, tab switch saves current time before dispatching SET_TAB.~~ ✅ DONE
+17. **UI polish & bug fixes**: Tab type renamed from `'clip'` to `'video'` across all files (app-state, App, TopBar), BulkConvertDrawer title alignment fixed (`px-4`), file count counter removed from drawer, codec dropdown styling fixed (explicit bg/fg via style prop), gallery bulk delete button added (destructive color, disabled when no selection), ExpandedPlayer close button moved inside video container (top-right absolute), clip length label replaced with RulerDimensionLine icon, 's' size fixed to `text-sm`, BulkConvertDrawer removed unused `galleryFiles` import.

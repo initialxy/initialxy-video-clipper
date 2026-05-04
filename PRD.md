@@ -19,18 +19,18 @@ A desktop app for clipping video files (.mp4) to create training data for video 
 
 The app has a tab bar on the **left side of the top bar** with two modes using shadcn Tabs component:
 - **Video** (with Video icon) — video editor with player, seek, and clip extraction
-- **Gallery** (with Images icon) — grid view of all clipped videos with captions
+- **Gallery** (with Images icon) — grid view of all clipped videos with captions, bulk delete
 
 Action buttons for the active tab appear on the **right side of the top bar**.
 
-### 2. Video Loading (Clip Mode)
+### 2. Video Loading (Video Mode)
 
-- **Drag & drop**: Drop any video file from the filesystem into the app window to load it. Only available in Clip mode.
-- **Open File button**: A fallback action button in the Clip mode top bar that opens a file picker dialog.
+- **Drag & drop**: Drop any video file from the filesystem into the app window to load it. Only available in Video mode.
+- **Open File button**: A fallback action button in the Video mode top bar that opens a file picker dialog.
 - **Load new video**: Dropping a new video file replaces the currently loaded video. The seek pointer resets to 0. The clip length setting is preserved across video loads.
 - Supported formats: Any format ffmpeg can read (primarily .mp4, but not limited to).
 
-### 3. Playback Controls (Clip Mode)
+### 3. Playback Controls (Video Mode)
 
 - **Play / Pause**: Toggle playback with button or spacebar (global, even when not focused on player).
 - **Mute / Unmute**: Toggle audio mute with button or `M` key.
@@ -39,7 +39,7 @@ Action buttons for the active tab appear on the **right side of the top bar**.
 - **Time display**: Show current time and total duration in `MM:SS.xx` format (hundredths of a second).
 - **No skip buttons**: No `<<` / `>>` skip controls.
 
-### 4. Clip Extraction (Clip Mode)
+### 4. Clip Extraction (Video Mode)
 
 - **Clip length input**: A floating-point number field in the top bar, defaulting to `10.0` seconds. The user can set any positive float value (e.g., `2.5`, `15.0`, `0.1`).
 - **Clip button**: Labeled "Clip" with keyboard shortcut `C`.
@@ -58,7 +58,7 @@ Action buttons for the active tab appear on the **right side of the top bar**.
   - Bitrate
   - All other stream properties
   - Implementation: Use ffmpeg stream copy (`-c copy`) with precise start/duration via `-ss` and `-t`.
-  - **No re-encode fallback**: Clip mode must NEVER re-encode. It cuts at the nearest available frame keyframe boundary. Preserving the original encoding is critically important — clip mode only extracts a portion, nothing more.
+  - **No re-encode fallback**: Video mode must NEVER re-encode. It cuts at the nearest available frame keyframe boundary. Preserving the original encoding is critically important — video mode only extracts a portion, nothing more.
 
 ### 5. Gallery Mode
 
@@ -89,6 +89,7 @@ Action buttons for the active tab appear on the **right side of the top bar**.
 - **Selection**:
   - Multi-select: Click individual items to select/deselect.
   - Select All: A checkbox or button to select all files in the gallery.
+  - Bulk Delete: A "Delete" button in the Gallery top bar (destructive color) that deletes all selected files. Disabled when no files are selected. On confirm, deletes both the video file and its `.txt` caption file.
 
 ### 6. Expanded Player (Gallery Mode)
 
@@ -106,7 +107,7 @@ Action buttons for the active tab appear on the **right side of the top bar**.
 
 ### 7. Bulk Conversion Mode (Gallery)
 
-- **Activation**: A "Bulk Convert" button in the Gallery top bar opens a **slide-out drawer** from the right side.
+- **Activation**: A "Convert" button in the Gallery top bar (primary color) opens a **slide-out drawer** from the right side.
 - **Selection**:
   - Multi-select: Click individual items to select/deselect.
   - Select All: A checkbox or button to select all files in the gallery.
@@ -117,7 +118,7 @@ Action buttons for the active tab appear on the **right side of the top bar**.
   - **Frame rate**: Numeric input for target fps (e.g., 24, 30, 60) with a `"Same as source"` toggle. A "clear" button resets to source.
   - **Bitrate**: Numeric input for target bitrate (e.g., `5000k`, `10M`) with a `"Same as source"` toggle. A "clear" button resets to source.
   - **No changes warning**: If **all** parameters are left at `"Same as source"`, show an inline toast notification warning the user that files will simply be copied to `converted/` without any actual transcoding. The toast auto-dismisses after 3 seconds.
-  - **Settings persistence**: The drawer remembers the last-used settings via Node.js built-in `sqlite3`. When the user reopens the drawer, the previous settings are restored.
+  - **Settings persistence**: The drawer remembers the last-used settings via JSON config file. When the user reopens the drawer, the previous settings are restored.
 - **Execution**:
   - Converts all selected files using the specified settings.
   - Outputs to `converted/` directory.
@@ -134,16 +135,16 @@ Action buttons for the active tab appear on the **right side of the top bar**.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  [Video] [Gallery]    ...       [Clip Length: 10.0s] [Clip]    │
+│  [Video] [Gallery]    ...       [⏱ 10.0s] [Clip]              │
 └─────────────────────────────────────────────────────────────────┘
    ↑ tabs                    ↑ action buttons for active tab
 ```
 
-### Clip Mode
+### Video Mode
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  [Clip] [Gallery]       ...       [Clip Length: 10.0s] [Clip]  │
+│  [Video] [Gallery]      ...       [⏱ 10.0s] [Clip]            │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐    │
@@ -163,7 +164,7 @@ Action buttons for the active tab appear on the **right side of the top bar**.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  [Clip] [Gallery]       ...       [Select All] [Bulk Convert]  │
+│  [Video] [Gallery]    ...       [Select All] [Convert] [Delete]│
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐                       │
@@ -184,14 +185,14 @@ Action buttons for the active tab appear on the **right side of the top bar**.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  [Clip] [Gallery]       ...       [← Back]                     │
+│  [Video] [Gallery]    ...       [Select All] [Convert] [Delete]│
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐    │
 │  │                                                         │    │
 │  │                   VIDEO PLAYER                          │    │
 │  │              (aspect ratio maintained)                   │    │
-│  │                                                         │    │
+│  │                    ┌─[×]──┐                             │    │
 │  └─────────────────────────────────────────────────────────┘    │
 │                                                                 │
 │  [▶/❚❚] [🔊] [===o===]  00:03.70 / 05:22.40                    │
@@ -271,7 +272,7 @@ video-clipper/
 
 ### Settings Persistence
 
-- Use Node.js built-in `sqlite3` for persistent storage of app settings and preferences.
+- Use JSON config file for persistent storage of app settings and preferences.
 - Store: bulk conversion settings (codec, resolution, fps, bitrate), clip length default, window size/position.
 - Settings are loaded on app start and saved on change.
 

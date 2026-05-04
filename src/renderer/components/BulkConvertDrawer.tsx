@@ -10,8 +10,7 @@ interface BulkConvertDrawerProps {
 }
 
 export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
-  const { selectedFiles, galleryFiles, isConverting, convertProgress, isConvertDrawerOpen } =
-    useAppState();
+  const { selectedFiles, isConverting, convertProgress, isConvertDrawerOpen } = useAppState();
   const dispatch = useAppDispatch();
   const {
     codec,
@@ -64,7 +63,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
       }}
     >
       <SheetContent side="right" className="flex flex-col sm:w-[340px]">
-        <SheetHeader className="border-border/50 border-b px-1 pt-4 pb-0">
+        <SheetHeader className="border-border/50 border-b px-4 pt-4 pb-0">
           <SheetTitle className="text-base">Bulk Convert</SheetTitle>
         </SheetHeader>
 
@@ -89,7 +88,8 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
             <select
               value={codec}
               onChange={(e) => setCodec(e.target.value)}
-              className={cn(inputBase, 'appearance-none')}
+              className={cn(inputBase, 'text-foreground appearance-none')}
+              style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)' }}
             >
               <option value="">Same as source</option>
               <option value="libx264">H.264 (libx264)</option>
@@ -129,7 +129,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
                 }}
                 className={inputBase}
               />
-              <span className="text-muted-foreground/40 text-sm">×</span>
+              <span className="text-muted-foreground/40 mx-1 text-sm">×</span>
               <input
                 type="number"
                 placeholder="H"
@@ -191,13 +191,6 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
               onChange={(e) => setBitrate(e.target.value)}
               className={inputBase}
             />
-          </div>
-
-          {/* Selected files count */}
-          <div className="border-border/30 bg-muted/20 rounded-md border px-3 py-2.5">
-            <p className="text-muted-foreground text-xs">
-              {selectedFiles.size} of {galleryFiles.length} files selected
-            </p>
           </div>
 
           {/* Progress */}

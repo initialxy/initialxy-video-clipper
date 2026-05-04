@@ -11,6 +11,7 @@ export const IPC_CHANNELS = {
   FS_WRITE_CAPTION: 'fs:write-caption',
   FS_SCAN_OUTPUTS: 'fs:scan-outputs',
   FS_DELETE_CLIP: 'fs:delete-clip',
+  FS_BULK_DELETE: 'fs:bulk-delete',
   APP_DRAG_DROP: 'app:drag-drop',
   APP_CHECK_FFMPEG: 'app:check-ffmpeg',
   APP_OPEN_FILE: 'app:open-file',
@@ -49,6 +50,7 @@ export interface IPCPayloads {
   [IPC_CHANNELS.FS_WRITE_CAPTION]: { filePath: string; content: string };
   [IPC_CHANNELS.FS_SCAN_OUTPUTS]: {};
   [IPC_CHANNELS.FS_DELETE_CLIP]: { filePath: string };
+  [IPC_CHANNELS.FS_BULK_DELETE]: { paths: string[] };
   [IPC_CHANNELS.APP_DRAG_DROP]: { filePath: string };
   [IPC_CHANNELS.APP_CHECK_FFMPEG]: {};
   [IPC_CHANNELS.APP_OPEN_FILE]: {};

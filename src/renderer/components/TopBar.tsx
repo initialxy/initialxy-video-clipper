@@ -1,5 +1,14 @@
 import { useState, useCallback, useEffect, useRef, type ChangeEvent } from 'react';
-import { FolderOpen, RefreshCw, Square, CheckSquare, Download, Scissors } from 'lucide-react';
+import {
+  FolderOpen,
+  RefreshCw,
+  Square,
+  CheckSquare,
+  Download,
+  Scissors,
+  RulerDimensionLine,
+  Trash2,
+} from 'lucide-react';
 import { Video, Images } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs';
 import { useAppState, useAppDispatch, type ActiveTab } from '@renderer/store/app-state';
@@ -10,9 +19,10 @@ const CLIP_LENGTH_KEY = 'clip_length';
 interface TopBarProps {
   onClip: () => void;
   onRefreshGallery: () => void;
-  onTabChange: (tab: 'clip' | 'gallery') => void;
+  onTabChange: (tab: 'video' | 'gallery') => void;
   onOpenBulkConvert: () => void;
   onToggleSelectAll: () => void;
+  onBulkDelete: () => void;
   isAllSelected: boolean;
 }
 
@@ -22,6 +32,7 @@ export function TopBar({
   onTabChange,
   onOpenBulkConvert,
   onToggleSelectAll,
+  onBulkDelete,
   isAllSelected,
 }: TopBarProps) {
   const { activeTab, clipLength, currentVideo, selectedFiles } = useAppState();
@@ -69,7 +80,7 @@ export function TopBar({
         type: 'SET_VIDEO',
         payload: { path: result.filePath, ...info },
       });
-      dispatch({ type: 'SET_TAB', payload: 'clip' });
+      dispatch({ type: 'SET_TAB', payload: 'video' });
     }
   }, [dispatch]);
 
@@ -78,7 +89,7 @@ export function TopBar({
       {/* Left: Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as ActiveTab)}>
         <TabsList className="h-8">
-          <TabsTrigger value="clip" className="gap-1.5">
+          <TabsTrigger value="video" className="gap-1.5">
             <Video className="h-4 w-4" />
             <span>Video</span>
           </TabsTrigger>
@@ -91,7 +102,7 @@ export function TopBar({
 
       {/* Right: Action buttons */}
       <div className="flex items-center gap-2">
-        {activeTab === 'clip' && (
+        {activeTab === 'video' && (
           <>
             <button
               onClick={handleOpenFile}
@@ -104,7 +115,7 @@ export function TopBar({
 
             {/* Clip length input */}
             <div className="border-border/50 bg-muted/30 flex items-center gap-1.5 rounded-md border px-2 py-1">
-              <label className="text-muted-foreground text-xs">Length:</label>
+              <RulerDimensionLine className="text-muted-foreground h-4 w-4" />
               <input
                 type="number"
                 step="0.1"
@@ -113,7 +124,7 @@ export function TopBar({
                 onChange={handleClipLengthChange}
                 className="w-14 bg-transparent text-center text-sm tabular-nums outline-none"
               />
-              <span className="text-muted-foreground text-xs">s</span>
+              <span className="text-muted-foreground text-sm">s</span>
             </div>
 
             <button
@@ -151,12 +162,27 @@ export function TopBar({
               className={cn(
                 'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors',
                 selectedFilesCount > 0
-                  ? 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                  : 'text-muted-foreground/30 cursor-not-allowed',
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                  : 'bg-muted/50 text-muted-foreground cursor-not-allowed',
               )}
             >
               <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Bulk Convert</span>
+              <span className="hidden sm:inline">Convert</span>
+            </button>
+
+            <button
+              onClick={onBulkDelete}
+              disabled={selectedFilesCount === 0}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                selectedFilesCount > 0
+                  ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                  : 'bg-muted/50 text-muted-foreground cursor-not-allowed',
+              )}
+              title="Delete Selected"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Delete</span>
             </button>
 
             <button

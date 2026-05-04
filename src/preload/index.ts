@@ -27,6 +27,9 @@ const electronAPI = {
 
   deleteClip: (filePath: string) => ipcRenderer.invoke('fs:delete-clip', { filePath }),
 
+  bulkDelete: (payload: IPCPayloads['fs:bulk-delete']) =>
+    ipcRenderer.invoke('fs:bulk-delete', payload),
+
   // App
   handleDragDrop: (filePath: string) => ipcRenderer.invoke('app:drag-drop', { filePath }),
 

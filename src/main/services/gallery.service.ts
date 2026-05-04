@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { buildThumbnailCommand } from '@main/ffmpeg';
 import { runFfmpeg } from './ffmpeg-executor';
-import { getThumbnailPath } from '@shared/utils';
+import { getCaptionPath, getThumbnailPath } from '@shared/utils';
 import { VIDEO_EXTENSIONS } from '@main/constants';
 
 const PROJECT_ROOT = process.cwd();
@@ -67,6 +67,30 @@ export function deleteClip(filePath: string): { success: boolean; error?: string
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
   }
+}
+
+export async function bulkDeleteFiles(
+  paths: string[],
+): Promise<{ success: boolean; errors: string[] }> {
+  const errors: string[] = [];
+  for (const filePath of paths) {
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      const captionPath = getCaptionPath(filePath);
+      if (fs.existsSync(captionPath)) {
+        fs.unlinkSync(captionPath);
+      }
+      const thumbPath = getThumbnailPath(filePath);
+      if (fs.existsSync(thumbPath)) {
+        fs.unlinkSync(thumbPath);
+      }
+    } catch {
+      errors.push(filePath);
+    }
+  }
+  return { success: errors.length === 0, errors };
 }
 
 export async function extractThumbnail(
