@@ -69,10 +69,10 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
             e.stopPropagation();
             onDelete();
           }}
-          className="bg-background/80 hover:bg-background absolute top-2 right-2 z-10 rounded-md p-1.5 text-red-400 opacity-0 transition-opacity group-hover:opacity-100"
+          className="bg-background/80 hover:bg-background absolute top-3 right-3 z-10 rounded-md p-2 text-red-400 opacity-0 transition-opacity group-hover:opacity-100"
           title="Delete clip"
         >
-          <Trash2 className="h-3.5 w-3.5" />
+          <Trash2 className="h-5 w-5" />
         </button>
       )}
 
@@ -83,20 +83,20 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
             e.stopPropagation();
             onToggleSelect();
           }}
-          className="bg-background/80 hover:bg-background absolute top-2 left-2 z-10 rounded-md p-1.5 opacity-0 transition-opacity group-hover:opacity-100"
+          className="bg-background/80 hover:bg-background absolute top-3 left-3 z-10 rounded-md p-2 opacity-0 transition-opacity group-hover:opacity-100"
           title={isSelected ? 'Deselect' : 'Select'}
         >
           {isSelected ? (
-            <CheckSquare className="text-primary h-3.5 w-3.5" />
+            <CheckSquare className="text-primary h-5 w-5" />
           ) : (
-            <Square className="h-3.5 w-3.5" />
+            <Square className="h-5 w-5" />
           )}
         </button>
       )}
 
-      {/* Thumbnail (click to expand) */}
+      {/* Thumbnail covering whole cell */}
       <div
-        className="h-1/2 w-full cursor-pointer overflow-hidden bg-black"
+        className="absolute inset-0 cursor-pointer bg-black"
         onClick={(e) => {
           e.stopPropagation();
           onOpenExpanded();
@@ -110,18 +110,20 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="text-muted-foreground/50 flex h-full items-center justify-center">
+          <div className="flex h-full w-full items-center justify-center">
             <div className="border-muted-foreground/30 border-t-muted-foreground h-8 w-8 animate-spin rounded-full border-2" />
           </div>
         )}
       </div>
 
-      {/* Caption overlay */}
-      <CaptionOverlay
-        caption={caption}
-        onSave={handleCaptionSave}
-        onClick={(e) => e.stopPropagation()}
-      />
+      {/* Caption overlay on bottom half */}
+      <div className="absolute inset-x-0 bottom-0 h-1/2">
+        <CaptionOverlay
+          caption={caption}
+          onSave={handleCaptionSave}
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
     </div>
   );
 }

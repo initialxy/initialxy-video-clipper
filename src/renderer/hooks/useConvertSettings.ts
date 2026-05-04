@@ -15,8 +15,6 @@ export function useConvertSettings() {
   const [fps, setFps] = useState(0);
   const [bitrate, setBitrate] = useState('');
 
-  const [isOpen, setIsOpen] = useState(false);
-
   const loadSettings = useCallback(async () => {
     const [codecRes, widthRes, heightRes, fpsRes, bitrateRes] = await Promise.all([
       window.electronAPI.getSetting(SETTINGS.CODEC),
@@ -33,12 +31,11 @@ export function useConvertSettings() {
   }, []);
 
   const open = useCallback(async () => {
-    setIsOpen(true);
     await loadSettings();
   }, [loadSettings]);
 
   const close = useCallback(() => {
-    setIsOpen(false);
+    // no-op, controlled by app state
   }, []);
 
   const saveSettings = useCallback(async () => {
@@ -60,7 +57,6 @@ export function useConvertSettings() {
   }, []);
 
   return {
-    isOpen,
     open,
     close,
     codec,

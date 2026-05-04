@@ -70,12 +70,14 @@ Action buttons for the active tab appear on the **right side of the top bar**.
   - Example: viewport 1200px → 2 columns → each cell is 600x600px.
   - Example: viewport 1800px → 3 columns → each cell is 600x600px.
   - If viewport is smaller than 500px, cell size adapts to fit (minimum practical size).
-- **Thumbnail**: Each cell shows the first frame of the video as a static thumbnail, rendered as **object-fit: cover** (cropped to fill the square cell).
+- **Thumbnail**: Each cell shows the first frame of the video as a static thumbnail, rendered as **object-fit: cover** (cropped to fill the entire square cell). The thumbnail fills the entire cell as a background image.
 - **Caption overlay**: The **lower half** of each grid cell has a dark overlay (semi-transparent dark background) with the caption text displayed on top.
   - If text is too long, truncate with ellipsis (`...`) to prevent overflow.
   - Clicking the lower half (caption area) converts it into an inline text editor for editing.
   - The editor supports scrolling for longer text.
   - On blur or 2-second debounce, save the caption.
+  - The inline caption editor has no visible focus ring (outline only).
+  - Collapse/expand icons are vertical chevrons: `ChevronsDownUp` for collapse, `ChevronUp` for expand.
 - **Gallery refresh**:
   - Automatically refreshes when switching to Gallery tab.
   - Manual refresh button available in the Gallery top bar.
@@ -99,6 +101,8 @@ Action buttons for the active tab appear on the **right side of the top bar**.
 - **Autosave with debounce**: Caption text is automatically saved on input with a 2-second debounce.
 - The `.txt` file is created on first save (does not exist initially).
 - Close button or Escape key returns to gallery grid.
+- **Tab switch closes player**: Switching from Gallery to Video tab automatically closes the expanded player.
+- **Video stops on close**: Video playback stops when the expanded player is closed.
 
 ### 7. Bulk Conversion Mode (Gallery)
 
@@ -130,7 +134,7 @@ Action buttons for the active tab appear on the **right side of the top bar**.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  [Clip] [Gallery]       ...       [Clip Length: 10.0s] [Clip]  │
+│  [Video] [Gallery]    ...       [Clip Length: 10.0s] [Clip]    │
 └─────────────────────────────────────────────────────────────────┘
    ↑ tabs                    ↑ action buttons for active tab
 ```

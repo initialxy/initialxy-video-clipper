@@ -10,10 +10,10 @@ interface BulkConvertDrawerProps {
 }
 
 export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
-  const { selectedFiles, galleryFiles, isConverting, convertProgress } = useAppState();
+  const { selectedFiles, galleryFiles, isConverting, convertProgress, isConvertDrawerOpen } =
+    useAppState();
   const dispatch = useAppDispatch();
   const {
-    isOpen,
     codec,
     setCodec,
     width,
@@ -51,7 +51,15 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
+    <Sheet
+      open={isConvertDrawerOpen}
+      onOpenChange={(open: boolean) => {
+        if (!open) {
+          dispatch({ type: 'SET_CONVERT_DRAWER_OPEN', payload: false });
+          onClose();
+        }
+      }}
+    >
       <SheetContent side="right" className="w-80 sm:w-[320px]">
         <SheetHeader className="border-border/50 border-b px-4 py-3">
           <SheetTitle>Bulk Convert</SheetTitle>

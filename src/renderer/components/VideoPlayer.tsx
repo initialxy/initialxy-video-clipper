@@ -28,10 +28,10 @@ export function VideoPlayer({ className, onClose }: VideoPlayerProps) {
   return (
     <div className={cn('flex flex-col', className)}>
       {/* Video area */}
-      <div className="relative flex-1 overflow-hidden rounded-lg bg-black">
+      <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg bg-black">
         <video
           ref={videoRef}
-          className="h-full w-full object-contain"
+          className="max-h-full max-w-full object-contain"
           onClick={togglePlay}
           onTimeUpdate={onTimeUpdate}
           onPlay={onPlay}

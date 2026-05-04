@@ -77,7 +77,7 @@ export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps
           onChange={handleChange}
           onBlur={handleBlur}
           autoFocus
-          className="bg-background/50 text-foreground focus:ring-primary/50 h-full w-full resize-none rounded p-2 text-xs outline-none focus:ring-1"
+          className="bg-background/50 text-foreground h-full w-full resize-none rounded p-2 text-xs outline-none"
           placeholder="Enter caption..."
         />
       </div>

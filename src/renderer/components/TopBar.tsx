@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, type ChangeEvent } from 'react';
-import { FolderOpen, RefreshCw, CheckSquare, Square, Download, Scissors } from 'lucide-react';
+import { FolderOpen, RefreshCw, Square, CheckSquare, Download, Scissors } from 'lucide-react';
 import { Video, Images } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs';
 import { useAppState, useAppDispatch, type ActiveTab } from '@renderer/store/app-state';
@@ -143,7 +143,7 @@ export function TopBar({
               onClick={onToggleSelectAll}
               className="text-muted-foreground hover:text-foreground hover:bg-muted/50 flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors"
             >
-              {isAllSelected ? <Square className="h-4 w-4" /> : <CheckSquare className="h-4 w-4" />}
+              {isAllSelected ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
               <span className="hidden sm:inline">
                 {isAllSelected ? 'Deselect All' : 'Select All'}
               </span>

@@ -157,11 +157,13 @@ This makes ffmpeg logic testable and easy to reason about.
 #### Renderer State Management
 
 **app-state.ts** uses React context + `useReducer` for global state:
-- `activeTab` ('clip' | 'gallery')
+- `activeTab` ('video' | 'gallery')
 - `currentVideo` (path, duration, info)
 - `clipLength` (number)
 - `galleryFiles` (array)
 - `selectedFiles` (Set)
+- `isConvertDrawerOpen` (boolean)
+- `expandedFile` (GalleryFile | null)
 
 Components subscribe to only the slice they need via custom hooks derived from the context.
 
@@ -374,10 +376,11 @@ ffmpeg -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
 
 ### 13. Tab Navigation
 
-- Two tabs: **Clip** (left) and **Gallery** (right) in the top bar.
-- Clip mode: video player, seek, clip extraction, drag-and-drop, open file.
+- Two tabs: **Video** (with Video icon, left) and **Gallery** (with Images icon, right) in the top bar.
+- Video mode: video player, seek, clip extraction, drag-and-drop, open file.
 - Gallery mode: grid view, captions, bulk convert, delete, refresh.
 - Action buttons in the top bar change based on the active tab.
+- Switching tabs closes the expanded player and stops video playback.
 
 ### 14. State Management
 
@@ -466,7 +469,7 @@ Build the app in this sequence:
 1. ~~**Project scaffold**: Electron + React + TypeScript + Tailwind + shadcn setup.~~ ✅ DONE
 2. ~~**Main process**: Window creation, IPC channel definitions, preload script.~~ ✅ DONE
 3. ~~**Theme**: ZFlow dark-first theme application.~~ ✅ DONE
-4. ~~**Tab navigation**: Top bar with Clip/Gallery tabs, action buttons per tab.~~ ✅ DONE
+4. ~~**Tab navigation**: Top bar with Video/Gallery tabs, action buttons per tab.~~ ✅ DONE
 5. ~~**Video player**: Drag-and-drop loading, open file dialog, play/pause, mute/volume, precision seek slider, time display, global keyboard shortcuts.~~ ✅ DONE
 6. ~~**Clip extraction**: Clip length input, Clip button with `C` hotkey, ffmpeg integration, counter persistence, toast on success, insufficient-duration warning toast, no re-encode.~~ ✅ DONE
 7. ~~**Gallery view**: File scanning, thumbnail generation, dynamic square grid layout (500px min), caption overlay with inline editing, delete with confirmation modal, gallery refresh.~~ ✅ DONE
@@ -476,4 +479,5 @@ Build the app in this sequence:
 11. ~~**ffmpeg check on launch**: Verify ffmpeg availability, show error dialog if missing.~~ ✅ DONE
 12. ~~**Settings persistence**: sqlite3 for bulk conversion settings, clip length default, window size/position.~~ ✅ DONE
 13. ~~**Code quality refactor**: Shared `runFfmpeg` executor, extracted `ffprobe.service`, `useConvertSettings` hook, deduplicated interfaces, derived `ElectronAPI` from `IPCRegistry`, removed dead code (unused components/hooks/state), cleaned up config files.~~ ✅ DONE
-14. **UI polish & UX improvements**: Sonner toast notifications, shadcn Tabs/Sheet/Button widgets, vertical volume slider on hover, drag-drop on main content area, close button on video player, scissors icon on Clip button, renamed tabs to Video/Gallery with icons, hover selection UX for gallery, clip length persistence via settings, requestAnimationFrame for smooth seek, stop video on expanded player close, cursor at end on caption edit start. ✅ DONE
+14. **UI polish & UX improvements**: Sonner toast notifications, shadcn Tabs/Sheet/Button widgets, vertical volume slider on hover, drag-drop on main content area, close button on video player, scissors icon on Clip button, renamed tabs to Video/Gallery with icons, hover selection UX for gallery, clip length persistence via settings, requestAnimationFrame for smooth seek, stop video on expanded player close, cursor at end on caption edit start.
+15. **Bug fixes**: Bulk convert drawer state management (moved `isOpen` from hook to app state), larger gallery select/delete buttons, full-cover gallery thumbnails, removed caption input focus ring, vertical chevron icons for caption editor, tab switch closes expanded player, correct Select All checkbox icons, toast notification integration, 'c' hotkey works after seeking, video player sizing with min-h-0 and object-contain. ✅ DONE

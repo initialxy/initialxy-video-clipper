@@ -28,6 +28,7 @@ export interface AppState {
   expandedFile: string | null;
   isConverting: boolean;
   convertProgress: number;
+  isConvertDrawerOpen: boolean;
 }
 
 type AppAction =
@@ -39,14 +40,15 @@ type AppAction =
   | { type: 'SELECT_ALL_FILES'; payload: boolean }
   | { type: 'SET_EXPANDED_FILE'; payload: string | null }
   | { type: 'SET_CONVERTING'; payload: boolean }
-  | { type: 'SET_CONVERT_PROGRESS'; payload: number };
+  | { type: 'SET_CONVERT_PROGRESS'; payload: number }
+  | { type: 'SET_CONVERT_DRAWER_OPEN'; payload: boolean };
 
 const CLIP_LENGTH_KEY = 'clip_length';
 
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'SET_TAB':
-      return { ...state, activeTab: action.payload };
+      return { ...state, activeTab: action.payload, expandedFile: null };
     case 'SET_VIDEO':
       return { ...state, currentVideo: action.payload };
     case 'SET_CLIP_LENGTH':
@@ -73,6 +75,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, isConverting: action.payload };
     case 'SET_CONVERT_PROGRESS':
       return { ...state, convertProgress: action.payload };
+    case 'SET_CONVERT_DRAWER_OPEN':
+      return { ...state, isConvertDrawerOpen: action.payload };
     default:
       return state;
   }
@@ -87,6 +91,7 @@ const initialState: AppState = {
   expandedFile: null,
   isConverting: false,
   convertProgress: 0,
+  isConvertDrawerOpen: false,
 };
 
 const AppStateContext = createContext<AppState>(initialState);

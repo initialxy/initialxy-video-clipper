@@ -1,10 +1,6 @@
-1. bulk convert button in gallery view still does not work! Nothing happens when I click on it.
-2. can we make the select button and delete buttons a bit bigger in gallery view? It's hard to click on.
-3. Gallery view thumbnail still does not cover the whole square area. It is only visible on the top half. This is wrong. The caption should overlay on the bottom half with a transparent background. But thumbnail image should still be visible on the whole square cell. It really should use `background-size: cover;` over the whole square cell.
-4. The enter caption box in gallery grid view shouldn't need an border/outline when focused. It doesn't look good. Just remove it.
-5. In gallery view, expanded mode, the caption box's collapse icon should be a vertical arrows instead of horizontal arrows as it is expanding vertically. In fact, why not use the chevrons-down-up icon instead and use expand icon when indicating expanding.
-6. When in expanded video mode, and click on Video tab, it still does not close the expanded video, which is confusing.
-7. In gallery view, "Select All" should show an empty checkbox icon, while "Deselect all" should show a checked checkbox icon. You got it the other way around.
-8. Toast now does not appear at all.
-9. Pressing the 'c' hot key to clip generally works, but when I drag on the seek handle then press 'c', it just focuses on the seek handle instead of triggering clip action.
-10. If a video is smaller than the viewport available, It appears to be stretched to best fit the viewport which is good. But it seems to only account for width, but not height, which means if viewport is very wide comparing to height, the video will always be expanded to fit width and push down all the playback controls.
+1. now in gallery grid view, the thumbnail is covering the whole cell, which is good. But the caption text box is only covering from middle to the lower quarter of the cell? Why? It should just overlay the whole lower half of the cell. When I click on it, why does text size change? Just keep it consistent. In fact, use the slightly larger text size for all even in unfocused state.
+2. When I go from gallery tab -> click on a video to expand -> click on video tab. It now loads the video I expanded in gallery tab in video tab. Why? I want to preserve the video I had originally open in video tab, as well as it's playback position, which it also does not preserve.
+3. In gallery tab, expanded video view. Since you are using the downward arrow icon to indicate collapsing the caption text area, that is fine, then we should just use the upward arrow icon to indicate expanding the caption text area.
+4. bulk video converter button should be disabled if no file is selected.
+5. bulk video convert side pane does NOT look good. There's weird spacing issues. input fields that have different font sizes and colors. Input fields with slightly different heights. There's a "0" just on the right side of "Resolution". What is that? On the top, there are TWO "x" buttons to close, but only one works. What is this mess? You should be ashamed of yourself for even creating it. Just take a look in screenshot.
+6. Toast now works, which is great, but it's just white, which is jarring on dark theme. Can we use a different color, maybe just black is fine.

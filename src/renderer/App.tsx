@@ -4,6 +4,7 @@ import { useClipCounter } from '@renderer/hooks/useClipCounter';
 import { useGallery } from '@renderer/hooks/useGallery';
 import { useVideoPlayer } from '@renderer/hooks/useVideoPlayer';
 import { useConvertSettings } from '@renderer/hooks/useConvertSettings';
+import { useToast } from '@renderer/hooks/useToast';
 
 import { TopBar } from '@renderer/components/TopBar';
 import { VideoPlayer } from '@renderer/components/VideoPlayer';
@@ -21,6 +22,7 @@ function AppContent() {
   const { galleryFiles, refreshGallery, selectAll, isAllSelected, deleteFile } = useGallery();
   const { getCurrentTime } = useVideoPlayer();
   const convertSettings = useConvertSettings();
+  const { success: toastSuccess, error: toastError, addToast } = useToast();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -94,25 +96,42 @@ function AppContent() {
     const result = await handleClip(getCurrentTime(), (_remaining, requested) => {
       const clipRemaining = currentVideo.duration - getCurrentTime();
       if (clipRemaining > 0 && clipRemaining < requested) {
-        window.electronAPI
-          .createClip({
-            inputPath: currentVideo.path,
-            outputPath: '',
-            start: getCurrentTime(),
-            duration: clipRemaining,
-          })
-          .then((clipResult) => {
-            if (clipResult.success) {
-              refreshGallery();
-            }
-          });
+        addToast(`Only ${_remaining.toFixed(2)}s remaining. Clip remaining?`, 'warning', {
+          label: 'Clip Remaining',
+          handler: () => {
+            window.electronAPI
+              .createClip({
+                inputPath: currentVideo.path,
+                outputPath: '',
+                start: getCurrentTime(),
+                duration: clipRemaining,
+              })
+              .then((clipResult) => {
+                if (clipResult.success) {
+                  refreshGallery();
+                  toastSuccess('Clip saved');
+                }
+              });
+          },
+        });
       }
     });
 
     if (result.success) {
       refreshGallery();
+      toastSuccess('Clip saved');
+    } else if (result.error) {
+      toastError(result.error);
     }
-  }, [currentVideo, getCurrentTime, handleClip, refreshGallery]);
+  }, [
+    currentVideo,
+    getCurrentTime,
+    handleClip,
+    refreshGallery,
+    toastSuccess,
+    toastError,
+    addToast,
+  ]);
 
   useEffect(() => {
     return window.electronAPI.onConvertProgress((data) => {
@@ -144,7 +163,17 @@ function AppContent() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (activeTab !== 'clip') return;
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const target = e.target;
+      if (target instanceof HTMLTextAreaElement) return;
+      if (
+        target instanceof HTMLInputElement &&
+        (target.type === 'text' ||
+          target.type === 'number' ||
+          target.type === 'email' ||
+          target.type === 'password' ||
+          target.type === 'search')
+      )
+        return;
       if (e.key === 'c' || e.key === 'C') {
         e.preventDefault();
         handleClipAction();
@@ -178,7 +207,10 @@ function AppContent() {
       <TopBar
         onClip={handleClipAction}
         onRefreshGallery={refreshGallery}
-        onOpenBulkConvert={convertSettings.open}
+        onOpenBulkConvert={() => {
+          dispatch({ type: 'SET_CONVERT_DRAWER_OPEN', payload: true });
+          convertSettings.open();
+        }}
         onToggleSelectAll={handleToggleSelectAll}
         isAllSelected={isAllSelected}
       />
@@ -196,7 +228,7 @@ function AppContent() {
         {expandedFile ? (
           <ExpandedPlayer filePath={expandedFile} onClose={handleCloseExpanded} />
         ) : activeTab === 'clip' ? (
-          <div className="flex flex-1 flex-col p-4">
+          <div className="flex min-h-0 flex-1 flex-col p-4">
             {currentVideo ? (
               <VideoPlayer className="flex-1" onClose={handleCloseVideo} />
             ) : (
