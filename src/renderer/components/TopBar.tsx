@@ -157,20 +157,6 @@ export function TopBar({
             </button>
 
             <button
-              onClick={onOpenBulkConvert}
-              disabled={selectedFilesCount === 0}
-              className={cn(
-                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors',
-                selectedFilesCount > 0
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : 'bg-muted/50 text-muted-foreground cursor-not-allowed',
-              )}
-            >
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Convert</span>
-            </button>
-
-            <button
               onClick={onBulkDelete}
               disabled={selectedFilesCount === 0}
               className={cn(
@@ -183,6 +169,20 @@ export function TopBar({
             >
               <Trash2 className="h-4 w-4" />
               <span className="hidden sm:inline">Delete</span>
+            </button>
+
+            <button
+              onClick={onOpenBulkConvert}
+              disabled={selectedFilesCount === 0}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors',
+                selectedFilesCount > 0
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                  : 'bg-muted/50 text-muted-foreground cursor-not-allowed',
+              )}
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Convert</span>
             </button>
 
             <button

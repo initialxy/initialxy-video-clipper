@@ -33,7 +33,7 @@ export function ExpandedPlayer({ filePath, onClose }: ExpandedPlayerProps) {
   }, [onClose]);
 
   return (
-    <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-6">
+    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
       {/* Video player */}
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="relative mb-3 flex flex-1 items-center justify-center overflow-hidden rounded-lg bg-black">

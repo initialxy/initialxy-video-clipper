@@ -4,6 +4,13 @@ import { useAppDispatch } from '@renderer/store/app-state';
 import { cn } from '@renderer/lib/utils';
 import { useConvertSettings } from '@renderer/hooks/useConvertSettings';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@renderer/components/ui/sheet';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@renderer/components/ui/select';
 
 interface BulkConvertDrawerProps {
   onClose: () => void;
@@ -85,18 +92,18 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
                 </button>
               )}
             </div>
-            <select
-              value={codec}
-              onChange={(e) => setCodec(e.target.value)}
-              className={cn(inputBase, 'text-foreground appearance-none')}
-              style={{ backgroundColor: 'var(--muted)', color: 'var(--foreground)' }}
-            >
-              <option value="">Same as source</option>
-              <option value="libx264">H.264 (libx264)</option>
-              <option value="libx265">H.265 (libx265)</option>
-              <option value="libsvtav1">AV1 (SVT-AV1)</option>
-              <option value="mpeg4">MPEG-4</option>
-            </select>
+            <Select value={codec} onValueChange={(v) => setCodec(v || '')}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Same as source" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Same as source</SelectItem>
+                <SelectItem value="libx264">H.264 (libx264)</SelectItem>
+                <SelectItem value="libx265">H.265 (libx265)</SelectItem>
+                <SelectItem value="libsvtav1">AV1 (SVT-AV1)</SelectItem>
+                <SelectItem value="mpeg4">MPEG-4</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Resolution */}

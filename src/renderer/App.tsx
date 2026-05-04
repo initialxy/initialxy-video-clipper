@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState, type DragEvent } from 'react';
 import { useAppState, useAppDispatch } from '@renderer/store/app-state';
 import { useClipCounter } from '@renderer/hooks/useClipCounter';
 import { useGallery } from '@renderer/hooks/useGallery';
-import { useVideoPlayer } from '@renderer/hooks/useVideoPlayer';
 import { useConvertSettings } from '@renderer/hooks/useConvertSettings';
 import { useToast } from '@renderer/hooks/useToast';
 
@@ -16,11 +15,10 @@ import { Toaster } from '@renderer/components/ui/sonner';
 import { cn } from '@renderer/lib/utils';
 
 function AppContent() {
-  const { activeTab, currentVideo, expandedFile, savedTime, selectedFiles } = useAppState();
+  const { activeTab, currentVideo, expandedFile, selectedFiles, currentTime } = useAppState();
   const dispatch = useAppDispatch();
   const { handleClip } = useClipCounter();
   const { galleryFiles, refreshGallery, selectAll, isAllSelected, deleteFile } = useGallery();
-  const { getCurrentTime } = useVideoPlayer(savedTime);
   const convertSettings = useConvertSettings();
   const { success: toastSuccess, error: toastError, addToast } = useToast();
 
@@ -30,11 +28,11 @@ function AppContent() {
   const handleTabChange = useCallback(
     (tab: 'video' | 'gallery') => {
       if (tab === 'gallery' && currentVideo) {
-        dispatch({ type: 'SET_SAVED_TIME', payload: getCurrentTime() });
+        dispatch({ type: 'SET_SAVED_TIME', payload: currentTime });
       }
       dispatch({ type: 'SET_TAB', payload: tab });
     },
-    [dispatch, currentVideo, getCurrentTime],
+    [dispatch, currentVideo, currentTime],
   );
 
   const handleDrop = useCallback(
@@ -103,8 +101,8 @@ function AppContent() {
   const handleClipAction = useCallback(async () => {
     if (!currentVideo) return;
 
-    const result = await handleClip(getCurrentTime(), (_remaining, requested) => {
-      const clipRemaining = currentVideo.duration - getCurrentTime();
+    const result = await handleClip(currentTime, (_remaining, requested) => {
+      const clipRemaining = currentVideo.duration - currentTime;
       if (clipRemaining > 0 && clipRemaining < requested) {
         addToast(`Only ${_remaining.toFixed(2)}s remaining. Clip remaining?`, 'warning', {
           label: 'Clip Remaining',
@@ -113,7 +111,7 @@ function AppContent() {
               .createClip({
                 inputPath: currentVideo.path,
                 outputPath: '',
-                start: getCurrentTime(),
+                start: currentTime,
                 duration: clipRemaining,
               })
               .then((clipResult) => {
@@ -133,15 +131,7 @@ function AppContent() {
     } else if (result.error) {
       toastError(result.error);
     }
-  }, [
-    currentVideo,
-    getCurrentTime,
-    handleClip,
-    refreshGallery,
-    toastSuccess,
-    toastError,
-    addToast,
-  ]);
+  }, [currentVideo, currentTime, handleClip, refreshGallery, toastSuccess, toastError, addToast]);
 
   useEffect(() => {
     return window.electronAPI.onConvertProgress((data) => {
@@ -152,13 +142,13 @@ function AppContent() {
   useEffect(() => {
     return window.electronAPI.onConvertWarnNoChanges(() => {
       if (!currentVideo) return;
-      const clipRemaining = currentVideo.duration - getCurrentTime();
+      const clipRemaining = currentVideo.duration - currentTime;
       if (clipRemaining > 0) {
         window.electronAPI
           .createClip({
             inputPath: currentVideo.path,
             outputPath: '',
-            start: getCurrentTime(),
+            start: currentTime,
             duration: clipRemaining,
           })
           .then((clipResult) => {
@@ -168,7 +158,7 @@ function AppContent() {
           });
       }
     });
-  }, [currentVideo, getCurrentTime, refreshGallery]);
+  }, [currentVideo, currentTime, refreshGallery]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

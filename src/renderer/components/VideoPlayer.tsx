@@ -1,9 +1,10 @@
 import { Play, Pause, X } from 'lucide-react';
+import { useRef, useEffect } from 'react';
 import { useVideoPlayer } from '@renderer/hooks/useVideoPlayer';
 import { VolumeControl } from './VolumeControl';
 import { formatTime } from '@shared/utils';
 import { cn } from '@renderer/lib/utils';
-import { useAppState } from '@renderer/store/app-state';
+import { useAppState, useAppDispatch } from '@renderer/store/app-state';
 
 interface VideoPlayerProps {
   className?: string;
@@ -12,6 +13,8 @@ interface VideoPlayerProps {
 
 export function VideoPlayer({ className, onClose }: VideoPlayerProps) {
   const { savedTime } = useAppState();
+  const dispatch = useAppDispatch();
+  const lastDispatchedTime = useRef(0);
   const {
     videoRef,
     currentTime,
@@ -26,6 +29,13 @@ export function VideoPlayer({ className, onClose }: VideoPlayerProps) {
     onPlay,
     onPause,
   } = useVideoPlayer(savedTime);
+
+  useEffect(() => {
+    if (currentTime - lastDispatchedTime.current > 0.1) {
+      dispatch({ type: 'SET_CURRENT_TIME', payload: currentTime });
+      lastDispatchedTime.current = currentTime;
+    }
+  }, [currentTime, dispatch]);
 
   return (
     <div className={cn('flex flex-col', className)}>

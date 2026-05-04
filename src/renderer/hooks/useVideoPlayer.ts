@@ -18,14 +18,23 @@ export function useVideoPlayer(savedTime?: number) {
   const duration = currentVideo?.duration ?? 0;
 
   // Load video when path changes
+  const prevVideoPathRef = useRef<string | null>(null);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !currentVideo) return;
+
+    const isNewVideo = prevVideoPathRef.current !== currentVideo.path;
+    prevVideoPathRef.current = currentVideo.path;
 
     video.src = `file://${currentVideo.path}`;
     video.load();
     setCurrentTime(0);
     setIsPlaying(false);
+
+    if (isNewVideo) {
+      savedTimeRef.current = 0;
+    }
 
     const onLoadedMetadata = () => {
       const restoreTime =

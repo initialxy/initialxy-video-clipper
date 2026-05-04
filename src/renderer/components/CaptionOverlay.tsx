@@ -70,7 +70,7 @@ export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps
 
   if (isEditing) {
     return (
-      <div className="h-full w-full bg-black/50" onBlur={handleUnmount}>
+      <div className="h-full w-full bg-black/70" onBlur={handleUnmount}>
         <textarea
           ref={textareaRef}
           value={editText}
