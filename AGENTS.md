@@ -30,7 +30,7 @@ video-clipper/
 │   │   ├── ipc-handlers.ts     # IPC route registration (thin delegates to services)
 │   │   ├── ffmpeg.ts           # ffmpeg command builder (pure functions, no side effects)
 │   │   ├── constants.ts        # VIDEO_EXTENSIONS, SETTINGS_KEYS
-│   │   ├── db.ts               # sqlite3 schema, queries, migrations
+│   │   ├── db.ts               # JSON config file persistence (node:sqlite unavailable in Electron)
 │   │   └── services/           # Business logic layer
 │   │       ├── ffmpeg-executor.ts    # Shared runFfmpeg executor (spawns child_process)
 │   │       ├── ffprobe.service.ts    # getVideoInfo, checkFfmpeg (ffprobe parsing)
@@ -92,7 +92,7 @@ video-clipper/
 │  - IPC handlers (clip, convert, fs ops)     │
 │  - ffmpeg child process spawning            │
 │  - File system access                       │
-│  - sqlite3 settings persistence             │
+│  - JSON config file settings persistence    │
 │  - ffmpeg availability check on launch      │
 └──────────────┬──────────────────────────────┘
                │ IPC (contextBridge)
@@ -126,7 +126,7 @@ src/main/
 ├── ipc-handlers.ts   # IPC route registration (thin delegates to services)
 ├── ffmpeg.ts         # ffmpeg command builder (pure functions, no side effects)
 ├── constants.ts      # VIDEO_EXTENSIONS, SETTINGS_KEYS
-├── db.ts             # sqlite3 schema, queries, migrations
+├── db.ts             # JSON config file persistence (node:sqlite unavailable in Electron)
 └── services/
     ├── ffmpeg-executor.ts    # Shared runFfmpeg executor (spawns child_process)
     ├── ffprobe.service.ts    # getVideoInfo, checkFfmpeg (ffprobe parsing)
@@ -184,7 +184,7 @@ Components subscribe to only the slice they need via custom hooks derived from t
 | ffmpeg | Pure command builder + separate executor | Testable, no side effects in builder |
 | Business logic | Service layer in main process | Separates IPC plumbing from domain logic |
 | State | React context + useReducer | Simple, no external deps, per PRD |
-| Settings | sqlite3 in main, accessed via IPC | Only main process touches disk |
+| Settings | JSON config file in main, accessed via IPC | Only main process touches disk |
 | Shared utils | `src/shared/utils.ts` | Time formatting, path helpers used by both processes |
 | Video persistence | `savedTime` state + restore on mount | Preserves playback position across tab switches |
 
@@ -386,8 +386,9 @@ ffmpeg -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
 
 ### 10. Settings Persistence
 
-- Use Node.js built-in `sqlite3` for persistent storage.
-- Store: bulk conversion settings (codec, resolution, fps, bitrate), clip length default, window size/position.
+- Use JSON config file for persistent storage (via `db.ts`).
+- `better-sqlite3` is incompatible with the latest Electron, and `node:sqlite` is not exposed in Electron's Node.js context.
+- Store: bulk conversion settings (codec, resolution, fps, bitrate), clip length default, window size/position, clip counters.
 - Settings are loaded on app start and saved on change.
 - Bulk conversion drawer remembers last-used settings.
 
@@ -529,9 +530,9 @@ Build the app in this sequence:
 7. ~~**Gallery view**: File scanning, thumbnail generation, dynamic square grid layout (500px min), caption overlay with inline editing, delete with confirmation modal, gallery refresh.~~ ✅ DONE
 8. ~~**Expanded player**: Click thumbnail to open, playback with sound, seek/volume controls, caption editor below video, close on Escape.~~ ✅ DONE
 9. ~~**Caption editing**: Debounced autosave, `.txt` file CRUD, inline overlay editor in gallery, full editor in expanded view.~~ ✅ DONE
-10. ~~**Bulk conversion**: Slide-out drawer, optional params with "Same as source", settings persistence via sqlite3, ffmpeg batch processing, progress indicators, no-changes toast warning, caption file copying.~~ ✅ DONE
+10. ~~**Bulk conversion**: Slide-out drawer, optional params with "Same as source", settings persistence via JSON config, ffmpeg batch processing, progress indicators, no-changes toast warning, caption file copying.~~ ✅ DONE
 11. ~~**ffmpeg check on launch**: Verify ffmpeg availability, show error dialog if missing.~~ ✅ DONE
-12. ~~**Settings persistence**: sqlite3 for bulk conversion settings, clip length default, window size/position.~~ ✅ DONE
+12. ~~**Settings persistence**: JSON config file for bulk conversion settings, clip length default, window size/position.~~ ✅ DONE
 13. ~~**Code quality refactor**: Shared `runFfmpeg` executor, extracted `ffprobe.service`, `useConvertSettings` hook, deduplicated interfaces, derived `ElectronAPI` from `IPCRegistry`, removed dead code (unused components/hooks/state), cleaned up config files.~~ ✅ DONE
 14. ~~**UI polish & UX improvements**: Sonner toast notifications, shadcn Tabs/Sheet/Button widgets, vertical volume slider on hover, drag-drop on main content area, close button on video player, scissors icon on Clip button, renamed tabs to Video/Gallery with icons, hover selection UX for gallery, clip length persistence via settings, requestAnimationFrame for smooth seek, stop video on expanded player close, cursor at end on caption edit start.~~ ✅ DONE
 15. ~~**Bug fixes**: Bulk convert drawer state management (moved `isOpen` from hook to app state), larger gallery select/delete buttons, full-cover gallery thumbnails, removed caption input focus ring, vertical chevron icons for caption editor, tab switch closes expanded player, correct Select All checkbox icons, toast notification integration, 'c' hotkey works after seeking, video player sizing with min-h-0 and object-contain.~~ ✅ DONE
