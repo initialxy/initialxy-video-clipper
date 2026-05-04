@@ -8,7 +8,7 @@ A desktop app for clipping video files (.mp4) to create training data for video 
 
 **Tech Stack**: Electron + React + TypeScript + Tailwind CSS + shadcn/ui  
 **External Dependency**: ffmpeg (must be installed on the host machine — checked on app launch via `ffmpeg -version`)  
-**Persistent Storage**: JSON file for settings persistence (clip length, bulk convert settings)  
+**Persistent Storage**: sqlite3 for settings persistence (clip length, bulk convert settings, window state)  
 **Toast Notifications**: Sonner for toast notifications
 
 ---

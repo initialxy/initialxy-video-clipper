@@ -10,6 +10,7 @@ const CLIP_LENGTH_KEY = 'clip_length';
 interface TopBarProps {
   onClip: () => void;
   onRefreshGallery: () => void;
+  onTabChange: (tab: 'clip' | 'gallery') => void;
   onOpenBulkConvert: () => void;
   onToggleSelectAll: () => void;
   isAllSelected: boolean;
@@ -18,11 +19,13 @@ interface TopBarProps {
 export function TopBar({
   onClip,
   onRefreshGallery,
+  onTabChange,
   onOpenBulkConvert,
   onToggleSelectAll,
   isAllSelected,
 }: TopBarProps) {
-  const { activeTab, clipLength, currentVideo } = useAppState();
+  const { activeTab, clipLength, currentVideo, selectedFiles } = useAppState();
+  const selectedFilesCount = selectedFiles.size;
   const dispatch = useAppDispatch();
   const [clipLengthInput, setClipLengthInput] = useState(String(clipLength));
   const prevClipLength = useRef(clipLength);
@@ -46,13 +49,6 @@ export function TopBar({
       }
     }
   }, [clipLengthInput]);
-
-  const handleTabChange = useCallback(
-    (tab: ActiveTab) => {
-      dispatch({ type: 'SET_TAB', payload: tab });
-    },
-    [dispatch],
-  );
 
   const handleClipLengthChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -80,7 +76,7 @@ export function TopBar({
   return (
     <div className="border-border/50 bg-background/80 flex items-center justify-between border-b px-4 py-2 backdrop-blur-sm">
       {/* Left: Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => handleTabChange(v as ActiveTab)}>
+      <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as ActiveTab)}>
         <TabsList className="h-8">
           <TabsTrigger value="clip" className="gap-1.5">
             <Video className="h-4 w-4" />
@@ -151,7 +147,13 @@ export function TopBar({
 
             <button
               onClick={onOpenBulkConvert}
-              className="text-muted-foreground hover:text-foreground hover:bg-muted/50 flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors"
+              disabled={selectedFilesCount === 0}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors',
+                selectedFilesCount > 0
+                  ? 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  : 'text-muted-foreground/30 cursor-not-allowed',
+              )}
             >
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">Bulk Convert</span>

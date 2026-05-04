@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { useCaption } from '@renderer/hooks/useCaption';
 import { CaptionEditor } from './CaptionEditor';
-import { useAppDispatch } from '@renderer/store/app-state';
 
 interface ExpandedPlayerProps {
   filePath: string;
@@ -10,18 +9,8 @@ interface ExpandedPlayerProps {
 }
 
 export function ExpandedPlayer({ filePath, onClose }: ExpandedPlayerProps) {
-  const dispatch = useAppDispatch();
   const { caption, updateCaption } = useCaption(filePath);
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    window.electronAPI.getVideoInfo(filePath).then((info) => {
-      dispatch({
-        type: 'SET_VIDEO',
-        payload: { path: filePath, ...info },
-      });
-    });
-  }, [filePath, dispatch]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

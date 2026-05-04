@@ -29,6 +29,7 @@ export interface AppState {
   isConverting: boolean;
   convertProgress: number;
   isConvertDrawerOpen: boolean;
+  savedTime: number;
 }
 
 type AppAction =
@@ -41,7 +42,8 @@ type AppAction =
   | { type: 'SET_EXPANDED_FILE'; payload: string | null }
   | { type: 'SET_CONVERTING'; payload: boolean }
   | { type: 'SET_CONVERT_PROGRESS'; payload: number }
-  | { type: 'SET_CONVERT_DRAWER_OPEN'; payload: boolean };
+  | { type: 'SET_CONVERT_DRAWER_OPEN'; payload: boolean }
+  | { type: 'SET_SAVED_TIME'; payload: number };
 
 const CLIP_LENGTH_KEY = 'clip_length';
 
@@ -77,6 +79,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, convertProgress: action.payload };
     case 'SET_CONVERT_DRAWER_OPEN':
       return { ...state, isConvertDrawerOpen: action.payload };
+    case 'SET_SAVED_TIME':
+      return { ...state, savedTime: action.payload };
     default:
       return state;
   }
@@ -92,6 +96,7 @@ const initialState: AppState = {
   isConverting: false,
   convertProgress: 0,
   isConvertDrawerOpen: false,
+  savedTime: 0,
 };
 
 const AppStateContext = createContext<AppState>(initialState);

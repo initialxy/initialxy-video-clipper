@@ -24,8 +24,10 @@ export function useConvertSettings() {
       window.electronAPI.getSetting(SETTINGS.BITRATE),
     ]);
     setCodec(codecRes.value ?? '');
-    setWidth(parseInt(widthRes.value ?? '0', 10) || 0);
-    setHeight(parseInt(heightRes.value ?? '0', 10) || 0);
+    const w = parseInt(widthRes.value ?? '', 10);
+    setWidth(isNaN(w) || w <= 0 ? 0 : w);
+    const h = parseInt(heightRes.value ?? '', 10);
+    setHeight(isNaN(h) || h <= 0 ? 0 : h);
     setFps(parseInt(fpsRes.value ?? '0', 10) || 0);
     setBitrate(bitrateRes.value ?? '');
   }, []);
@@ -41,8 +43,8 @@ export function useConvertSettings() {
   const saveSettings = useCallback(async () => {
     await Promise.all([
       window.electronAPI.setSetting(SETTINGS.CODEC, codec),
-      window.electronAPI.setSetting(SETTINGS.WIDTH, String(width)),
-      window.electronAPI.setSetting(SETTINGS.HEIGHT, String(height)),
+      window.electronAPI.setSetting(SETTINGS.WIDTH, width ? String(width) : ''),
+      window.electronAPI.setSetting(SETTINGS.HEIGHT, height ? String(height) : ''),
       window.electronAPI.setSetting(SETTINGS.FPS, String(fps)),
       window.electronAPI.setSetting(SETTINGS.BITRATE, bitrate),
     ]);

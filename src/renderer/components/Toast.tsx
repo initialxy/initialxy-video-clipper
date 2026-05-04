@@ -8,14 +8,14 @@ interface ToastProps {
   onDismiss: (id: string) => void;
 }
 
-const typeStyles = {
-  success: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400',
-  error: 'border-red-500/50 bg-red-500/10 text-red-400',
-  warning: 'border-amber-500/50 bg-amber-500/10 text-amber-400',
-  info: 'border-blue-500/50 bg-blue-500/10 text-blue-400',
+const typeStyles: Record<ToastType['type'], string> = {
+  success: 'border-emerald-500/40 bg-emerald-950/80 text-emerald-300',
+  error: 'border-red-500/40 bg-red-950/80 text-red-300',
+  warning: 'border-amber-500/40 bg-amber-950/80 text-amber-300',
+  info: 'border-blue-500/40 bg-blue-950/80 text-blue-300',
 };
 
-const typeIcons = {
+const typeIcons: Record<ToastType['type'], typeof CheckCircle> = {
   success: CheckCircle,
   error: AlertCircle,
   warning: AlertTriangle,
@@ -26,7 +26,6 @@ export function Toast({ toast, onDismiss }: ToastProps) {
   const Icon = typeIcons[toast.type];
 
   useEffect(() => {
-    // Auto-dismiss after 3s only if no action
     if (!toast.action) {
       const timer = setTimeout(() => onDismiss(toast.id), 3000);
       return () => clearTimeout(timer);
@@ -36,7 +35,7 @@ export function Toast({ toast, onDismiss }: ToastProps) {
   return (
     <div
       className={cn(
-        'flex max-w-[400px] min-w-[280px] items-start gap-3 rounded-lg border px-4 py-3 shadow-lg backdrop-blur-sm',
+        'flex max-w-[400px] min-w-[280px] items-start gap-3 rounded-lg border px-4 py-3 shadow-lg backdrop-blur-md',
         typeStyles[toast.type],
       )}
     >
@@ -48,7 +47,16 @@ export function Toast({ toast, onDismiss }: ToastProps) {
             toast.action?.handler();
             onDismiss(toast.id);
           }}
-          className="shrink-0 rounded-md bg-white/10 px-2 py-1 text-xs font-medium transition-colors hover:bg-white/20"
+          className={cn(
+            'shrink-0 rounded-md px-2 py-1 text-xs font-medium transition-colors',
+            toast.type === 'success'
+              ? 'bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30'
+              : toast.type === 'error'
+                ? 'bg-red-500/20 text-red-200 hover:bg-red-500/30'
+                : toast.type === 'warning'
+                  ? 'bg-amber-500/20 text-amber-200 hover:bg-amber-500/30'
+                  : 'bg-blue-500/20 text-blue-200 hover:bg-blue-500/30',
+          )}
         >
           {toast.action.label}
         </button>

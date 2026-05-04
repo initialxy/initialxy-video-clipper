@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAppState } from '@renderer/store/app-state';
 
-export function useVideoPlayer() {
+export function useVideoPlayer(savedTime?: number) {
   const { currentVideo } = useAppState();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
@@ -23,12 +23,15 @@ export function useVideoPlayer() {
     setIsPlaying(false);
 
     const onLoadedMetadata = () => {
-      setCurrentTime(video.currentTime);
+      const restoreTime =
+        savedTime !== undefined && savedTime > 0 && savedTime < video.duration ? savedTime : 0;
+      video.currentTime = restoreTime;
+      setCurrentTime(restoreTime);
     };
 
     video.addEventListener('loadedmetadata', onLoadedMetadata);
     return () => video.removeEventListener('loadedmetadata', onLoadedMetadata);
-  }, [currentVideo, currentVideo?.path]);
+  }, [currentVideo, currentVideo?.path, savedTime]);
 
   // Smooth time update using requestAnimationFrame during playback
   const updateTime = useCallback(() => {

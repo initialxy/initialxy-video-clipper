@@ -27,6 +27,16 @@ function AppContent() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
+  const handleTabChange = useCallback(
+    (tab: 'clip' | 'gallery') => {
+      if (tab === 'gallery' && currentVideo) {
+        dispatch({ type: 'SET_SAVED_TIME', payload: getCurrentTime() });
+      }
+      dispatch({ type: 'SET_TAB', payload: tab });
+    },
+    [dispatch, currentVideo, getCurrentTime],
+  );
+
   const handleDrop = useCallback(
     async (filePath: string) => {
       const info = await window.electronAPI.getVideoInfo(filePath);
@@ -207,6 +217,7 @@ function AppContent() {
       <TopBar
         onClip={handleClipAction}
         onRefreshGallery={refreshGallery}
+        onTabChange={handleTabChange}
         onOpenBulkConvert={() => {
           dispatch({ type: 'SET_CONVERT_DRAWER_OPEN', payload: true });
           convertSettings.open();
@@ -262,7 +273,15 @@ function AppContent() {
         />
       )}
 
-      <Toaster />
+      <Toaster
+        toastOptions={{
+          style: {
+            background: 'var(--background)',
+            color: 'var(--foreground)',
+            border: '1px solid var(--border)',
+          },
+        }}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useVideoPlayer } from '@renderer/hooks/useVideoPlayer';
 import { VolumeControl } from './VolumeControl';
 import { formatTime } from '@shared/utils';
 import { cn } from '@renderer/lib/utils';
+import { useAppState } from '@renderer/store/app-state';
 
 interface VideoPlayerProps {
   className?: string;
@@ -10,6 +11,7 @@ interface VideoPlayerProps {
 }
 
 export function VideoPlayer({ className, onClose }: VideoPlayerProps) {
+  const { savedTime } = useAppState();
   const {
     videoRef,
     currentTime,
@@ -23,7 +25,7 @@ export function VideoPlayer({ className, onClose }: VideoPlayerProps) {
     onTimeUpdate,
     onPlay,
     onPause,
-  } = useVideoPlayer();
+  } = useVideoPlayer(savedTime);
 
   return (
     <div className={cn('flex flex-col', className)}>

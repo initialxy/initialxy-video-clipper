@@ -50,6 +50,9 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
     }
   };
 
+  const inputBase =
+    'w-full rounded-md border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50';
+
   return (
     <Sheet
       open={isConvertDrawerOpen}
@@ -60,27 +63,23 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
         }
       }}
     >
-      <SheetContent side="right" className="w-80 sm:w-[320px]">
-        <SheetHeader className="border-border/50 border-b px-4 py-3">
-          <SheetTitle>Bulk Convert</SheetTitle>
-          <button
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md p-1"
-          >
-            <X className="h-4 w-4" />
-          </button>
+      <SheetContent side="right" className="flex flex-col sm:w-[340px]">
+        <SheetHeader className="border-border/50 border-b px-1 pt-4 pb-0">
+          <SheetTitle className="text-base">Bulk Convert</SheetTitle>
         </SheetHeader>
 
         {/* Settings */}
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        <div className="flex-1 space-y-5 overflow-y-auto px-4 py-5">
           {/* Codec */}
           <div>
-            <div className="mb-1 flex items-center justify-between">
-              <label className="text-muted-foreground text-xs font-medium">Codec</label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+                Codec
+              </label>
               {codec && (
                 <button
                   onClick={() => setCodec('')}
-                  className="text-muted-foreground/50 hover:text-foreground"
+                  className="text-muted-foreground/40 hover:text-foreground transition-colors"
                   title="Reset to same as source"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -90,7 +89,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
             <select
               value={codec}
               onChange={(e) => setCodec(e.target.value)}
-              className="border-border/50 bg-muted/30 focus:ring-primary/50 w-full rounded-md border px-3 py-1.5 text-sm outline-none focus:ring-1"
+              className={cn(inputBase, 'appearance-none')}
             >
               <option value="">Same as source</option>
               <option value="libx264">H.264 (libx264)</option>
@@ -102,15 +101,17 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
 
           {/* Resolution */}
           <div>
-            <div className="mb-1 flex items-center justify-between">
-              <label className="text-muted-foreground text-xs font-medium">Resolution</label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+                Resolution
+              </label>
               {(width || height) && (
                 <button
                   onClick={() => {
                     setWidth(0);
                     setHeight(0);
                   }}
-                  className="text-muted-foreground/50 hover:text-foreground"
+                  className="text-muted-foreground/40 hover:text-foreground transition-colors"
                   title="Reset to same as source"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -121,29 +122,37 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
               <input
                 type="number"
                 placeholder="W"
-                value={width || ''}
-                onChange={(e) => setWidth(parseInt(e.target.value) || 0)}
-                className="border-border/50 bg-muted/30 focus:ring-primary/50 w-full rounded-md border px-3 py-1.5 text-sm outline-none focus:ring-1"
+                value={width ? width : ''}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  setWidth(isNaN(v) ? 0 : v);
+                }}
+                className={inputBase}
               />
-              <span className="text-muted-foreground">×</span>
+              <span className="text-muted-foreground/40 text-sm">×</span>
               <input
                 type="number"
                 placeholder="H"
-                value={height || ''}
-                onChange={(e) => setHeight(parseInt(e.target.value) || 0)}
-                className="border-border/50 bg-muted/30 focus:ring-primary/50 w-full rounded-md border px-3 py-1.5 text-sm outline-none focus:ring-1"
+                value={height ? height : ''}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  setHeight(isNaN(v) ? 0 : v);
+                }}
+                className={inputBase}
               />
             </div>
           </div>
 
           {/* FPS */}
           <div>
-            <div className="mb-1 flex items-center justify-between">
-              <label className="text-muted-foreground text-xs font-medium">Frame Rate</label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+                Frame Rate
+              </label>
               {fps > 0 && (
                 <button
                   onClick={() => setFps(0)}
-                  className="text-muted-foreground/50 hover:text-foreground"
+                  className="text-muted-foreground/40 hover:text-foreground transition-colors"
                   title="Reset to same as source"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -153,20 +162,22 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
             <input
               type="number"
               placeholder="Same as source"
-              value={fps || ''}
+              value={fps > 0 ? fps : ''}
               onChange={(e) => setFps(parseInt(e.target.value) || 0)}
-              className="border-border/50 bg-muted/30 focus:ring-primary/50 w-full rounded-md border px-3 py-1.5 text-sm outline-none focus:ring-1"
+              className={inputBase}
             />
           </div>
 
           {/* Bitrate */}
           <div>
-            <div className="mb-1 flex items-center justify-between">
-              <label className="text-muted-foreground text-xs font-medium">Bitrate</label>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+                Bitrate
+              </label>
               {bitrate && (
                 <button
                   onClick={() => setBitrate('')}
-                  className="text-muted-foreground/50 hover:text-foreground"
+                  className="text-muted-foreground/40 hover:text-foreground transition-colors"
                   title="Reset to same as source"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -178,12 +189,12 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
               placeholder="e.g. 5000k, 10M"
               value={bitrate}
               onChange={(e) => setBitrate(e.target.value)}
-              className="border-border/50 bg-muted/30 focus:ring-primary/50 w-full rounded-md border px-3 py-1.5 text-sm outline-none focus:ring-1"
+              className={inputBase}
             />
           </div>
 
           {/* Selected files count */}
-          <div className="border-border/50 bg-muted/20 rounded-md border p-3">
+          <div className="border-border/30 bg-muted/20 rounded-md border px-3 py-2.5">
             <p className="text-muted-foreground text-xs">
               {selectedFiles.size} of {galleryFiles.length} files selected
             </p>

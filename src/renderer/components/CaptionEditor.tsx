@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ChevronsDownUp, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface CaptionEditorProps {
   caption: string;
@@ -26,7 +26,7 @@ export function CaptionEditor({ caption, onChange, label }: CaptionEditorProps) 
           className="text-muted-foreground hover:text-foreground absolute top-2 right-2 rounded-md p-1"
           title="Collapse"
         >
-          <ChevronsDownUp className="h-4 w-4" />
+          <ChevronDown className="h-4 w-4" />
         </button>
         {label && (
           <div className="border-border/50 border-b px-4 py-2">
