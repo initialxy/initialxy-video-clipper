@@ -7,6 +7,7 @@ A desktop app for clipping video files (.mp4) to create training data for video 
 **Primary purpose**: Create and manage captioned video clip datasets for video diffusion model training. Caption visibility and quick editing are critical.
 
 **Tech Stack**: Electron + React + TypeScript + Tailwind CSS + shadcn/ui  
+**UI Primitives**: Base UI (`@base-ui/react`) — all shadcn components use Base UI primitives. Do NOT use Radix UI primitives (`@radix-ui/react-*`).  
 **External Dependency**: ffmpeg (must be installed on the host machine — checked on app launch via `ffmpeg -version`)  
 **Persistent Storage**: JSON file for settings persistence (clip length, bulk convert settings)  
 **Toast Notifications**: Sonner for toast notifications

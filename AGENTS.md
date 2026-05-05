@@ -187,6 +187,7 @@ Components subscribe to only the slice they need via custom hooks derived from t
 | Settings | JSON config file in main, accessed via IPC | Only main process touches disk |
 | Shared utils | `src/shared/utils.ts` | Time formatting, path helpers used by both processes |
 | Video persistence | `savedTime` state + restore on mount | Preserves playback position across tab switches |
+| UI primitives | Base UI (`@base-ui/react`) for all shadcn components | Consistent primitive library across all components. Do NOT use `@radix-ui/react-*` |
 
 #### What This Avoids
 
@@ -198,6 +199,24 @@ Components subscribe to only the slice they need via custom hooks derived from t
 - **No dead code** — unused components/hooks removed, unused state eliminated
 - **No ExpandedPlayer SET_VIDEO** — prevents gallery expansion from overwriting video tab state
 - **No `galleryFiles` in BulkConvertDrawer** — removed unused import, uses `selectedFiles` from app state only
+- **No Radix UI primitives** — all shadcn components use `@base-ui/react`, never `@radix-ui/react-*`
+
+#### UI Primitives
+
+All shadcn/ui components in this project use **Base UI** (`@base-ui/react`) as their primitive library. This is configured via `"style": "base-nova"` in `components.json`.
+
+- **Button** → `@base-ui/react/button`
+- **Select** → `@base-ui/react/select`
+- **Sheet** → `@base-ui/react/dialog`
+- **Tabs** → `@base-ui/react/tabs`
+
+When adding new shadcn components, always use the Base UI variant. Do NOT use `@radix-ui/react-*` packages. When running `npx shadcn@latest add <component>`, specify the `base-nova` style to get the correct primitives.
+
+Import pattern for Base UI Tabs:
+```typescript
+import { Tabs } from '@base-ui/react/tabs';
+// Use: Tabs.Root, Tabs.List, Tabs.Tab, Tabs.Panel
+```
 
 ### Build Tool
 
