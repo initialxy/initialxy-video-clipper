@@ -54,7 +54,7 @@ export function VolumeControl({ isMuted, toggleMute, setVolumeLevel }: VolumeCon
       {/* Inner container — absolute, contains slider + icon */}
       <div
         className={cn(
-          'bg-background absolute bottom-0 flex flex-col items-center',
+          'bg-card absolute bottom-0 flex flex-col items-center rounded-lg',
           showSlider && 'outline-border pt-3 outline',
         )}
       >
@@ -68,8 +68,8 @@ export function VolumeControl({ isMuted, toggleMute, setVolumeLevel }: VolumeCon
           className={cn(
             'data-vertical:h-full data-vertical:w-auto data-vertical:flex-col',
             showSlider ? 'h-20' : 'h-0',
+            !showSlider && 'hidden',
           )}
-          style={{ overflow: showSlider ? 'visible' : 'hidden' }}
         />
         <Button
           onClick={handleToggleMute}
