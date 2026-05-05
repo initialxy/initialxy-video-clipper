@@ -54,12 +54,7 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
 
   return (
     <div
-      className={cn(
-        'group relative aspect-square overflow-hidden rounded-lg border transition-all',
-        isSelected
-          ? 'border-primary ring-primary/30 ring-2'
-          : 'border-border/50 hover:border-border',
-      )}
+      className="group border-border/50 hover:border-border relative aspect-square overflow-hidden rounded-lg border"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -79,8 +74,8 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
         </Button>
       )}
 
-      {/* Selection checkbox */}
-      {isHovered && (
+      {/* Selection checkbox - always visible when selected, visible on hover when not selected */}
+      {(isSelected || isHovered) && (
         <Button
           variant="ghost"
           size="icon"
@@ -88,7 +83,10 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
             e.stopPropagation();
             onToggleSelect();
           }}
-          className="bg-background/80 hover:bg-background absolute top-3 left-3 z-10 opacity-0 transition-opacity group-hover:opacity-100"
+          className={cn(
+            'bg-background/80 hover:bg-background absolute top-3 left-3 z-10 transition-opacity',
+            isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+          )}
           title={isSelected ? 'Deselect' : 'Select'}
         >
           {isSelected ? (
