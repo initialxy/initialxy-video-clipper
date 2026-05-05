@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { debounce } from '@shared/utils';
 import { useAppState } from '@renderer/store/app-state';
 
 export function useVideoPlayer(savedTime?: number, filePath?: string) {
@@ -9,20 +8,14 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const animFrameRef = useRef<number | null>(null);
-  const isSeekingRef = useRef(false);
   const isPlayingStateRef = useRef(false);
   const savedTimeRef = useRef(savedTime);
-  const resetSeekingRef = useRef<ReturnType<typeof debounce> | null>(null);
+  const pendingSeekTimeRef = useRef<number | null>(null);
+  const isWaitingForSeekedRef = useRef(false);
 
   useEffect(() => {
     savedTimeRef.current = savedTime;
   }, [savedTime]);
-
-  useEffect(() => {
-    resetSeekingRef.current = debounce(() => {
-      isSeekingRef.current = false;
-    }, 200);
-  }, []);
 
   const videoPath = filePath || currentVideo?.path;
   const duration = currentVideo?.duration ?? 0;
@@ -52,8 +45,19 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
       setCurrentTime(video.currentTime);
     };
 
+    const onSeeked = () => {
+      isWaitingForSeekedRef.current = false;
+      if (pendingSeekTimeRef.current !== null) {
+        const nextTime = pendingSeekTimeRef.current;
+        pendingSeekTimeRef.current = null;
+        video.currentTime = nextTime;
+        setCurrentTime(nextTime);
+      }
+    };
+
     video.addEventListener('loadedmetadata', onLoadedMetadata);
     video.addEventListener('timeupdate', onTimeUpdatePlayback);
+    video.addEventListener('seeked', onSeeked);
 
     video.src = `file://${videoPath}`;
     video.load();
@@ -66,6 +70,7 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
     return () => {
       video.removeEventListener('loadedmetadata', onLoadedMetadata);
       video.removeEventListener('timeupdate', onTimeUpdatePlayback);
+      video.removeEventListener('seeked', onSeeked);
     };
   }, [videoPath]);
 
@@ -105,12 +110,9 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
   }, [stopAnimationLoop]);
 
   const onTimeUpdate = useCallback(() => {
-    // Only update during seeking (not during playback animation loop)
-    if (isSeekingRef.current) {
-      const video = videoRef.current;
-      if (video) {
-        setCurrentTime(video.currentTime);
-      }
+    const video = videoRef.current;
+    if (video) {
+      setCurrentTime(video.currentTime);
     }
   }, []);
 
@@ -128,10 +130,16 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
     (time: number) => {
       const video = videoRef.current;
       if (!video) return;
-      isSeekingRef.current = true;
-      video.currentTime = Math.max(0, Math.min(time, duration));
-      setCurrentTime(video.currentTime);
-      resetSeekingRef.current?.();
+
+      const clampedTime = Math.max(0, Math.min(time, duration));
+
+      if (!isWaitingForSeekedRef.current) {
+        isWaitingForSeekedRef.current = true;
+        video.currentTime = clampedTime;
+        setCurrentTime(clampedTime);
+      } else {
+        pendingSeekTimeRef.current = clampedTime;
+      }
     },
     [duration],
   );
@@ -185,11 +193,10 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [togglePlay, toggleMute]);
 
-  // Cleanup animation frame and debounced seeking on unmount
+  // Cleanup animation frame on unmount
   useEffect(() => {
     return () => {
       stopAnimationLoop();
-      resetSeekingRef.current?.cancel();
     };
   }, [stopAnimationLoop]);
 
