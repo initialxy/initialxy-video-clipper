@@ -275,12 +275,22 @@ Electron imports must use `import electron from 'electron'` + destructuring, not
 - MCP server auto-detects the Electron app on port 9222.
 - To debug: run `npm exec electron . --remote-debugging-port=9222` or use the MCP server's auto-detection.
 
-**Programmatic video loading (`__loadVideo`):**
-- The renderer always exposes `window.__loadVideo(filePath)` for programmatic video loading during automated testing.
-- This bypasses the "Open File" dialog which cannot be driven by MCP — instead load a video directly by path.
-- Usage via MCP: `electron_send_command_to_electron` → `command: "eval"` → `args: { code: "window.__loadVideo('/path/to/video.mp4')" }`
-- The hook calls `electronAPI.getVideoInfo(filePath)` internally to probe the video, then dispatches `SET_VIDEO` to load it into the player.
-- Example test video: `sample_video.mp4` at the project root.
+**Debug helpers (exposed on `window` in dev mode):**
+
+| Helper | Signature | Purpose |
+|--------|-----------|---------|
+| `__loadVideo` | `(filePath: string) => Promise<void>` | Load a video into the player. Bypasses "Open File" dialog. Calls `getVideoInfo` internally then dispatches `SET_VIDEO`. |
+| `__setVideoTime` | `(time: number) => void` | Seek video to specified time. |
+| `__getVideoTime` | `() => { videoCurrentTime: number, sliderValue: string }` | Returns current video currentTime and seek slider value. |
+| `__seekAndWait` | `(time: number) => Promise<{ actualTime: number, requestedTime: number }>` | Seek and wait for `seeked` event, returns the actual position after seek completes. Useful for verifying keyframe alignment. |
+
+Usage via MCP:
+```
+electron_send_command_to_electron → command: "eval" → args: { code: "window.__loadVideo('/path/to/video.mp4')" }
+electron_send_command_to_electron → command: "eval" → args: { code: "window.__seekAndWait(10)" }
+```
+
+Example test video: `sample_video.mp4` at the project root.
 
 ### Theme
 
@@ -581,7 +591,7 @@ npm run typecheck        # Run TypeScript type check
 ### When Electron Needs Restart Mid-Session
 
 1. Kill: `pkill -9 electron`
-2. Rebuild + relaunch: `npm run start:debug > /dev/null 2>&1 &` (**must include `> /dev/null 2>&1 &`**)
+2. Rebuild + relaunch: `npm run start:debug > /dev/null 2>&1 &` (**must include `> /dev/null 2>&1 &` and nothing else prepending or appending this command**)
 3. Wait 3-5 seconds for Electron to start.
 4. Verify port 9222 is responding: `curl -s http://127.0.0.1:9222/json/version`
 4. If MCP tool still fails (returns "No Electron applications found" or "Not connected" despite port 9222 being up), the MCP server was killed and needs reload: ask the user to restart from their harness.
