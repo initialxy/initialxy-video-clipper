@@ -48,6 +48,7 @@ function AppContent() {
 
   const handleDrop = useCallback(
     async (filePath: string) => {
+      dispatch({ type: 'SET_SAVED_TIME', payload: 0 });
       const info = await window.electronAPI.getVideoInfo(filePath);
       dispatch({
         type: 'SET_VIDEO',
@@ -354,6 +355,7 @@ function App() {
   // Dev-mode debug hooks: __loadVideo, __setVideoTime, __getVideoTime, __seekAndWait
   useEffect(() => {
     (window as unknown as Record<string, unknown>).__loadVideo = async (filePath: string) => {
+      dispatch({ type: 'SET_SAVED_TIME', payload: 0 });
       const info = await window.electronAPI.getVideoInfo(filePath);
       dispatch({
         type: 'SET_VIDEO',

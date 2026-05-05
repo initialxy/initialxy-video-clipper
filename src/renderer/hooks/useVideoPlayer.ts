@@ -13,22 +13,18 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
   const pendingSeekTimeRef = useRef<number | null>(null);
   const isWaitingForSeekedRef = useRef(false);
 
-  useEffect(() => {
-    savedTimeRef.current = savedTime;
-  }, [savedTime]);
+  // Update ref synchronously during render so it's available when
+  // loadedmetadata fires synchronously during video.load()
+  // eslint-disable-next-line react-hooks/refs
+  savedTimeRef.current = savedTime;
 
   const videoPath = filePath || currentVideo?.path;
   const duration = currentVideo?.duration ?? 0;
 
   // Load video when path changes
-  const prevVideoPathRef = useRef<string | null>(null);
-
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !videoPath) return;
-
-    const isNewVideo = prevVideoPathRef.current !== videoPath;
-    prevVideoPathRef.current = videoPath;
 
     const onLoadedMetadata = () => {
       const restoreTime =
@@ -62,10 +58,6 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
     video.src = `file://${videoPath}`;
     video.load();
     setIsPlaying(false);
-
-    if (isNewVideo) {
-      savedTimeRef.current = 0;
-    }
 
     return () => {
       video.removeEventListener('loadedmetadata', onLoadedMetadata);
