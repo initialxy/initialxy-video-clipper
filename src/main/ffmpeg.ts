@@ -5,7 +5,10 @@
 
 /**
  * Build a clip command using stream copy (no re-encode).
- * ffmpeg -ss <START> -i <INPUT> -t <DURATION> -c copy -avoid_negative_ts make_zero <OUTPUT>
+ * ffmpeg -i <INPUT> -ss <START> -t <DURATION> -c copy -avoid_negative_ts make_zero <OUTPUT>
+ *
+ * -ss AFTER -i for frame-accurate seeking (decodes from beginning but lands on exact position).
+ * -ss BEFORE -i would seek to nearest keyframe (fast but inaccurate, can be off by up to one GOP).
  */
 export function buildClipCommand(
   input: string,
@@ -15,10 +18,10 @@ export function buildClipCommand(
 ): string[] {
   return [
     'ffmpeg',
-    '-ss',
-    String(start),
     '-i',
     input,
+    '-ss',
+    String(start),
     '-t',
     String(duration),
     '-c',
