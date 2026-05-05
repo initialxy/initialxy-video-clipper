@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Button } from '@renderer/components/ui/button';
+import { Textarea } from '@renderer/components/ui/textarea';
 
 interface CaptionEditorProps {
   caption: string;
@@ -21,22 +23,24 @@ export function CaptionEditor({ caption, onChange, label }: CaptionEditorProps) 
   if (isExpanded) {
     return (
       <div className="border-border/50 bg-muted/20 relative rounded-lg border">
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={handleCollapse}
-          className="text-muted-foreground hover:text-foreground absolute top-2 right-2 rounded-md p-1"
+          className="absolute top-2 right-2"
           title="Collapse"
         >
           <ChevronDown className="h-4 w-4" />
-        </button>
+        </Button>
         {label && (
           <div className="border-border/50 border-b px-4 py-2">
             <span className="text-muted-foreground text-sm font-medium">{label}</span>
           </div>
         )}
-        <textarea
+        <Textarea
           value={caption}
           onChange={(e) => onChange(e.target.value)}
-          className="text-foreground min-h-[200px] w-full resize-none bg-transparent p-4 text-sm outline-none"
+          className="min-h-[200px] resize-none"
           placeholder="Enter caption text..."
         />
       </div>
@@ -45,22 +49,24 @@ export function CaptionEditor({ caption, onChange, label }: CaptionEditorProps) 
 
   return (
     <div className="border-border/50 bg-muted/20 relative rounded-lg border">
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={handleExpand}
-        className="text-muted-foreground hover:text-foreground absolute top-2 right-2 rounded-md p-1"
+        className="absolute top-2 right-2"
         title="Expand"
       >
         <ChevronUp className="h-4 w-4" />
-      </button>
+      </Button>
       {label && (
         <div className="border-border/50 border-b px-4 py-2">
           <span className="text-muted-foreground text-sm font-medium">{label}</span>
         </div>
       )}
-      <textarea
+      <Textarea
         value={caption}
         onChange={(e) => onChange(e.target.value)}
-        className="text-foreground max-h-[200px] min-h-[100px] w-full resize-none bg-transparent p-4 text-sm outline-none"
+        className="max-h-[200px] min-h-[100px] resize-none"
         placeholder="Enter caption text..."
       />
     </div>

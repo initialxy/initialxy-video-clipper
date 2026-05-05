@@ -1,7 +1,6 @@
 import { X } from 'lucide-react';
 import { useAppState } from '@renderer/store/app-state';
 import { useAppDispatch } from '@renderer/store/app-state';
-import { cn } from '@renderer/lib/utils';
 import { useConvertSettings } from '@renderer/hooks/useConvertSettings';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@renderer/components/ui/sheet';
 import {
@@ -11,6 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@renderer/components/ui/select';
+import { Input } from '@renderer/components/ui/input';
+import { Button } from '@renderer/components/ui/button';
+import { Label } from '@renderer/components/ui/label';
 
 interface BulkConvertDrawerProps {
   onClose: () => void;
@@ -56,9 +58,6 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
     }
   };
 
-  const inputBase =
-    'w-full rounded-md border bg-transparent h-9 px-3 text-sm outline-none placeholder:text-muted-foreground/50';
-
   return (
     <Sheet
       open={isConvertDrawerOpen}
@@ -75,16 +74,12 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
         </SheetHeader>
 
         {/* Settings */}
-        <div className="flex-1 space-y-5 overflow-y-auto px-4">
+        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
           {/* Codec */}
-          <div>
-            <div className="mb-1.5">
-              <label className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
-                Codec
-              </label>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="codec">Codec</Label>
             <Select value={codec} onValueChange={(v) => setCodec(v || '')}>
-              <SelectTrigger className="!h-9 w-full">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Same as source" />
               </SelectTrigger>
               <SelectContent>
@@ -98,26 +93,26 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
           </div>
 
           {/* Resolution */}
-          <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <label className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
-                Resolution
-              </label>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="resolution">Resolution</Label>
               {width || height ? (
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
                   onClick={() => {
                     setWidth(0);
                     setHeight(0);
                   }}
-                  className="text-muted-foreground/40 hover:text-foreground transition-colors"
                   title="Reset to same as source"
                 >
                   <X className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               ) : null}
             </div>
             <div className="flex items-center gap-2">
-              <input
+              <Input
+                id="width"
                 type="number"
                 placeholder="W"
                 value={width ? width : ''}
@@ -125,10 +120,10 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
                   const v = parseInt(e.target.value, 10);
                   setWidth(isNaN(v) ? 0 : v);
                 }}
-                className={inputBase}
               />
-              <span className="text-muted-foreground/40 mx-1 text-sm">×</span>
-              <input
+              <span className="text-muted-foreground/40 text-xs">×</span>
+              <Input
+                id="height"
                 type="number"
                 placeholder="H"
                 value={height ? height : ''}
@@ -136,58 +131,55 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
                   const v = parseInt(e.target.value, 10);
                   setHeight(isNaN(v) ? 0 : v);
                 }}
-                className={inputBase}
               />
             </div>
           </div>
 
           {/* FPS */}
-          <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <label className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
-                Frame Rate
-              </label>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="fps">Frame Rate</Label>
               {fps > 0 && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
                   onClick={() => setFps(0)}
-                  className="text-muted-foreground/40 hover:text-foreground transition-colors"
                   title="Reset to same as source"
                 >
                   <X className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               )}
             </div>
-            <input
+            <Input
+              id="fps"
               type="number"
               placeholder="Same as source"
               value={fps > 0 ? fps : ''}
               onChange={(e) => setFps(parseInt(e.target.value) || 0)}
-              className={inputBase}
             />
           </div>
 
           {/* Bitrate */}
-          <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <label className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
-                Bitrate
-              </label>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="bitrate">Bitrate</Label>
               {bitrate && (
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
                   onClick={() => setBitrate('')}
-                  className="text-muted-foreground/40 hover:text-foreground transition-colors"
                   title="Reset to same as source"
                 >
                   <X className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               )}
             </div>
-            <input
+            <Input
+              id="bitrate"
               type="text"
               placeholder="e.g. 5000k, 10M"
               value={bitrate}
               onChange={(e) => setBitrate(e.target.value)}
-              className={inputBase}
             />
           </div>
 
@@ -209,24 +201,16 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
 
         {/* Footer */}
         <div className="border-border/50 space-y-2 border-t p-4">
-          <button
+          <Button
             onClick={handleConvert}
             disabled={selectedFiles.size === 0 || isConverting}
-            className={cn(
-              'w-full rounded-md py-2 text-sm font-medium transition-colors',
-              selectedFiles.size > 0 && !isConverting
-                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                : 'bg-muted/50 text-muted-foreground cursor-not-allowed',
-            )}
+            className="w-full"
           >
             {isConverting ? 'Converting...' : `Convert ${selectedFiles.size} files`}
-          </button>
-          <button
-            onClick={reset}
-            className="text-muted-foreground hover:text-foreground hover:bg-muted/50 w-full rounded-md py-2 text-sm transition-colors"
-          >
+          </Button>
+          <Button onClick={reset} variant="outline" className="w-full">
             Reset All
-          </button>
+          </Button>
         </div>
       </SheetContent>
     </Sheet>

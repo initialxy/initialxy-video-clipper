@@ -12,7 +12,8 @@ import {
 import { Video, Images } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs';
 import { useAppState, useAppDispatch, type ActiveTab } from '@renderer/store/app-state';
-import { cn } from '@renderer/lib/utils';
+import { Button } from '@renderer/components/ui/button';
+import { Input } from '@renderer/components/ui/input';
 
 const CLIP_LENGTH_KEY = 'clip_length';
 
@@ -104,19 +105,15 @@ export function TopBar({
       <div className="flex items-center gap-2">
         {activeTab === 'video' && (
           <>
-            <button
-              onClick={handleOpenFile}
-              className="text-muted-foreground hover:text-foreground hover:bg-muted/50 flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors"
-              title="Open File"
-            >
+            <Button onClick={handleOpenFile} variant="ghost" size="sm" title="Open File">
               <FolderOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Open</span>
-            </button>
+            </Button>
 
             {/* Clip length input */}
             <div className="border-border/50 bg-muted/30 flex items-center gap-1.5 rounded-md border px-2 py-1">
               <RulerDimensionLine className="text-muted-foreground h-4 w-4" />
-              <input
+              <Input
                 type="number"
                 step="0.1"
                 min="0.1"
@@ -127,71 +124,44 @@ export function TopBar({
               <span className="text-muted-foreground text-sm">s</span>
             </div>
 
-            <button
-              onClick={onClip}
-              disabled={!currentVideo}
-              className={cn(
-                'flex items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
-                currentVideo
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : 'bg-muted/50 text-muted-foreground cursor-not-allowed',
-              )}
-              title="Save Clip (C)"
-            >
+            <Button onClick={onClip} disabled={!currentVideo} title="Save Clip (C)">
               <Scissors className="h-4 w-4" />
               <span>Clip</span>
-            </button>
+            </Button>
           </>
         )}
 
         {activeTab === 'gallery' && (
           <>
-            <button
-              onClick={onToggleSelectAll}
-              className="text-muted-foreground hover:text-foreground hover:bg-muted/50 flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors"
-            >
+            <Button onClick={onToggleSelectAll} variant="ghost" size="sm">
               {isAllSelected ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
               <span className="hidden sm:inline">
                 {isAllSelected ? 'Deselect All' : 'Select All'}
               </span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={onBulkDelete}
+              variant="destructive"
               disabled={selectedFilesCount === 0}
-              className={cn(
-                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                selectedFilesCount > 0
-                  ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
-                  : 'bg-muted/50 text-muted-foreground cursor-not-allowed',
-              )}
               title="Delete Selected"
             >
               <Trash2 className="h-4 w-4" />
               <span className="hidden sm:inline">Delete</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={onOpenBulkConvert}
+              variant="default"
               disabled={selectedFilesCount === 0}
-              className={cn(
-                'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors',
-                selectedFilesCount > 0
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : 'bg-muted/50 text-muted-foreground cursor-not-allowed',
-              )}
             >
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">Convert</span>
-            </button>
+            </Button>
 
-            <button
-              onClick={onRefreshGallery}
-              className="text-muted-foreground hover:text-foreground hover:bg-muted/50 flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors"
-              title="Refresh Gallery"
-            >
+            <Button onClick={onRefreshGallery} variant="ghost" size="icon" title="Refresh Gallery">
               <RefreshCw className="h-4 w-4" />
-            </button>
+            </Button>
           </>
         )}
       </div>

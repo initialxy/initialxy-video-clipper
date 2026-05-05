@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 import type { Toast as ToastType } from '@renderer/hooks/useToast';
 import { cn } from '@renderer/lib/utils';
+import { Button } from '@renderer/components/ui/button';
 
 interface ToastProps {
   toast: ToastType;
@@ -42,31 +43,48 @@ export function Toast({ toast, onDismiss }: ToastProps) {
       <Icon className="mt-0.5 h-4 w-4 shrink-0" />
       <div className="flex-1 text-sm">{toast.message}</div>
       {toast.action && (
-        <button
+        <Button
           onClick={() => {
             toast.action?.handler();
             onDismiss(toast.id);
           }}
-          className={cn(
-            'shrink-0 rounded-md px-2 py-1 text-xs font-medium transition-colors',
-            toast.type === 'success'
-              ? 'bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30'
-              : toast.type === 'error'
-                ? 'bg-red-500/20 text-red-200 hover:bg-red-500/30'
-                : toast.type === 'warning'
-                  ? 'bg-amber-500/20 text-amber-200 hover:bg-amber-500/30'
-                  : 'bg-blue-500/20 text-blue-200 hover:bg-blue-500/30',
-          )}
+          className="shrink-0"
+          style={{
+            background:
+              toast.type === 'success'
+                ? 'rgba(16, 185, 129, 0.2)'
+                : toast.type === 'error'
+                  ? 'rgba(239, 68, 68, 0.2)'
+                  : toast.type === 'warning'
+                    ? 'rgba(245, 158, 11, 0.2)'
+                    : 'rgba(59, 130, 246, 0.2)',
+            color:
+              toast.type === 'success'
+                ? '#a7f3d0'
+                : toast.type === 'error'
+                  ? '#fca5a5'
+                  : toast.type === 'warning'
+                    ? '#fcd34d'
+                    : '#93c5fd',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = '0.8';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = '1';
+          }}
         >
           {toast.action.label}
-        </button>
+        </Button>
       )}
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={() => onDismiss(toast.id)}
         className="shrink-0 opacity-60 transition-opacity hover:opacity-100"
       >
         <X className="h-3.5 w-3.5" />
-      </button>
+      </Button>
     </div>
   );
 }

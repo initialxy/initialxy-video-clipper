@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { useCaption } from '@renderer/hooks/useCaption';
 import { CaptionEditor } from './CaptionEditor';
+import { Button } from '@renderer/components/ui/button';
 
 interface ExpandedPlayerProps {
   filePath: string;
@@ -45,13 +46,15 @@ export function ExpandedPlayer({ filePath, onClose }: ExpandedPlayerProps) {
             autoPlay
             playsInline
           />
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            className="text-muted-foreground/80 hover:text-foreground hover:bg-muted/50 absolute top-2 right-2 rounded-md p-1.5 transition-colors"
+            className="absolute top-2 right-2"
             title="Close (Escape)"
           >
             <X className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
       </div>
 

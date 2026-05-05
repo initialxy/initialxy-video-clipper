@@ -12,6 +12,15 @@ import { ExpandedPlayer } from '@renderer/components/ExpandedPlayer';
 import { BulkConvertDrawer } from '@renderer/components/BulkConvertDrawer';
 import { DeleteConfirmModal } from '@renderer/components/DeleteConfirmModal';
 import { Toaster } from '@renderer/components/ui/sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@renderer/components/ui/dialog';
+import { Button } from '@renderer/components/ui/button';
 import { cn } from '@renderer/lib/utils';
 
 function AppContent() {
@@ -292,30 +301,26 @@ function AppContent() {
 
       {/* Bulk Delete Confirmation Modal */}
       {bulkDeleteCount !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-          <div className="border-border/50 bg-background w-full max-w-sm rounded-xl border p-6 shadow-2xl">
-            <h2 className="text-foreground text-lg font-semibold">Delete Clips</h2>
-            <p className="text-muted-foreground mt-2 text-sm">
-              Are you sure you want to delete{' '}
-              <span className="text-foreground font-medium">{bulkDeleteCount} file(s)</span>? This
-              will also remove their caption files.
-            </p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => setBulkDeleteCount(null)}
-                className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md px-4 py-2 text-sm font-medium transition-colors"
-              >
+        <Dialog open={true} onOpenChange={(open) => !open && setBulkDeleteCount(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Delete Clips</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete{' '}
+                <span className="text-foreground font-medium">{bulkDeleteCount} file(s)</span>? This
+                will also remove their caption files.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setBulkDeleteCount(null)}>
                 Cancel
-              </button>
-              <button
-                onClick={handleBulkDeleteConfirm}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-md px-4 py-2 text-sm font-medium transition-colors"
-              >
+              </Button>
+              <Button variant="destructive" onClick={handleBulkDeleteConfirm}>
                 Delete
-              </button>
-            </div>
-          </div>
-        </div>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
 
       <Toaster

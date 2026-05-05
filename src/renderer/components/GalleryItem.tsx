@@ -3,6 +3,7 @@ import { Trash2, CheckSquare, Square } from 'lucide-react';
 import { cn } from '@renderer/lib/utils';
 import { CaptionOverlay } from './CaptionOverlay';
 import { useAppState } from '@renderer/store/app-state';
+import { Button } from '@renderer/components/ui/button';
 
 interface GalleryItemProps {
   file: { path: string; name: string; size: number; modified: string };
@@ -64,26 +65,30 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
     >
       {/* Delete button */}
       {isHovered && (
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
           }}
-          className="bg-background/80 hover:bg-background absolute top-3 right-3 z-10 rounded-md p-2 text-red-400 opacity-0 transition-opacity group-hover:opacity-100"
+          className="bg-background/80 hover:bg-background absolute top-3 right-3 z-10 text-red-400 opacity-0 transition-opacity group-hover:opacity-100"
           title="Delete clip"
         >
           <Trash2 className="h-5 w-5" />
-        </button>
+        </Button>
       )}
 
       {/* Selection checkbox */}
       {isHovered && (
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={(e) => {
             e.stopPropagation();
             onToggleSelect();
           }}
-          className="bg-background/80 hover:bg-background absolute top-3 left-3 z-10 rounded-md p-2 opacity-0 transition-opacity group-hover:opacity-100"
+          className="bg-background/80 hover:bg-background absolute top-3 left-3 z-10 opacity-0 transition-opacity group-hover:opacity-100"
           title={isSelected ? 'Deselect' : 'Select'}
         >
           {isSelected ? (
@@ -91,7 +96,7 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
           ) : (
             <Square className="h-5 w-5" />
           )}
-        </button>
+        </Button>
       )}
 
       {/* Thumbnail covering whole cell */}

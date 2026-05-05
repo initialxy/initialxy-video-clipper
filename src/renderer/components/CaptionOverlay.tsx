@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, type MouseEvent, type ChangeEvent } from 'react';
+import { Textarea } from '@renderer/components/ui/textarea';
 
 interface CaptionOverlayProps {
   caption: string;
@@ -71,13 +72,13 @@ export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps
   if (isEditing) {
     return (
       <div className="h-full w-full bg-black/70" onBlur={handleUnmount}>
-        <textarea
+        <Textarea
           ref={textareaRef}
           value={editText}
           onChange={handleChange}
           onBlur={handleBlur}
           autoFocus
-          className="text-foreground h-full w-full resize-none bg-transparent p-3 text-sm leading-relaxed outline-none"
+          className="h-full w-full resize-none bg-transparent p-3 text-sm leading-relaxed outline-none"
           placeholder="Enter caption..."
         />
       </div>

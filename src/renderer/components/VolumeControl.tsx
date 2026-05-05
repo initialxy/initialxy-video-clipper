@@ -1,6 +1,8 @@
-import { useState, useCallback, useRef, type ChangeEvent, type MouseEvent } from 'react';
+import { useState, useCallback, useRef, type MouseEvent } from 'react';
 import { Volume2, VolumeX, Volume1 } from 'lucide-react';
 import { cn } from '@renderer/lib/utils';
+import { Button } from '@renderer/components/ui/button';
+import { Slider } from '@renderer/components/ui/slider';
 
 interface VolumeControlProps {
   isMuted: boolean;
@@ -16,8 +18,8 @@ export function VolumeControl({ isMuted, toggleMute, setVolumeLevel }: VolumeCon
   const effectiveVolume = isMuted ? 0 : volume;
 
   const handleVolumeChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      const vol = parseFloat(e.target.value);
+    (_value: number | readonly number[]) => {
+      const vol = Array.isArray(_value) ? _value[0] : _value;
       setVolume(vol);
       setVolumeLevel(vol);
     },
@@ -56,26 +58,26 @@ export function VolumeControl({ isMuted, toggleMute, setVolumeLevel }: VolumeCon
           showSlider && 'outline-border pt-3 outline',
         )}
       >
-        <input
-          type="range"
+        <Slider
+          value={[effectiveVolume]}
           min={0}
           max={1}
           step={0.01}
-          value={effectiveVolume}
-          onChange={handleVolumeChange}
-          className="vertical-slider"
-          style={{
-            height: showSlider ? '80px' : '0px',
-            overflow: showSlider ? 'visible' : 'hidden',
-          }}
+          onValueChange={handleVolumeChange}
+          className={cn(
+            'data-vertical:h-full data-vertical:w-auto data-vertical:flex-col',
+            showSlider ? 'h-20' : 'h-0',
+          )}
+          style={{ overflow: showSlider ? 'visible' : 'hidden' }}
         />
-        <button
+        <Button
           onClick={handleToggleMute}
-          className="text-foreground hover:bg-muted/50 rounded-md p-2 transition-colors"
+          variant="ghost"
+          size="icon"
           title={isMuted ? 'Unmute (M)' : 'Mute (M)'}
         >
           <VolumeIcon className="h-5 w-5" />
-        </button>
+        </Button>
       </div>
     </div>
   );

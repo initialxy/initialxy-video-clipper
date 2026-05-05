@@ -5,6 +5,8 @@ import { VolumeControl } from './VolumeControl';
 import { formatTime } from '@shared/utils';
 import { cn } from '@renderer/lib/utils';
 import { useAppState, useAppDispatch } from '@renderer/store/app-state';
+import { Button } from '@renderer/components/ui/button';
+import { Slider } from '@renderer/components/ui/slider';
 
 interface VideoPlayerProps {
   className?: string;
@@ -60,42 +62,47 @@ export function VideoPlayer({ className, onClose, currentTimeRef }: VideoPlayerP
           playsInline
         />
         {onClose && (
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={(e) => {
               e.stopPropagation();
               onClose();
             }}
-            className="text-muted-foreground/80 hover:text-foreground hover:bg-muted/50 absolute top-2 right-2 rounded-md p-1.5 transition-colors"
             title="Remove video"
+            className="absolute top-2 right-2"
           >
             <X className="h-4 w-4" />
-          </button>
+          </Button>
         )}
       </div>
 
       {/* Controls bar */}
       <div className="mt-3 flex items-center gap-3 px-1">
         {/* Play/Pause */}
-        <button
+        <Button
           onClick={togglePlay}
-          className="text-foreground hover:bg-muted/50 rounded-md p-2 transition-colors"
+          variant="ghost"
+          size="icon"
           title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
         >
           {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-        </button>
+        </Button>
 
         {/* Volume */}
         <VolumeControl isMuted={isMuted} toggleMute={toggleMute} setVolumeLevel={setVolumeLevel} />
 
         {/* Seek slider */}
-        <input
-          type="range"
+        <Slider
+          value={[currentTime]}
           min={0}
           max={duration || 1}
           step={0.01}
-          value={currentTime}
-          onChange={(e) => seek(parseFloat(e.target.value))}
-          className="accent-primary h-1 flex-1 pl-2"
+          onValueChange={(value) => {
+            const val = Array.isArray(value) ? value[0] : value;
+            seek(val);
+          }}
+          className="flex-1"
         />
 
         {/* Time display */}
