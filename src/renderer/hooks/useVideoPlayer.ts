@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { debounce } from '@shared/utils';
 import { useAppState } from '@renderer/store/app-state';
 
 export function useVideoPlayer(savedTime?: number, filePath?: string) {
@@ -11,10 +12,17 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
   const isSeekingRef = useRef(false);
   const isPlayingStateRef = useRef(false);
   const savedTimeRef = useRef(savedTime);
+  const resetSeekingRef = useRef<ReturnType<typeof debounce> | null>(null);
 
   useEffect(() => {
     savedTimeRef.current = savedTime;
   }, [savedTime]);
+
+  useEffect(() => {
+    resetSeekingRef.current = debounce(() => {
+      isSeekingRef.current = false;
+    }, 200);
+  }, []);
 
   const videoPath = filePath || currentVideo?.path;
   const duration = currentVideo?.duration ?? 0;
@@ -123,10 +131,7 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
       isSeekingRef.current = true;
       video.currentTime = Math.max(0, Math.min(time, duration));
       setCurrentTime(video.currentTime);
-      // Reset seeking flag after a short delay to allow timeupdate to fire
-      setTimeout(() => {
-        isSeekingRef.current = false;
-      }, 100);
+      resetSeekingRef.current?.();
     },
     [duration],
   );
@@ -180,10 +185,11 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [togglePlay, toggleMute]);
 
-  // Cleanup animation frame on unmount
+  // Cleanup animation frame and debounced seeking on unmount
   useEffect(() => {
     return () => {
       stopAnimationLoop();
+      resetSeekingRef.current?.cancel();
     };
   }, [stopAnimationLoop]);
 

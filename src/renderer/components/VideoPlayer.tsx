@@ -64,7 +64,7 @@ export function VideoPlayer({ className, onClose, currentTimeRef, filePath }: Vi
       <div className="relative flex min-h-0 flex-1 items-center justify-center bg-black">
         <video
           ref={videoRef}
-          className="max-h-full max-w-full object-contain"
+          className="h-full w-full object-contain"
           onClick={togglePlay}
           onTimeUpdate={onTimeUpdate}
           onPlay={onPlay}
