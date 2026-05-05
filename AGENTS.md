@@ -44,26 +44,26 @@ video-clipper/
 │   │   ├── index.tsx           # Renderer entry point
 │   │   ├── App.tsx             # Root component with tab routing
 │   │   ├── components/
- │   │   │   ├── TopBar.tsx              # Tab bar (left) + action buttons (right) + drag-drop
- │   │   │   ├── VideoPlayer.tsx         # Main video player with inline playback controls
- │   │   │   ├── VolumeControl.tsx       # Mute button + volume slider
- │   │   │   ├── GalleryView.tsx         # Grid of clipped videos with thumbnails
- │   │   │   ├── GalleryItem.tsx         # Single gallery card (thumb + caption overlay)
- │   │   │   ├── ExpandedPlayer.tsx      # Full-screen video player for gallery items
- │   │   │   ├── CaptionEditor.tsx       # Text area with debounced autosave
- │   │   │   ├── CaptionOverlay.tsx      # Inline caption overlay for gallery grid cells
- │   │   │   ├── BulkConvertDrawer.tsx   # Slide-out drawer for bulk conversion settings
- │   │   │   ├── Toast.tsx               # Toast notification system
- │   │   │   └── DeleteConfirmModal.tsx  # Confirmation modal for clip deletion
- │   │   ├── components/ui/              # shadcn/ui components (all Base UI primitives)
- │   │   │   ├── button.tsx              # Button (default, outline, secondary, ghost, destructive, link)
- │   │   │   ├── select.tsx              # Select dropdown
+│   │   │   ├── TopBar.tsx              # Tab bar (left) + action buttons (right) + drag-drop
+│   │   │   ├── VideoPlayer.tsx         # Main video player with inline playback controls
+│   │   │   ├── VolumeControl.tsx       # Mute button + volume slider
+│   │   │   ├── GalleryView.tsx         # Grid of clipped videos with thumbnails
+│   │   │   ├── GalleryItem.tsx         # Single gallery card (thumb + caption overlay)
+│   │   │   ├── ExpandedPlayer.tsx      # Full-screen video player for gallery items
+│   │   │   ├── CaptionEditor.tsx       # Text area with debounced autosave
+│   │   │   ├── CaptionOverlay.tsx      # Inline caption overlay for gallery grid cells
+│   │   │   ├── BulkConvertDrawer.tsx   # Slide-out drawer for bulk conversion settings
+│   │   │   ├── Toast.tsx               # Toast notification system
+│   │   │   └── DeleteConfirmModal.tsx  # Confirmation modal for clip deletion
+│   │   ├── components/ui/              # shadcn/ui components (all Base UI primitives)
+│   │   │   ├── button.tsx              # Button (default, outline, secondary, ghost, destructive, link)
+│   │   │   ├── select.tsx              # Select dropdown
 │   │   │   ├── sheet.tsx               # Sheet (Base UI dialog, confirmation modals)
-  │   │   │   ├── drawer.tsx              # Drawer (vaul, BulkConvertDrawer side pane)
- │   │   │   ├── tabs.tsx                # Tabs
- │   │   │   ├── sonner.tsx              # Toast notifications
- │   │   │   ├── input.tsx               # Text input
- │   │   │   ├── textarea.tsx            # Multi-line text input
+│   │   │   ├── drawer.tsx              # Drawer (vaul, BulkConvertDrawer side pane)
+│   │   │   ├── tabs.tsx                # Tabs
+│   │   │   ├── sonner.tsx              # Toast notifications
+│   │   │   ├── input.tsx               # Text input
+│   │   │   ├── textarea.tsx            # Multi-line text input
 │   │   │   ├── slider.tsx              # Range slider
 │   │   │   ├── dialog.tsx              # Modal dialog
 │   │   │   ├── progress.tsx            # Progress indicator
@@ -160,7 +160,7 @@ ipcMain.handle('clip:create', async (_event, payload) => {
 **ffmpeg.ts** is a pure command builder — no child_process calls:
 ```typescript
 export function buildClipCommand(input: string, output: string, start: number, duration: number): string[] {
-  return ['ffmpeg', '-ss', String(start), '-i', input, '-t', String(duration), '-c', 'copy', '-avoid_negative_ts', 'make_zero', output];
+  return ['ffmpeg', '-ss', String(start), '-i', input, '-t', String(duration), output];
 }
 ```
 
@@ -360,12 +360,9 @@ The `ElectronAPI` interface is declared in `src/env.d.ts` and derives its payloa
 
 **Clipping (stream copy ONLY — no re-encode ever):**
 ```bash
-ffmpeg -ss <START> -i <INPUT> -t <DURATION> -c copy -avoid_negative_ts make_zero <OUTPUT>
+ffmpeg -i <INPUT> -ss <START> -t <DURATION> <OUTPUT>
 ```
-- `-ss` before `-i` for fast seeking (may not be frame-exact).
-- Use `-c copy` to preserve codec, bitrate, resolution, framerate, audio.
-- `-avoid_negative_ts make_zero` prevents timestamp issues.
-- **CRITICAL**: Clip mode must NEVER re-encode. Cut at nearest keyframe boundary. Preserving original encoding is paramount.
+- `-ss` after `-i` for accurate seeking.
 
 **Bulk conversion (each param is optional — omit if "Same as source"):**
 ```bash

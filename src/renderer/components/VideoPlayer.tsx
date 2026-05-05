@@ -12,10 +12,19 @@ interface VideoPlayerProps {
   className?: string;
   onClose?: () => void;
   currentTimeRef?: MutableRefObject<number>;
+  togglePlayRef?: MutableRefObject<(() => void) | undefined>;
+  autoPlay?: boolean;
   filePath?: string;
 }
 
-export function VideoPlayer({ className, onClose, currentTimeRef, filePath }: VideoPlayerProps) {
+export function VideoPlayer({
+  className,
+  onClose,
+  currentTimeRef,
+  togglePlayRef,
+  autoPlay,
+  filePath,
+}: VideoPlayerProps) {
   const { currentVideo } = useAppState();
   const dispatch = useAppDispatch();
   const lastDispatchedTime = useRef(0);
@@ -23,7 +32,7 @@ export function VideoPlayer({ className, onClose, currentTimeRef, filePath }: Vi
   const videoPath = filePath || currentVideo?.path;
   const isGlobalMode = !filePath;
 
-  const player = useVideoPlayer(videoPath, { useGlobalState: isGlobalMode });
+  const player = useVideoPlayer(videoPath, { useGlobalState: isGlobalMode, autoPlay });
   const {
     videoRef,
     currentTime,
@@ -44,6 +53,12 @@ export function VideoPlayer({ className, onClose, currentTimeRef, filePath }: Vi
       currentTimeRef.current = currentTime;
     }
   }, [currentTime, currentTimeRef]);
+
+  useEffect(() => {
+    if (togglePlayRef) {
+      togglePlayRef.current = togglePlay;
+    }
+  }, [togglePlay, togglePlayRef]);
 
   useEffect(() => {
     if (!isGlobalMode) return;

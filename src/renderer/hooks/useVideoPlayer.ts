@@ -3,6 +3,7 @@ import { useAppState } from '@renderer/store/app-state';
 
 interface UseVideoPlayerOptions {
   useGlobalState?: boolean;
+  autoPlay?: boolean;
 }
 
 export function useVideoPlayer(filePath?: string, options?: UseVideoPlayerOptions) {
@@ -39,6 +40,9 @@ export function useVideoPlayer(filePath?: string, options?: UseVideoPlayerOption
       } else {
         setPlayerTime(0);
         video.currentTime = 0;
+        if (options?.autoPlay) {
+          video.play().catch(() => {});
+        }
       }
     };
 
