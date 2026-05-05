@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAppState } from '@renderer/store/app-state';
 
-export function useVideoPlayer(savedTime?: number) {
+export function useVideoPlayer(savedTime?: number, filePath?: string) {
   const { currentVideo } = useAppState();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [currentTime, setCurrentTime] = useState(0);
@@ -16,6 +16,7 @@ export function useVideoPlayer(savedTime?: number) {
     savedTimeRef.current = savedTime;
   }, [savedTime]);
 
+  const videoPath = filePath || currentVideo?.path;
   const duration = currentVideo?.duration ?? 0;
 
   // Load video when path changes
@@ -23,10 +24,10 @@ export function useVideoPlayer(savedTime?: number) {
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !currentVideo) return;
+    if (!video || !videoPath) return;
 
-    const isNewVideo = prevVideoPathRef.current !== currentVideo.path;
-    prevVideoPathRef.current = currentVideo.path;
+    const isNewVideo = prevVideoPathRef.current !== videoPath;
+    prevVideoPathRef.current = videoPath;
 
     const onLoadedMetadata = () => {
       const restoreTime =
@@ -46,7 +47,7 @@ export function useVideoPlayer(savedTime?: number) {
     video.addEventListener('loadedmetadata', onLoadedMetadata);
     video.addEventListener('timeupdate', onTimeUpdatePlayback);
 
-    video.src = `file://${currentVideo.path}`;
+    video.src = `file://${videoPath}`;
     video.load();
     setIsPlaying(false);
 
@@ -58,7 +59,7 @@ export function useVideoPlayer(savedTime?: number) {
       video.removeEventListener('loadedmetadata', onLoadedMetadata);
       video.removeEventListener('timeupdate', onTimeUpdatePlayback);
     };
-  }, [currentVideo]);
+  }, [videoPath]);
 
   // Smooth time update using requestAnimationFrame during playback
   const updateTime = useCallback(() => {
