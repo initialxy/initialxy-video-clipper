@@ -47,7 +47,10 @@ export function VolumeControl({ isMuted, toggleMute, setVolumeLevel }: VolumeCon
   return (
     <div
       ref={containerRef}
-      className="relative flex h-9 w-9 flex-col items-center"
+      className={cn(
+        'relative flex h-8 w-8 flex-col items-center overflow-hidden',
+        showSlider && 'overflow-visible',
+      )}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -55,7 +58,7 @@ export function VolumeControl({ isMuted, toggleMute, setVolumeLevel }: VolumeCon
       <div
         className={cn(
           'bg-card absolute bottom-0 flex flex-col items-center rounded-lg',
-          showSlider && 'outline-border pt-3 outline',
+          showSlider && 'outline-border outline',
         )}
       >
         <Slider
@@ -65,11 +68,7 @@ export function VolumeControl({ isMuted, toggleMute, setVolumeLevel }: VolumeCon
           step={0.01}
           orientation="vertical"
           onValueChange={handleVolumeChange}
-          className={cn(
-            'data-vertical:h-full data-vertical:w-auto data-vertical:flex-col',
-            showSlider ? 'h-20' : 'h-0',
-            !showSlider && 'hidden',
-          )}
+          className="mx-auto mt-3 mb-2 w-full max-w-xs"
         />
         <Button
           onClick={handleToggleMute}
