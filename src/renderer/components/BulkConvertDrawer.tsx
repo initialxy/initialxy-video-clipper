@@ -57,7 +57,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
   };
 
   const inputBase =
-    'w-full rounded-md border bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/50';
+    'w-full rounded-md border bg-transparent h-9 px-3 text-sm outline-none placeholder:text-muted-foreground/50';
 
   return (
     <Sheet
@@ -75,7 +75,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
         </SheetHeader>
 
         {/* Settings */}
-        <div className="flex-1 space-y-5 overflow-y-auto px-4 py-5">
+        <div className="flex-1 space-y-5 overflow-y-auto px-4">
           {/* Codec */}
           <div>
             <div className="mb-1.5">
@@ -84,7 +84,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
               </label>
             </div>
             <Select value={codec} onValueChange={(v) => setCodec(v || '')}>
-              <SelectTrigger className="h-9 w-full">
+              <SelectTrigger className="!h-9 w-full">
                 <SelectValue placeholder="Same as source" />
               </SelectTrigger>
               <SelectContent>
