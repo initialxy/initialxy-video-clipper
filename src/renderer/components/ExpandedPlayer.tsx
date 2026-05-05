@@ -22,12 +22,14 @@ export function ExpandedPlayer({ filePath, onClose }: ExpandedPlayerProps) {
   }, [onClose]);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
-      {/* Video player - same component as video tab */}
-      <VideoPlayer filePath={filePath} onClose={onClose} />
+    <div className="flex min-h-0 flex-1 flex-col p-4">
+      {/* Video player - takes remaining vertical space */}
+      <VideoPlayer className="min-h-0 flex-1" filePath={filePath} onClose={onClose} />
 
-      {/* Caption editor below video */}
-      <CaptionEditor caption={caption} onChange={updateCaption} label="Caption" />
+      {/* Caption editor - fixed height */}
+      <div className="mt-4 shrink-0">
+        <CaptionEditor caption={caption} onChange={updateCaption} label="Caption" />
+      </div>
     </div>
   );
 }
