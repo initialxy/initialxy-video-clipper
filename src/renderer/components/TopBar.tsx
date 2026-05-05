@@ -89,14 +89,14 @@ export function TopBar({
     <div className="border-border/50 bg-background/80 flex items-center justify-between border-b px-4 py-2 backdrop-blur-sm">
       {/* Left: Tabs */}
       <Tabs value={activeTab} onValueChange={(v: string) => onTabChange(v as ActiveTab)}>
-        <TabsList className="h-8">
-          <TabsTrigger value="video" className="gap-1.5">
+        <TabsList>
+          <TabsTrigger value="video">
             <Video className="h-4 w-4" />
-            <span>Video</span>
+            Video
           </TabsTrigger>
-          <TabsTrigger value="gallery" className="gap-1.5">
+          <TabsTrigger value="gallery">
             <Images className="h-4 w-4" />
-            <span>Gallery</span>
+            Gallery
           </TabsTrigger>
         </TabsList>
       </Tabs>
