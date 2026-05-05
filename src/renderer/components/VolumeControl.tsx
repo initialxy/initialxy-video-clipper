@@ -1,6 +1,8 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useRef, type MouseEvent } from 'react';
 import { Volume2, VolumeX, Volume1 } from 'lucide-react';
+import { cn } from '@renderer/lib/utils';
 import { Button } from '@renderer/components/ui/button';
+import { Slider } from '@renderer/components/ui/slider';
 
 interface VolumeControlProps {
   isMuted: boolean;
@@ -9,88 +11,73 @@ interface VolumeControlProps {
 }
 
 export function VolumeControl({ isMuted, toggleMute, setVolumeLevel }: VolumeControlProps) {
+  const [showSlider, setShowSlider] = useState(false);
   const [volume, setVolume] = useState(1);
-  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const effectiveVolume = isMuted ? 0 : volume;
 
   const handleVolumeChange = useCallback(
-    (newVol: number) => {
-      const clamped = Math.max(0, Math.min(1, newVol));
-      setVolume(clamped);
-      setVolumeLevel(clamped);
+    (_value: number | readonly number[]) => {
+      const vol = Array.isArray(_value) ? _value[0] : _value;
+      setVolume(vol);
+      setVolumeLevel(vol);
     },
     [setVolumeLevel],
   );
 
-  const handleToggleMute = useCallback(() => {
-    toggleMute();
-  }, [toggleMute]);
-
-  const handleSliderInteraction = useCallback(
-    (clientY: number) => {
-      const slider = document.getElementById('volume-slider');
-      if (!slider) return;
-      const rect = slider.getBoundingClientRect();
-      const ratio = 1 - (clientY - rect.top) / rect.height;
-      handleVolumeChange(ratio);
+  const handleToggleMute = useCallback(
+    (e: MouseEvent) => {
+      e.stopPropagation();
+      toggleMute();
     },
-    [handleVolumeChange],
+    [toggleMute],
   );
 
-  const handleMouseDown = useCallback(
-    (e: { clientY: number; preventDefault: () => void }) => {
-      e.preventDefault();
-      setIsDragging(true);
-      handleSliderInteraction(e.clientY);
-    },
-    [handleSliderInteraction],
-  );
+  const handleMouseEnter = useCallback(() => {
+    setShowSlider(true);
+  }, []);
 
-  useEffect(() => {
-    if (!isDragging) return;
-
-    const handleMove = (e: MouseEvent) => {
-      handleSliderInteraction(e.clientY);
-    };
-    const handleUp = () => {
-      setIsDragging(false);
-    };
-
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseup', handleUp);
-    return () => {
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseup', handleUp);
-    };
-  }, [isDragging, handleSliderInteraction]);
+  const handleMouseLeave = useCallback(() => {
+    setShowSlider(false);
+  }, []);
 
   const VolumeIcon = isMuted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
 
   return (
-    <div className="flex items-center gap-1">
-      <Button
-        onClick={handleToggleMute}
-        variant="ghost"
-        size="icon"
-        title={isMuted ? 'Unmute (M)' : 'Mute (M)'}
-        className="h-8 w-8 shrink-0"
-      >
-        <VolumeIcon className="h-4 w-4" />
-      </Button>
+    <div
+      ref={containerRef}
+      className="relative flex h-9 w-9 flex-col items-center"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {/* Inner container — absolute, contains slider + icon */}
       <div
-        id="volume-slider"
-        className="bg-muted relative h-16 w-2 cursor-pointer rounded-full"
-        onMouseDown={handleMouseDown}
+        className={cn(
+          'bg-background absolute bottom-0 flex flex-col items-center',
+          showSlider && 'outline-border pt-3 outline',
+        )}
       >
-        <div
-          className="bg-primary absolute right-0 bottom-0 left-0 rounded-full"
-          style={{ height: `${effectiveVolume * 100}%` }}
+        <Slider
+          value={[effectiveVolume]}
+          min={0}
+          max={1}
+          step={0.01}
+          onValueChange={handleVolumeChange}
+          className={cn(
+            'data-vertical:h-full data-vertical:w-auto data-vertical:flex-col',
+            showSlider ? 'h-20' : 'h-0',
+          )}
+          style={{ overflow: showSlider ? 'visible' : 'hidden' }}
         />
-        <div
-          className="absolute left-1/2 h-3 w-3 -translate-x-1/2 rounded-full bg-white shadow-sm"
-          style={{ bottom: `calc(${effectiveVolume * 100}% - 6px)` }}
-        />
+        <Button
+          onClick={handleToggleMute}
+          variant="ghost"
+          size="icon"
+          title={isMuted ? 'Unmute (M)' : 'Mute (M)'}
+        >
+          <VolumeIcon className="h-5 w-5" />
+        </Button>
       </div>
     </div>
   );
