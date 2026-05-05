@@ -20,9 +20,6 @@ if (isDev) {
   app.commandLine.appendSwitch('remote-debugging-port', '9222');
 }
 
-// Disable GPU acceleration to avoid issues on some systems
-app.disableHardwareAcceleration();
-
 let mainWindow: BrowserWindowType | null = null;
 
 function createWindow(): void {
