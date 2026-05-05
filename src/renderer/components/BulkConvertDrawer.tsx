@@ -2,7 +2,14 @@ import { X } from 'lucide-react';
 import { useAppState } from '@renderer/store/app-state';
 import { useAppDispatch } from '@renderer/store/app-state';
 import { useConvertSettings } from '@renderer/hooks/useConvertSettings';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@renderer/components/ui/sheet';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+  DrawerClose,
+} from '@renderer/components/ui/drawer';
 import {
   Select,
   SelectContent,
@@ -59,7 +66,8 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
   };
 
   return (
-    <Sheet
+    <Drawer
+      direction="right"
       open={isConvertDrawerOpen}
       onOpenChange={(open: boolean) => {
         if (!open) {
@@ -68,10 +76,17 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
         }
       }}
     >
-      <SheetContent side="right" className="flex flex-col sm:w-[340px]">
-        <SheetHeader className="border-border/50 border-b px-4 pt-4 pb-3">
-          <SheetTitle className="text-base">Bulk Convert</SheetTitle>
-        </SheetHeader>
+      <DrawerContent className="flex flex-col sm:w-[340px]">
+        <DrawerHeader className="border-border/50 border-b px-4 pt-4 pb-3">
+          <div className="flex items-center justify-between">
+            <DrawerTitle className="text-base">Bulk Convert</DrawerTitle>
+            <DrawerClose>
+              <Button variant="ghost" size="icon-sm">
+                <X className="h-4 w-4" />
+              </Button>
+            </DrawerClose>
+          </div>
+        </DrawerHeader>
 
         {/* Settings */}
         <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
@@ -200,7 +215,10 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
         </div>
 
         {/* Footer */}
-        <div className="border-border/50 space-y-2 border-t p-4">
+        <DrawerFooter className="border-border/50 space-y-2 border-t">
+          <Button onClick={() => reset()} variant="secondary" className="w-full">
+            Reset
+          </Button>
           <Button
             onClick={handleConvert}
             disabled={selectedFiles.size === 0 || isConverting}
@@ -208,11 +226,8 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
           >
             {isConverting ? 'Converting...' : `Convert ${selectedFiles.size} files`}
           </Button>
-          <Button onClick={reset} variant="outline" className="w-full">
-            Reset All
-          </Button>
-        </div>
-      </SheetContent>
-    </Sheet>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }
