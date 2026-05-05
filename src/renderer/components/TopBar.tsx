@@ -13,7 +13,7 @@ import { Video, Images } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs';
 import { useAppState, useAppDispatch, type ActiveTab } from '@renderer/store/app-state';
 import { Button } from '@renderer/components/ui/button';
-import { Input } from '@renderer/components/ui/input';
+import { InputGroup, InputGroupInput, InputGroupAddon } from '@renderer/components/ui/input-group';
 
 const CLIP_LENGTH_KEY = 'clip_length';
 
@@ -111,18 +111,20 @@ export function TopBar({
             </Button>
 
             {/* Clip length input */}
-            <div className="border-border/50 bg-muted/30 flex items-center gap-1.5 border px-2 py-1">
-              <RulerDimensionLine className="text-muted-foreground h-4 w-4" />
-              <Input
+            <InputGroup className="h-8">
+              <InputGroupInput
                 type="number"
                 step="0.1"
                 min="0.1"
                 value={clipLengthInput}
                 onChange={handleClipLengthChange}
-                className="w-14 bg-transparent text-center text-sm tabular-nums outline-none"
+                className="max-w-16 [appearance:textfield] text-center tabular-nums [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
-              <span className="text-muted-foreground text-sm">s</span>
-            </div>
+              <InputGroupAddon>
+                <RulerDimensionLine className="h-4 w-4" />
+              </InputGroupAddon>
+              <InputGroupAddon align="inline-end">Seconds</InputGroupAddon>
+            </InputGroup>
 
             <Button onClick={onClip} disabled={!currentVideo} title="Save Clip (C)">
               <Scissors className="h-4 w-4" />
