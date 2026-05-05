@@ -47,37 +47,37 @@ export function VolumeControl({ isMuted, toggleMute, setVolumeLevel }: VolumeCon
   return (
     <div
       ref={containerRef}
-      className={cn(
-        'relative flex h-8 w-8 flex-col items-center overflow-hidden',
-        showSlider && 'overflow-visible',
-      )}
+      className="relative h-8 w-8"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Inner container — absolute, contains slider + icon */}
+      {/* Container to help with transition */}
       <div
         className={cn(
-          'bg-card absolute bottom-0 flex flex-col items-center rounded-lg',
-          showSlider && 'outline-border outline',
+          'outline-border absolute bottom-0 flex h-8 flex-col justify-end overflow-hidden rounded-lg transition-all delay-300 duration-200 ease-out [interpolate-size:allow-keywords]',
+          showSlider && 'h-auto outline',
         )}
       >
-        <Slider
-          value={[effectiveVolume]}
-          min={0}
-          max={1}
-          step={0.01}
-          orientation="vertical"
-          onValueChange={handleVolumeChange}
-          className="mx-auto mt-3 mb-2 w-full max-w-xs"
-        />
-        <Button
-          onClick={handleToggleMute}
-          variant="ghost"
-          size="icon"
-          title={isMuted ? 'Unmute (M)' : 'Mute (M)'}
-        >
-          <VolumeIcon className="h-5 w-5" />
-        </Button>
+        {/* Inner container that contains slider + icon */}
+        <div className="bg-card flex flex-col items-center">
+          <Slider
+            value={[effectiveVolume]}
+            min={0}
+            max={1}
+            step={0.01}
+            orientation="vertical"
+            onValueChange={handleVolumeChange}
+            className="mx-auto mt-3 mb-2 w-full max-w-xs"
+          />
+          <Button
+            onClick={handleToggleMute}
+            variant="ghost"
+            size="icon"
+            title={isMuted ? 'Unmute (M)' : 'Mute (M)'}
+          >
+            <VolumeIcon className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
     </div>
   );
