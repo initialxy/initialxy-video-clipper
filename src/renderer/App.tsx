@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useRef, type DragEvent } from 'react';
+import { toast } from 'sonner';
 import { useAppState, useAppDispatch } from '@renderer/store/app-state';
-import { useClipCounter } from '@renderer/hooks/useClipCounter';
 import { useGallery } from '@renderer/hooks/useGallery';
 import { useConvertSettings } from '@renderer/hooks/useConvertSettings';
 import { useToast } from '@renderer/hooks/useToast';
@@ -24,12 +24,12 @@ import { Button } from '@renderer/components/ui/button';
 import { cn } from '@renderer/lib/utils';
 
 function AppContent() {
-  const { activeTab, currentVideo, expandedFile, selectedFiles, currentTime } = useAppState();
+  const { activeTab, currentVideo, expandedFile, selectedFiles, currentTime, clipLength } =
+    useAppState();
   const dispatch = useAppDispatch();
-  const { handleClip } = useClipCounter();
   const { galleryFiles, refreshGallery, selectAll, isAllSelected, deleteFile } = useGallery();
   const convertSettings = useConvertSettings();
-  const { success: toastSuccess, error: toastError, addToast } = useToast();
+  const { success: toastSuccess, error: toastError } = useToast();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [bulkDeleteCount, setBulkDeleteCount] = useState<number | null>(null);
@@ -112,29 +112,41 @@ function AppContent() {
   const handleClipAction = useCallback(async () => {
     if (!currentVideo) return;
     const actualTime = videoTimeRef.current;
+    const remaining = currentVideo.duration - actualTime;
 
-    const result = await handleClip(actualTime, (_remaining, requested) => {
-      const clipRemaining = currentVideo.duration - currentTime;
-      if (clipRemaining > 0 && clipRemaining < requested) {
-        addToast(`Only ${_remaining.toFixed(2)}s remaining. Clip remaining?`, 'warning', {
-          label: 'Clip Remaining',
-          handler: () => {
-            window.electronAPI
-              .createClip({
-                inputPath: currentVideo.path,
-                outputPath: '',
-                start: currentTime,
-                duration: clipRemaining,
-              })
-              .then((clipResult) => {
-                if (clipResult.success) {
-                  refreshGallery();
-                  toastSuccess('Clip saved');
-                }
-              });
-          },
-        });
+    if (remaining <= 0) {
+      toastError('Already at end of video');
+      return;
+    }
+
+    if (remaining < clipLength) {
+      if (currentVideo.duration < clipLength) {
+        toastError(`Cannot save clip — video is only ${currentVideo.duration.toFixed(2)}s long`);
+        return;
       }
+
+      const start = currentVideo.duration - clipLength;
+      const result = await window.electronAPI.createClip({
+        inputPath: currentVideo.path,
+        outputPath: '',
+        start,
+        duration: clipLength,
+      });
+
+      if (result.success) {
+        refreshGallery();
+        toast.warning(`Clipped last ${clipLength}s instead`);
+      } else if (result.error) {
+        toastError(result.error);
+      }
+      return;
+    }
+
+    const result = await window.electronAPI.createClip({
+      inputPath: currentVideo.path,
+      outputPath: '',
+      start: actualTime,
+      duration: clipLength,
     });
 
     if (result.success) {
@@ -143,7 +155,7 @@ function AppContent() {
     } else if (result.error) {
       toastError(result.error);
     }
-  }, [currentVideo, currentTime, handleClip, refreshGallery, toastSuccess, toastError, addToast]);
+  }, [currentVideo, clipLength, refreshGallery, toastSuccess, toastError]);
 
   useEffect(() => {
     return window.electronAPI.onConvertProgress((data) => {
@@ -339,14 +351,39 @@ function AppContent() {
 function App() {
   const dispatch = useAppDispatch();
 
-  // Dev-mode debug hook: window.__loadVideo('/path/to/video.mp4')
-  // Allows automated testing without manual file dialogs
+  // Dev-mode debug hooks: __loadVideo, __setVideoTime, __getVideoTime, __seekAndWait
   useEffect(() => {
     (window as unknown as Record<string, unknown>).__loadVideo = async (filePath: string) => {
       const info = await window.electronAPI.getVideoInfo(filePath);
       dispatch({
         type: 'SET_VIDEO',
         payload: { path: filePath, ...info },
+      });
+    };
+    (window as unknown as Record<string, unknown>).__setVideoTime = (time: number) => {
+      const video = document.querySelector('video') as HTMLVideoElement | null;
+      if (video) {
+        video.currentTime = time;
+      }
+    };
+    (window as unknown as Record<string, unknown>).__getVideoTime = () => {
+      const video = document.querySelector('video') as HTMLVideoElement | null;
+      const slider = document.querySelector('input[type="range"]') as HTMLInputElement | null;
+      return {
+        videoCurrentTime: video ? video.currentTime : 'no video element',
+        sliderValue: slider ? slider.value : 'no slider',
+      };
+    };
+    (window as unknown as Record<string, unknown>).__seekAndWait = async (time: number) => {
+      const video = document.querySelector('video') as HTMLVideoElement | null;
+      if (!video) return { error: 'no video' };
+      return new Promise((resolve) => {
+        const onSeeked = () => {
+          video.removeEventListener('seeked', onSeeked);
+          resolve({ actualTime: video.currentTime, requestedTime: time });
+        };
+        video.addEventListener('seeked', onSeeked);
+        video.currentTime = time;
       });
     };
   }, [dispatch]);
