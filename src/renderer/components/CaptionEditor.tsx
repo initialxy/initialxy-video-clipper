@@ -41,7 +41,7 @@ export function CaptionEditor({ caption, onChange, label }: CaptionEditorProps) 
         <Textarea
           value={caption}
           onChange={(e) => onChange(e.target.value)}
-          className={cn('resize-none', isExpanded ? 'min-h-100' : 'min-h-50')}
+          className={cn('resize-none transition-[height]', isExpanded ? 'h-100' : 'h-50')}
           placeholder="Enter caption text..."
         />
       </CardContent>
