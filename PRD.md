@@ -8,6 +8,7 @@ A desktop app for clipping video files (.mp4) to create training data for video 
 
 **Tech Stack**: Electron + React + TypeScript + Tailwind CSS + shadcn/ui  
 **UI Primitives**: Base UI (`@base-ui/react`) — all shadcn components use Base UI primitives. Do NOT use Radix UI primitives (`@radix-ui/react-*`).  
+**shadcn/ui Components**: Button, Select, Sheet, Tabs, Input, Textarea, Slider, Dialog, Progress, Label, Sonner (toast notifications). All components use Base UI primitives via `base-nova` style.
 **External Dependency**: ffmpeg (must be installed on the host machine — checked on app launch via `ffmpeg -version`)  
 **Persistent Storage**: JSON file for settings persistence (clip length, bulk convert settings)  
 **Toast Notifications**: Sonner for toast notifications

@@ -44,17 +44,29 @@ video-clipper/
 │   │   ├── index.tsx           # Renderer entry point
 │   │   ├── App.tsx             # Root component with tab routing
 │   │   ├── components/
-│   │   │   ├── TopBar.tsx              # Tab bar (left) + action buttons (right) + drag-drop
-│   │   │   ├── VideoPlayer.tsx         # Main video player with inline playback controls
-│   │   │   ├── VolumeControl.tsx       # Mute button + volume slider
-│   │   │   ├── GalleryView.tsx         # Grid of clipped videos with thumbnails
-│   │   │   ├── GalleryItem.tsx         # Single gallery card (thumb + caption overlay)
-│   │   │   ├── ExpandedPlayer.tsx      # Full-screen video player for gallery items
-│   │   │   ├── CaptionEditor.tsx       # Text area with debounced autosave
-│   │   │   ├── CaptionOverlay.tsx      # Inline caption overlay for gallery grid cells
-│   │   │   ├── BulkConvertDrawer.tsx   # Slide-out drawer for bulk conversion settings
-│   │   │   ├── Toast.tsx               # Toast notification system
-│   │   │   └── DeleteConfirmModal.tsx  # Confirmation modal for clip deletion
+ │   │   │   ├── TopBar.tsx              # Tab bar (left) + action buttons (right) + drag-drop
+ │   │   │   ├── VideoPlayer.tsx         # Main video player with inline playback controls
+ │   │   │   ├── VolumeControl.tsx       # Mute button + volume slider
+ │   │   │   ├── GalleryView.tsx         # Grid of clipped videos with thumbnails
+ │   │   │   ├── GalleryItem.tsx         # Single gallery card (thumb + caption overlay)
+ │   │   │   ├── ExpandedPlayer.tsx      # Full-screen video player for gallery items
+ │   │   │   ├── CaptionEditor.tsx       # Text area with debounced autosave
+ │   │   │   ├── CaptionOverlay.tsx      # Inline caption overlay for gallery grid cells
+ │   │   │   ├── BulkConvertDrawer.tsx   # Slide-out drawer for bulk conversion settings
+ │   │   │   ├── Toast.tsx               # Toast notification system
+ │   │   │   └── DeleteConfirmModal.tsx  # Confirmation modal for clip deletion
+ │   │   ├── components/ui/              # shadcn/ui components (all Base UI primitives)
+ │   │   │   ├── button.tsx              # Button (default, outline, secondary, ghost, destructive, link)
+ │   │   │   ├── select.tsx              # Select dropdown
+ │   │   │   ├── sheet.tsx               # Sheet/Drawer
+ │   │   │   ├── tabs.tsx                # Tabs
+ │   │   │   ├── sonner.tsx              # Toast notifications
+ │   │   │   ├── input.tsx               # Text input
+ │   │   │   ├── textarea.tsx            # Multi-line text input
+ │   │   │   ├── slider.tsx              # Range slider
+ │   │   │   ├── dialog.tsx              # Modal dialog
+ │   │   │   ├── progress.tsx            # Progress indicator
+ │   │   │   └── label.tsx               # Form label
 │   │   ├── hooks/
 │   │   │   ├── useVideoPlayer.ts       # Playback state management (play/pause/seek/mute)
 │   │   │   ├── useClipCounter.ts       # Per-source clip counter tracking
@@ -209,6 +221,13 @@ All shadcn/ui components in this project use **Base UI** (`@base-ui/react`) as t
 - **Select** → `@base-ui/react/select`
 - **Sheet** → `@base-ui/react/dialog`
 - **Tabs** → `@base-ui/react/tabs`
+- **Input** → `@base-ui/react/checkbox` (uses Base UI checkbox primitive)
+- **Textarea** → native `<textarea>` (no primitive needed)
+- **Slider** → `@base-ui/react/slider` (uses Base UI slider primitive)
+- **Dialog** → `@base-ui/react/dialog` (uses Base UI dialog primitive)
+- **Progress** → `@base-ui/react/progress` (uses Base UI progress primitive)
+- **Label** → `@base-ui/react/label` (uses Base UI label primitive)
+- **Sonner** → `sonner` (independent package, not a Base UI component)
 
 When adding new shadcn components, always use the Base UI variant. Do NOT use `@radix-ui/react-*` packages. When running `npx shadcn@latest add <component>`, specify the `base-nova` style to get the correct primitives.
 
@@ -608,3 +627,4 @@ Build the app in this sequence:
 15. ~~**Bug fixes**: Bulk convert drawer state management (moved `isOpen` from hook to app state), larger gallery select/delete buttons, full-cover gallery thumbnails, removed caption input focus ring, vertical chevron icons for caption editor, tab switch closes expanded player, correct Select All checkbox icons, toast notification integration, 'c' hotkey works after seeking, video player sizing with min-h-0 and object-contain.~~ ✅ DONE
 16. ~~**UI polish & bug fixes**: Video playback position preservation across tab switches (savedTime state + restore on mount), CaptionOverlay consistent styling (h-full, leading-relaxed, p-3 in both states), BulkConvertDrawer resolution inputs show empty when unset (0 treated as unset, no confusing "0" display), Sonner toast dark theme via toastOptions, bulk convert button disabled when no files selected, tab switch saves current time before dispatching SET_TAB.~~ ✅ DONE
 17. **UI polish & bug fixes**: Tab type renamed from `'clip'` to `'video'` across all files (app-state, App, TopBar), BulkConvertDrawer title alignment fixed (`px-4`), file count counter removed from drawer, codec dropdown styling fixed (explicit bg/fg via style prop), gallery bulk delete button added (destructive color, disabled when no selection), ExpandedPlayer close button moved inside video container (top-right absolute), clip length label replaced with RulerDimensionLine icon, 's' size fixed to `text-sm`, BulkConvertDrawer removed unused `galleryFiles` import.
+18. **UI consistency audit & shadcn migration**: Full audit of all UI components — replaced raw HTML form elements with shadcn/ui components (Input, Textarea, Slider, Dialog, Progress, Label). Removed custom focus ring styling, custom progress bar styling, and inline button styles. All components now use consistent shadcn variants (default, outline, destructive, ghost, secondary). Input fields use `bg-transparent` for consistent dark theme appearance. Progress uses shadcn Progress component with custom styling. Dialog uses shadcn Dialog with proper backdrop blur and animation. Label uses shadcn Label with form-label class. Slider uses shadcn Slider with track/thumb styling.
