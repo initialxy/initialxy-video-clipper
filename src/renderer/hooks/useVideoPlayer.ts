@@ -1,44 +1,49 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAppState } from '@renderer/store/app-state';
 
-export function useVideoPlayer(savedTime?: number, filePath?: string) {
-  const { currentVideo } = useAppState();
+interface UseVideoPlayerOptions {
+  useGlobalState?: boolean;
+}
+
+export function useVideoPlayer(filePath?: string, options?: UseVideoPlayerOptions) {
+  const { currentTime } = useAppState();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [playerTime, setPlayerTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [videoDuration, setVideoDuration] = useState(0);
   const animFrameRef = useRef<number | null>(null);
   const isPlayingStateRef = useRef(false);
-  const savedTimeRef = useRef(savedTime);
   const pendingSeekTimeRef = useRef<number | null>(null);
   const isWaitingForSeekedRef = useRef(false);
+  const useGlobalState = options?.useGlobalState ?? false;
 
-  // Update ref synchronously during render so it's available when
-  // loadedmetadata fires synchronously during video.load()
-  // eslint-disable-next-line react-hooks/refs
-  savedTimeRef.current = savedTime;
-
-  const videoPath = filePath || currentVideo?.path;
-  const duration = currentVideo?.duration ?? 0;
+  const currentTimeRef = useRef<number>(0);
+  /* eslint-disable-next-line react-hooks/refs */
+  currentTimeRef.current = useGlobalState ? currentTime : 0;
 
   // Load video when path changes
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !videoPath) return;
+    if (!video || !filePath) return;
 
     const onLoadedMetadata = () => {
-      const restoreTime =
-        savedTimeRef.current !== undefined &&
-        savedTimeRef.current > 0 &&
-        savedTimeRef.current < video.duration
-          ? savedTimeRef.current
-          : 0;
-      video.currentTime = restoreTime;
-      setCurrentTime(restoreTime);
+      setVideoDuration(video.duration);
+      if (useGlobalState) {
+        const restoreTime =
+          currentTimeRef.current > 0 && currentTimeRef.current < video.duration
+            ? currentTimeRef.current
+            : 0;
+        setPlayerTime(restoreTime);
+        video.currentTime = restoreTime;
+      } else {
+        setPlayerTime(0);
+        video.currentTime = 0;
+      }
     };
 
     const onTimeUpdatePlayback = () => {
-      setCurrentTime(video.currentTime);
+      setPlayerTime(video.currentTime);
     };
 
     const onSeeked = () => {
@@ -47,7 +52,7 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
         const nextTime = pendingSeekTimeRef.current;
         pendingSeekTimeRef.current = null;
         video.currentTime = nextTime;
-        setCurrentTime(nextTime);
+        setPlayerTime(nextTime);
       }
     };
 
@@ -55,7 +60,7 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
     video.addEventListener('timeupdate', onTimeUpdatePlayback);
     video.addEventListener('seeked', onSeeked);
 
-    video.src = `file://${videoPath}`;
+    video.src = `file://${filePath}`;
     video.load();
     setIsPlaying(false);
 
@@ -64,13 +69,12 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
       video.removeEventListener('timeupdate', onTimeUpdatePlayback);
       video.removeEventListener('seeked', onSeeked);
     };
-  }, [videoPath]);
+  }, [filePath, useGlobalState]);
 
-  // Smooth time update using requestAnimationFrame during playback
   const updateTime = useCallback(() => {
     const video = videoRef.current;
     if (video) {
-      setCurrentTime(video.currentTime);
+      setPlayerTime(video.currentTime);
     }
   }, []);
 
@@ -104,7 +108,7 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
   const onTimeUpdate = useCallback(() => {
     const video = videoRef.current;
     if (video) {
-      setCurrentTime(video.currentTime);
+      setPlayerTime(video.currentTime);
     }
   }, []);
 
@@ -123,17 +127,17 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
       const video = videoRef.current;
       if (!video) return;
 
-      const clampedTime = Math.max(0, Math.min(time, duration));
+      const clampedTime = Math.max(0, Math.min(time, videoDuration));
 
       if (!isWaitingForSeekedRef.current) {
         isWaitingForSeekedRef.current = true;
         video.currentTime = clampedTime;
-        setCurrentTime(clampedTime);
+        setPlayerTime(clampedTime);
       } else {
         pendingSeekTimeRef.current = clampedTime;
       }
     },
-    [duration],
+    [videoDuration],
   );
 
   const setVolumeLevel = useCallback((vol: number) => {
@@ -161,10 +165,11 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
     return 0;
   }, []);
 
-  // Global keyboard shortcuts
+  // Global keyboard shortcuts (only in global mode)
   useEffect(() => {
+    if (!useGlobalState) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't capture when typing in inputs (except range inputs for seek)
       const target = e.target;
       if (
         target instanceof HTMLTextAreaElement ||
@@ -183,7 +188,7 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlay, toggleMute]);
+  }, [togglePlay, toggleMute, useGlobalState]);
 
   // Cleanup animation frame on unmount
   useEffect(() => {
@@ -194,8 +199,8 @@ export function useVideoPlayer(savedTime?: number, filePath?: string) {
 
   return {
     videoRef,
-    currentTime,
-    duration,
+    currentTime: playerTime,
+    duration: videoDuration,
     isPlaying,
     isMuted,
     togglePlay,

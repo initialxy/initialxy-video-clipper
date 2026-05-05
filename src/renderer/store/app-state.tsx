@@ -29,7 +29,6 @@ export interface AppState {
   isConverting: boolean;
   convertProgress: number;
   isConvertDrawerOpen: boolean;
-  savedTime: number;
   currentTime: number;
 }
 
@@ -44,7 +43,6 @@ type AppAction =
   | { type: 'SET_CONVERTING'; payload: boolean }
   | { type: 'SET_CONVERT_PROGRESS'; payload: number }
   | { type: 'SET_CONVERT_DRAWER_OPEN'; payload: boolean }
-  | { type: 'SET_SAVED_TIME'; payload: number }
   | { type: 'SET_CURRENT_TIME'; payload: number };
 
 const CLIP_LENGTH_KEY = 'clip_length';
@@ -54,7 +52,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'SET_TAB':
       return { ...state, activeTab: action.payload, expandedFile: null };
     case 'SET_VIDEO':
-      return { ...state, currentVideo: action.payload };
+      return { ...state, currentVideo: action.payload, currentTime: 0 };
     case 'SET_CLIP_LENGTH':
       return { ...state, clipLength: action.payload };
     case 'SET_GALLERY_FILES':
@@ -81,8 +79,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, convertProgress: action.payload };
     case 'SET_CONVERT_DRAWER_OPEN':
       return { ...state, isConvertDrawerOpen: action.payload };
-    case 'SET_SAVED_TIME':
-      return { ...state, savedTime: action.payload };
     case 'SET_CURRENT_TIME':
       return { ...state, currentTime: action.payload };
     default:
@@ -100,7 +96,6 @@ const initialState: AppState = {
   isConverting: false,
   convertProgress: 0,
   isConvertDrawerOpen: false,
-  savedTime: 0,
   currentTime: 0,
 };
 

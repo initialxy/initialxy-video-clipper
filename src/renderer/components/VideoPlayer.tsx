@@ -16,14 +16,14 @@ interface VideoPlayerProps {
 }
 
 export function VideoPlayer({ className, onClose, currentTimeRef, filePath }: VideoPlayerProps) {
-  const { savedTime, currentVideo } = useAppState();
+  const { currentVideo } = useAppState();
   const dispatch = useAppDispatch();
   const lastDispatchedTime = useRef(0);
 
-  // Use filePath if provided, otherwise fall back to app state video
   const videoPath = filePath || currentVideo?.path;
+  const isGlobalMode = !filePath;
 
-  const player = useVideoPlayer(savedTime, videoPath);
+  const player = useVideoPlayer(videoPath, { useGlobalState: isGlobalMode });
   const {
     videoRef,
     currentTime,
@@ -46,12 +46,13 @@ export function VideoPlayer({ className, onClose, currentTimeRef, filePath }: Vi
   }, [currentTime, currentTimeRef]);
 
   useEffect(() => {
+    if (!isGlobalMode) return;
     const diff = Math.abs(currentTime - lastDispatchedTime.current);
     if (diff > 0.1 || currentTime < lastDispatchedTime.current) {
       dispatch({ type: 'SET_CURRENT_TIME', payload: currentTime });
       lastDispatchedTime.current = currentTime;
     }
-  }, [currentTime, dispatch]);
+  }, [currentTime, dispatch, isGlobalMode]);
 
   return (
     <div
