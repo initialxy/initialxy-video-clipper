@@ -71,7 +71,7 @@ export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps
 
   if (isEditing) {
     return (
-      <div className="h-full w-full bg-black/70" onBlur={handleUnmount}>
+      <div className="bg-background/80 h-full w-full" onBlur={handleUnmount}>
         <Textarea
           ref={textareaRef}
           value={editText}
@@ -85,14 +85,10 @@ export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps
     );
   }
 
-  const displayText = caption.length > 100 ? caption.slice(0, 100) + '...' : caption;
-
   return (
-    <div className="h-full w-full cursor-text bg-black/60 p-3" onClick={handleClick}>
-      <p className="text-foreground/80 h-full overflow-hidden text-sm leading-relaxed">
-        {displayText || (
-          <span className="text-muted-foreground/50 italic">Click to add caption</span>
-        )}
+    <div className="bg-background/60 h-full w-full cursor-text p-3" onClick={handleClick}>
+      <p className="text-foreground/80 h-full text-sm leading-relaxed overflow-ellipsis">
+        {caption || <span className="text-muted-foreground/80 italic">Click to add caption</span>}
       </p>
     </div>
   );
