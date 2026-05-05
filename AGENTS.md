@@ -574,7 +574,7 @@ npm run typecheck        # Run TypeScript type check
 
 1. **Kill everything**: `pkill -9 electron` — always use `-9` (not `-f`, which will kill the MCP server).
 2. **Build**: `npm run build` — compile the app first.
-3. **Launch with debugging**: Run `npm run start:debug > /dev/null 2>&1 &` in the **background** (note the trailing `> /dev/null 2>&1 &`). **CRITICAL: Electron MUST always be launched in the background, and always never chained with another command.** If launched in the foreground, or chained with another command such as `pkill`, it will block the shell thread and get killed by the harness timeout.
+3. **Launch with debugging**: Run `npm run start:debug > /dev/null 2>&1 &` in the **background** (note the trailing `> /dev/null 2>&1 &`). **CRITICAL: Electron MUST always be launched exactly like this, and never chained with another command.** If launched in the foreground, or chained with another command such as `pkill ... &&` or `sleep ... &&`, it will block the shell thread and get killed by the harness timeout.
 4. **Wait**: Give Electron 3-5 seconds to fully start and open the debug port.
 5. **Verify**: `electron_get_electron_window_info` — expect `"automationReady": true`. If it fails, check that port 9222 is responding with `curl -s http://127.0.0.1:9222/json/version`.
 
