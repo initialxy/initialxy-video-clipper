@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type DragEvent } from 'react';
+import { useCallback, useEffect, useState, useRef, type DragEvent } from 'react';
 import { useAppState, useAppDispatch } from '@renderer/store/app-state';
 import { useClipCounter } from '@renderer/hooks/useClipCounter';
 import { useGallery } from '@renderer/hooks/useGallery';
@@ -23,7 +23,9 @@ function AppContent() {
   const { success: toastSuccess, error: toastError, addToast } = useToast();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [bulkDeleteCount, setBulkDeleteCount] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const videoTimeRef = useRef(0);
 
   const handleTabChange = useCallback(
     (tab: 'video' | 'gallery') => {
@@ -100,8 +102,9 @@ function AppContent() {
 
   const handleClipAction = useCallback(async () => {
     if (!currentVideo) return;
+    const actualTime = videoTimeRef.current;
 
-    const result = await handleClip(currentTime, (_remaining, requested) => {
+    const result = await handleClip(actualTime, (_remaining, requested) => {
       const clipRemaining = currentVideo.duration - currentTime;
       if (clipRemaining > 0 && clipRemaining < requested) {
         addToast(`Only ${_remaining.toFixed(2)}s remaining. Clip remaining?`, 'warning', {
@@ -193,10 +196,16 @@ function AppContent() {
     selectAll(!isAllSelected);
   }, [selectAll, isAllSelected]);
 
-  const handleBulkDelete = useCallback(async () => {
+  const handleBulkDelete = useCallback(() => {
     if (selectedFiles.size === 0) return;
+    setBulkDeleteCount(selectedFiles.size);
+  }, [selectedFiles]);
+
+  const handleBulkDeleteConfirm = useCallback(async () => {
+    if (!bulkDeleteCount) return;
     const paths = Array.from(selectedFiles);
     const result = await window.electronAPI.bulkDelete({ paths });
+    setBulkDeleteCount(null);
     if (result.success) {
       dispatch({ type: 'SELECT_ALL_FILES', payload: false });
       refreshGallery();
@@ -204,7 +213,7 @@ function AppContent() {
     } else if (result.errors?.length) {
       toastError(`${result.errors.length} file(s) failed to delete`);
     }
-  }, [selectedFiles, dispatch, refreshGallery, toastSuccess, toastError]);
+  }, [bulkDeleteCount, selectedFiles, dispatch, refreshGallery, toastSuccess, toastError]);
 
   const handleCloseExpanded = useCallback(() => {
     dispatch({ type: 'SET_EXPANDED_FILE', payload: null });
@@ -245,7 +254,11 @@ function AppContent() {
         ) : activeTab === 'video' ? (
           <div className="flex min-h-0 flex-1 flex-col p-4">
             {currentVideo ? (
-              <VideoPlayer className="flex-1" onClose={handleCloseVideo} />
+              <VideoPlayer
+                className="flex-1"
+                onClose={handleCloseVideo}
+                currentTimeRef={videoTimeRef}
+              />
             ) : (
               <div className="flex flex-1 items-center justify-center">
                 <div className="text-muted-foreground text-center">
@@ -275,6 +288,34 @@ function AppContent() {
           onConfirm={handleDeleteConfirm}
           onCancel={() => setDeleteTarget(null)}
         />
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {bulkDeleteCount !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="border-border/50 bg-background w-full max-w-sm rounded-xl border p-6 shadow-2xl">
+            <h2 className="text-foreground text-lg font-semibold">Delete Clips</h2>
+            <p className="text-muted-foreground mt-2 text-sm">
+              Are you sure you want to delete{' '}
+              <span className="text-foreground font-medium">{bulkDeleteCount} file(s)</span>? This
+              will also remove their caption files.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setBulkDeleteCount(null)}
+                className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkDeleteConfirm}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <Toaster

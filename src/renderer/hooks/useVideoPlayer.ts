@@ -9,6 +9,7 @@ export function useVideoPlayer(savedTime?: number) {
   const [isMuted, setIsMuted] = useState(false);
   const animFrameRef = useRef<number | null>(null);
   const isSeekingRef = useRef(false);
+  const isPlayingStateRef = useRef(false);
   const savedTimeRef = useRef(savedTime);
 
   useEffect(() => {
@@ -27,15 +28,6 @@ export function useVideoPlayer(savedTime?: number) {
     const isNewVideo = prevVideoPathRef.current !== currentVideo.path;
     prevVideoPathRef.current = currentVideo.path;
 
-    video.src = `file://${currentVideo.path}`;
-    video.load();
-    setCurrentTime(0);
-    setIsPlaying(false);
-
-    if (isNewVideo) {
-      savedTimeRef.current = 0;
-    }
-
     const onLoadedMetadata = () => {
       const restoreTime =
         savedTimeRef.current !== undefined &&
@@ -47,9 +39,26 @@ export function useVideoPlayer(savedTime?: number) {
       setCurrentTime(restoreTime);
     };
 
+    const onTimeUpdatePlayback = () => {
+      setCurrentTime(video.currentTime);
+    };
+
     video.addEventListener('loadedmetadata', onLoadedMetadata);
-    return () => video.removeEventListener('loadedmetadata', onLoadedMetadata);
-  }, [currentVideo, currentVideo?.path]);
+    video.addEventListener('timeupdate', onTimeUpdatePlayback);
+
+    video.src = `file://${currentVideo.path}`;
+    video.load();
+    setIsPlaying(false);
+
+    if (isNewVideo) {
+      savedTimeRef.current = 0;
+    }
+
+    return () => {
+      video.removeEventListener('loadedmetadata', onLoadedMetadata);
+      video.removeEventListener('timeupdate', onTimeUpdatePlayback);
+    };
+  }, [currentVideo]);
 
   // Smooth time update using requestAnimationFrame during playback
   const updateTime = useCallback(() => {
@@ -76,11 +85,13 @@ export function useVideoPlayer(savedTime?: number) {
 
   const onPlay = useCallback(() => {
     setIsPlaying(true);
+    isPlayingStateRef.current = true;
     startAnimationLoop();
   }, [startAnimationLoop]);
 
   const onPause = useCallback(() => {
     setIsPlaying(false);
+    isPlayingStateRef.current = false;
     stopAnimationLoop();
   }, [stopAnimationLoop]);
 

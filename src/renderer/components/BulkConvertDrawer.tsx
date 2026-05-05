@@ -70,7 +70,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
       }}
     >
       <SheetContent side="right" className="flex flex-col sm:w-[340px]">
-        <SheetHeader className="border-border/50 border-b px-4 pt-4 pb-0">
+        <SheetHeader className="border-border/50 border-b px-4 pt-4 pb-3">
           <SheetTitle className="text-base">Bulk Convert</SheetTitle>
         </SheetHeader>
 
@@ -78,22 +78,13 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
         <div className="flex-1 space-y-5 overflow-y-auto px-4 py-5">
           {/* Codec */}
           <div>
-            <div className="mb-1.5 flex items-center justify-between">
+            <div className="mb-1.5">
               <label className="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
                 Codec
               </label>
-              {codec && (
-                <button
-                  onClick={() => setCodec('')}
-                  className="text-muted-foreground/40 hover:text-foreground transition-colors"
-                  title="Reset to same as source"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
             </div>
             <Select value={codec} onValueChange={(v) => setCodec(v || '')}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="h-9 w-full">
                 <SelectValue placeholder="Same as source" />
               </SelectTrigger>
               <SelectContent>

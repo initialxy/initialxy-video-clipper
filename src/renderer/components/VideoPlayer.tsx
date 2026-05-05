@@ -1,5 +1,5 @@
 import { Play, Pause, X } from 'lucide-react';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, type MutableRefObject } from 'react';
 import { useVideoPlayer } from '@renderer/hooks/useVideoPlayer';
 import { VolumeControl } from './VolumeControl';
 import { formatTime } from '@shared/utils';
@@ -9,9 +9,10 @@ import { useAppState, useAppDispatch } from '@renderer/store/app-state';
 interface VideoPlayerProps {
   className?: string;
   onClose?: () => void;
+  currentTimeRef?: MutableRefObject<number>;
 }
 
-export function VideoPlayer({ className, onClose }: VideoPlayerProps) {
+export function VideoPlayer({ className, onClose, currentTimeRef }: VideoPlayerProps) {
   const { savedTime } = useAppState();
   const dispatch = useAppDispatch();
   const lastDispatchedTime = useRef(0);
@@ -31,7 +32,14 @@ export function VideoPlayer({ className, onClose }: VideoPlayerProps) {
   } = useVideoPlayer(savedTime);
 
   useEffect(() => {
-    if (currentTime - lastDispatchedTime.current > 0.1) {
+    if (currentTimeRef) {
+      currentTimeRef.current = currentTime;
+    }
+  }, [currentTime, currentTimeRef]);
+
+  useEffect(() => {
+    const diff = Math.abs(currentTime - lastDispatchedTime.current);
+    if (diff > 0.1 || currentTime < lastDispatchedTime.current) {
       dispatch({ type: 'SET_CURRENT_TIME', payload: currentTime });
       lastDispatchedTime.current = currentTime;
     }
