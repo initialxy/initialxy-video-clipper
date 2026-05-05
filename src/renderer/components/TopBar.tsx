@@ -111,7 +111,7 @@ export function TopBar({
             </Button>
 
             {/* Clip length input */}
-            <div className="border-border/50 bg-muted/30 flex items-center gap-1.5 rounded-md border px-2 py-1">
+            <div className="border-border/50 bg-muted/30 flex items-center gap-1.5 border px-2 py-1">
               <RulerDimensionLine className="text-muted-foreground h-4 w-4" />
               <Input
                 type="number"

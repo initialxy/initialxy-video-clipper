@@ -54,7 +54,7 @@ export function VolumeControl({ isMuted, toggleMute, setVolumeLevel }: VolumeCon
       {/* Inner container — absolute, contains slider + icon */}
       <div
         className={cn(
-          'bg-background absolute bottom-0 flex flex-col items-center rounded-lg',
+          'bg-background absolute bottom-0 flex flex-col items-center',
           showSlider && 'outline-border pt-3 outline',
         )}
       >

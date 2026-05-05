@@ -186,7 +186,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
           {/* Progress */}
           {isConverting && (
             <div className="space-y-2">
-              <div className="bg-muted/50 h-2 w-full overflow-hidden rounded-full">
+              <div className="bg-muted/50 h-2 w-full overflow-hidden rounded-sm">
                 <div
                   className="bg-primary h-full transition-all duration-300"
                   style={{ width: `${convertProgress}%` }}

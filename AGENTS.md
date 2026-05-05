@@ -63,10 +63,11 @@ video-clipper/
  │   │   │   ├── sonner.tsx              # Toast notifications
  │   │   │   ├── input.tsx               # Text input
  │   │   │   ├── textarea.tsx            # Multi-line text input
- │   │   │   ├── slider.tsx              # Range slider
- │   │   │   ├── dialog.tsx              # Modal dialog
- │   │   │   ├── progress.tsx            # Progress indicator
- │   │   │   └── label.tsx               # Form label
+│   │   │   ├── slider.tsx              # Range slider
+│   │   │   ├── dialog.tsx              # Modal dialog
+│   │   │   ├── progress.tsx            # Progress indicator
+│   │   │   ├── label.tsx               # Form label
+│   │   │   └── card.tsx                # Card container
 │   │   ├── hooks/
 │   │   │   ├── useVideoPlayer.ts       # Playback state management (play/pause/seek/mute)
 │   │   │   ├── useClipCounter.ts       # Per-source clip counter tracking
@@ -227,6 +228,7 @@ All shadcn/ui components in this project use **Base UI** (`@base-ui/react`) as t
 - **Dialog** → `@base-ui/react/dialog` (uses Base UI dialog primitive)
 - **Progress** → `@base-ui/react/progress` (uses Base UI progress primitive)
 - **Label** → `@base-ui/react/label` (uses Base UI label primitive)
+- **Card** → native `<div>` with consistent styling (no primitive needed)
 - **Sonner** → `sonner` (independent package, not a Base UI component)
 
 When adding new shadcn components, always use the Base UI variant. Do NOT use `@radix-ui/react-*` packages. When running `npx shadcn@latest add <component>`, specify the `base-nova` style to get the correct primitives.

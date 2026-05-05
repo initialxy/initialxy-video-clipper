@@ -4,6 +4,7 @@ import { cn } from '@renderer/lib/utils';
 import { CaptionOverlay } from './CaptionOverlay';
 import { useAppState } from '@renderer/store/app-state';
 import { Button } from '@renderer/components/ui/button';
+import { Card, CardContent } from '@renderer/components/ui/card';
 
 interface GalleryItemProps {
   file: { path: string; name: string; size: number; modified: string };
@@ -53,9 +54,9 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
   );
 
   return (
-    <div
+    <Card
       className={cn(
-        'group relative aspect-square overflow-hidden rounded-lg border transition-all',
+        'group relative aspect-square overflow-hidden border transition-all',
         isSelected
           ? 'border-primary ring-primary/30 ring-2'
           : 'border-border/50 hover:border-border',
@@ -63,72 +64,74 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Delete button */}
-      {isHovered && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className="bg-background/80 hover:bg-background absolute top-3 right-3 z-10 text-red-400 opacity-0 transition-opacity group-hover:opacity-100"
-          title="Delete clip"
-        >
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      )}
-
-      {/* Selection checkbox */}
-      {isHovered && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleSelect();
-          }}
-          className="bg-background/80 hover:bg-background absolute top-3 left-3 z-10 opacity-0 transition-opacity group-hover:opacity-100"
-          title={isSelected ? 'Deselect' : 'Select'}
-        >
-          {isSelected ? (
-            <CheckSquare className="text-primary h-5 w-5" />
-          ) : (
-            <Square className="h-5 w-5" />
-          )}
-        </Button>
-      )}
-
-      {/* Thumbnail covering whole cell */}
-      <div
-        className="absolute inset-0 cursor-pointer bg-black"
-        onClick={(e) => {
-          e.stopPropagation();
-          onOpenExpanded();
-        }}
-      >
-        {thumbnail ? (
-          <img
-            ref={thumbRef}
-            src={thumbnail}
-            alt={file.name}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <div className="border-muted-foreground/30 border-t-muted-foreground h-8 w-8 animate-spin rounded-full border-2" />
-          </div>
+      <CardContent className="relative p-0">
+        {/* Delete button */}
+        {isHovered && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="bg-background/80 hover:bg-background absolute top-3 right-3 z-10 text-red-400 opacity-0 transition-opacity group-hover:opacity-100"
+            title="Delete clip"
+          >
+            <Trash2 className="h-5 w-5" />
+          </Button>
         )}
-      </div>
 
-      {/* Caption overlay on bottom half */}
-      <div className="absolute inset-x-0 bottom-0 h-1/2">
-        <CaptionOverlay
-          caption={caption}
-          onSave={handleCaptionSave}
-          onClick={(e) => e.stopPropagation()}
-        />
-      </div>
-    </div>
+        {/* Selection checkbox */}
+        {isHovered && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSelect();
+            }}
+            className="bg-background/80 hover:bg-background absolute top-3 left-3 z-10 opacity-0 transition-opacity group-hover:opacity-100"
+            title={isSelected ? 'Deselect' : 'Select'}
+          >
+            {isSelected ? (
+              <CheckSquare className="text-primary h-5 w-5" />
+            ) : (
+              <Square className="h-5 w-5" />
+            )}
+          </Button>
+        )}
+
+        {/* Thumbnail covering whole cell */}
+        <div
+          className="absolute inset-0 cursor-pointer bg-black"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenExpanded();
+          }}
+        >
+          {thumbnail ? (
+            <img
+              ref={thumbRef}
+              src={thumbnail}
+              alt={file.name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <div className="border-muted-foreground/30 border-t-muted-foreground h-8 w-8 animate-spin border-2" />
+            </div>
+          )}
+        </div>
+
+        {/* Caption overlay on bottom half */}
+        <div className="absolute inset-x-0 bottom-0 h-1/2">
+          <CaptionOverlay
+            caption={caption}
+            onSave={handleCaptionSave}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      </CardContent>
+    </Card>
   );
 }

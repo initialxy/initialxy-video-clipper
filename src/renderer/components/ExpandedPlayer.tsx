@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { useCaption } from '@renderer/hooks/useCaption';
 import { CaptionEditor } from './CaptionEditor';
 import { Button } from '@renderer/components/ui/button';
+import { Card, CardContent } from '@renderer/components/ui/card';
 
 interface ExpandedPlayerProps {
   filePath: string;
@@ -36,8 +37,8 @@ export function ExpandedPlayer({ filePath, onClose }: ExpandedPlayerProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
       {/* Video player */}
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="relative mb-3 flex flex-1 items-center justify-center overflow-hidden rounded-lg bg-black">
+      <Card>
+        <CardContent className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden p-0">
           <video
             ref={videoRef}
             src={`file://${filePath}`}
@@ -55,8 +56,8 @@ export function ExpandedPlayer({ filePath, onClose }: ExpandedPlayerProps) {
           >
             <X className="h-4 w-4" />
           </Button>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Caption editor below video */}
       <CaptionEditor caption={caption} onChange={updateCaption} label="Caption" />

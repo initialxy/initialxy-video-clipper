@@ -233,7 +233,7 @@ function AppContent() {
   }, [dispatch]);
 
   return (
-    <div className="bg-background text-foreground flex h-screen flex-col overflow-hidden">
+    <div className="dark bg-background text-foreground flex h-screen flex-col overflow-hidden">
       {/* Top Bar */}
       <TopBar
         onClip={handleClipAction}

@@ -22,7 +22,7 @@ export function CaptionEditor({ caption, onChange, label }: CaptionEditorProps) 
 
   if (isExpanded) {
     return (
-      <div className="border-border/50 bg-muted/20 relative rounded-lg border">
+      <div className="border-border/50 bg-muted/20 relative border">
         <Button
           variant="ghost"
           size="icon"
@@ -48,7 +48,7 @@ export function CaptionEditor({ caption, onChange, label }: CaptionEditorProps) 
   }
 
   return (
-    <div className="border-border/50 bg-muted/20 relative rounded-lg border">
+    <div className="border-border/50 bg-muted/20 relative border">
       <Button
         variant="ghost"
         size="icon"
