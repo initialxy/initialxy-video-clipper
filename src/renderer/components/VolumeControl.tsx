@@ -63,6 +63,7 @@ export function VolumeControl({ isMuted, toggleMute, setVolumeLevel }: VolumeCon
           min={0}
           max={1}
           step={0.01}
+          orientation="vertical"
           onValueChange={handleVolumeChange}
           className={cn(
             'data-vertical:h-full data-vertical:w-auto data-vertical:flex-col',
