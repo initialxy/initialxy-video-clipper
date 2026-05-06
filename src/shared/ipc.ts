@@ -6,6 +6,9 @@ export const IPC_CHANNELS = {
   CONVERT_BULK: 'convert:bulk',
   CONVERT_PROGRESS: 'convert:progress',
   CONVERT_WARN_NO_CHANGES: 'convert:warn-no-changes',
+  AUTO_CAPTION_RUN: 'auto-caption:run',
+  AUTO_CAPTION_PROGRESS: 'auto-caption:progress',
+  AUTO_CAPTION_INTERRUPT: 'auto-caption:interrupt',
   FS_GET_VIDEO_INFO: 'fs:get-video-info',
   FS_EXTRACT_THUMBNAIL: 'fs:extract-thumbnail',
   FS_READ_CAPTION: 'fs:read-caption',
@@ -42,6 +45,17 @@ export interface IPCPayloads {
     progress: number;
     status: string;
   };
+  [IPC_CHANNELS.AUTO_CAPTION_RUN]: {
+    files: string[];
+    config: { baseUrl: string; model: string; apiKey: string };
+  };
+  [IPC_CHANNELS.AUTO_CAPTION_PROGRESS]: {
+    file: string;
+    current: number;
+    total: number;
+    status: string;
+  };
+  [IPC_CHANNELS.AUTO_CAPTION_INTERRUPT]: {};
   [IPC_CHANNELS.FS_GET_VIDEO_INFO]: { filePath: string };
   [IPC_CHANNELS.FS_EXTRACT_THUMBNAIL]: { filePath: string; outputPath: string };
   [IPC_CHANNELS.FS_READ_CAPTION]: { filePath: string };
@@ -61,6 +75,11 @@ export interface IPCReturns {
     success: boolean;
     results?: Array<{ file: string; success: boolean; error?: string }>;
   };
+  [IPC_CHANNELS.AUTO_CAPTION_RUN]: {
+    success: boolean;
+    results?: Array<{ file: string; success: boolean; error?: string }>;
+  };
+  [IPC_CHANNELS.AUTO_CAPTION_INTERRUPT]: { cancelled: boolean };
   [IPC_CHANNELS.FS_GET_VIDEO_INFO]: {
     duration: number;
     width: number;

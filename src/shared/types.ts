@@ -37,6 +37,21 @@ export interface ConvertProgress {
   status: 'converting' | 'done' | 'error';
 }
 
+/** Auto-caption progress event */
+export interface AutoCaptionProgress {
+  file: string;
+  current: number;
+  total: number;
+  status: 'processing' | 'done' | 'error';
+}
+
+/** Per-file auto-caption result */
+export interface AutoCaptionResult {
+  file: string;
+  success: boolean;
+  error?: string;
+}
+
 /** A file in the gallery */
 export interface GalleryFile {
   path: string;

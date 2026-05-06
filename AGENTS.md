@@ -36,7 +36,8 @@ src/
 │       ├── clip.service.ts    # Clip operations (counter, naming, validation)
 │       ├── convert.service.ts # Bulk conversion orchestration
 │       ├── gallery.service.ts # File scanning, thumbnail caching
-│       └── caption.service.ts # Caption file CRUD
+│       ├── caption.service.ts # Caption file CRUD
+│       └── auto-caption.service.ts # Sequential LLM auto-captioning
 ├── preload/
 │   └── index.ts               # ContextBridge (types from @shared/ipc)
 ├── renderer/                  # React frontend
@@ -53,6 +54,7 @@ src/
 │   │   ├── CaptionOverlay.tsx # Inline caption overlay for gallery cells
 │   │   ├── BulkConvertDrawer.tsx # Slide-out drawer for bulk conversion
 │   │   ├── DeleteConfirmModal.tsx # Confirmation modal for deletion
+│   │   ├── AutoCaptionModal.tsx # Dialog for auto-caption endpoint settings
 │   │   └── ui/                # shadcn/ui components (all Base UI primitives)
 │   │       ├── button.tsx, select.tsx, sheet.tsx, tabs.tsx, sonner.tsx
 │   │       ├── input.tsx, input-group.tsx, textarea.tsx, slider.tsx
@@ -95,6 +97,8 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 | `isConverting` | `boolean` | Bulk conversion in progress |
 | `convertProgress` | `number` | Conversion progress percentage |
 | `isConvertDrawerOpen` | `boolean` | Bulk convert drawer visibility |
+| `isAutoCaptioning` | `boolean` | Auto-caption in progress |
+| `autoCaptionProgress` | `{ current: number; total: number }` | Auto-caption progress (current/total) |
 | `currentTime` | `number` | Current playback position |
 
 **Key behaviors:**
@@ -105,7 +109,7 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 
 ### IPC Channels
 
-14 channels defined in `src/shared/ipc.ts`. `ElectronAPI` in `env.d.ts` derives types from `IPCPayloads`/`IPCReturns`.
+17 channels defined in `src/shared/ipc.ts`. `ElectronAPI` in `env.d.ts` derives types from `IPCPayloads`/`IPCReturns`.
 
 | Channel | Direction | Payload | Returns |
 |---------|-----------|---------|---------|
@@ -113,6 +117,9 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 | `convert:bulk` | R→M | `{ files[], settings, outputDir }` | `{ success, results? }` |
 | `convert:progress` | M→R | `{ file, progress, status }` | — |
 | `convert:warn-no-changes` | M→R | — | — |
+| `auto-caption:run` | R→M | `{ files[], config: { baseUrl, model, apiKey } }` | `{ success, results? }` |
+| `auto-caption:progress` | M→R | `{ file, current, total, status }` | — |
+| `auto-caption:interrupt` | R→M | — | `{ cancelled }` |
 | `fs:get-video-info` | R→M | `{ filePath }` | `{ duration, width, height, codec, fps }` |
 | `fs:extract-thumbnail` | R→M | `{ filePath, outputPath }` | `{ success, outputPath? }` |
 | `fs:read-caption` | R→M | `{ filePath }` | `{ content?, exists }` |

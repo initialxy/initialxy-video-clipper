@@ -92,6 +92,7 @@ Action buttons for the active tab appear on the **right side of the top bar**.
   - Multi-select: Click individual items to select/deselect.
   - Select All: A checkbox or button to select all files in the gallery.
   - Bulk Delete: A "Delete" button in the Gallery top bar (destructive color) that deletes all selected files. Disabled when no files are selected. On confirm, deletes both the video file and its `.txt` caption file.
+- **Auto-caption**: A button in the Gallery top bar (secondary variant) labeled "Auto-caption" that opens a dialog to configure the LLM endpoint and initiate bulk auto-captioning for all selected files. See Section 8.
 
 ### 6. Expanded Player (Gallery Mode)
 
@@ -103,6 +104,7 @@ Action buttons for the active tab appear on the **right side of the top bar**.
 - Caption is saved as a `.txt` file with the same base name as the video (e.g., `v001_c003.mp4` → `v001_c003.txt`).
 - **Autosave with debounce**: Caption text is automatically saved on input with a 2-second debounce.
 - The `.txt` file is created on first save (does not exist initially).
+- **Auto-caption button**: A button labeled "Auto-caption" appears next to the caption text area. Clicking it sends the current video's thumbnail to the LLM for captioning. During processing, the button is disabled with a tooltip indicating progress.
 - Close button or Escape key returns to gallery grid.
 - **Tab switch closes player**: Switching from Gallery to Video tab automatically closes the expanded player.
 - **Video stops on close**: Video playback stops when the expanded player is closed.
@@ -128,6 +130,85 @@ Action buttons for the active tab appear on the **right side of the top bar**.
   - Accompanying `.txt` caption files are copied alongside converted videos.
   - Show progress indicators (per-file and overall).
   - When a param is "Same as source", simply omit that ffmpeg flag (don't pass `-c:v`, `-r`, `-b:v`, or `-vf` for that param).
+
+---
+
+### 8. Auto-caption (Gallery)
+
+- **LLM Configuration**: Configurable via a modal dialog with fields for:
+  - **Base URL** (e.g., `http://localhost:8080`) — default: `http://localhost:8080` (single string field, not separate URL + port)
+  - **Model name** — default: `model`
+  - **API key** — default: `DUMMY` (optional, sent as `Authorization` header if provided)
+  All settings stored in JSON config file under key `AUTO_CAPTION_CONFIG` (object with `baseUrl`, `model`, `apiKey`).
+- **UI — ButtonGroup**: The Auto-caption button in the Gallery top bar uses a `ButtonGroup` pattern:
+  ```
+  ┌──────────────────┬───┐
+  │ Auto-caption     │ ⋮ │  ← secondary variant, ellipsis-vertical icon
+  └──────────────────┴───┘
+  ```
+  The main button triggers auto-captioning for the selected files. The button is **disabled** when no files are selected. The ellipsis-vertical icon button opens the **Auto-caption Settings** dialog where the user can configure the base URL, model name, and API key.
+- **Activation**:
+  - **Gallery bulk mode**: With N files selected, clicking "Auto-caption" sends a request to the LLM for each file. The button is **disabled** when no files are selected (same as Delete and Convert buttons).
+  - **Expanded player mode**: When a video is expanded, a separate "Auto-caption" button appears below the video (next to the caption text area). Clicking it captions only that single file.
+  - **Gallery grid single-cell**: No direct auto-caption from the grid — only accessible via the expanded player.
+  - **Video tab**: No auto-caption in the Video tab. Gallery-only feature.
+- **Prompt construction**:
+  - **System prompt**: Instruct the LLM to provide its caption under a `## Caption` heading. Example:
+    ```
+    You are a helpful assistant that describes and captions images for AI training data.
+    Your response must include a caption under a "## Caption" heading.
+    ```
+  - **User prompt** (per image):
+    - If **no existing caption**: `"Describe the content of this image."`
+    - If **existing caption exists**: `"This image has an existing description: <existing caption>. Please improve and rephrase it. Describe the content of this image."`
+  - The image is sent as part of the request as a base64-encoded string (see API contract below).
+- **Response parsing**:
+  - Search the LLM response for `## Caption` heading.
+  - If found, extract everything after `## Caption` (trimmed) as the new caption.
+  - If `## Caption` is **not** found, fallback to using the entire LLM response (trimmed).
+  - Write the parsed caption to the `.txt` file, overwriting any existing content.
+- **Bulk processing UI state** (persistent Sonner toast):
+  - During processing, a **persistent toast** appears (using `toast.custom()` with `duration: Infinity`) showing:
+    - Progress text: `i / n captioned` (e.g., "3 / 12 captioned")
+    - A **Cancel** button (secondary, using Sonner's `cancel` prop) to interrupt the operation
+  - The toast updates dynamically as progress changes (by calling `toast()` with the same toast ID to replace content).
+  - On completion or cancellation, the toast is dismissed and a summary toast appears (e.g., "Auto-caption completed: 10/12 success").
+  - The operation is **interruptible**: clicking Cancel stops processing remaining files.
+- **Button states during processing**:
+  - Both the Gallery top bar Auto-caption button and the expanded player Auto-caption button are **disabled** (grayed out) while captioning is in progress.
+  - They re-enable once the operation completes (success, error, or cancellation).
+- **API contract**:
+  - **Request**: `POST <baseUrl>/v1/chat/completions` (OpenAI-compatible format)
+    - **Headers**: `Content-Type: application/json`, `Authorization: Bearer <apiKey>` (if apiKey is provided)
+    - **Body**:
+      ```json
+      {
+        "model": "<model>",
+        "messages": [
+          {
+            "role": "system",
+            "content": "<system prompt>"
+          },
+          {
+            "role": "user",
+            "content": [
+              { "type": "text", "text": "<user prompt>" },
+              { "type": "image_url", "image_url": { "url": "data:image/jpeg;base64,<base64_encoded_thumbnail>" } }
+            ]
+          }
+        ],
+        "max_tokens": 512,
+        "stream": false
+      }
+      ```
+    - The image is the existing gallery thumbnail JPEG file (already extracted for the gallery grid). Read from disk, base64-encoded, and embedded inline as a data URI.
+  - **Response**: Standard OpenAI-compatible chat completion JSON. Extract `choices[0].message.content`.
+  - **Error handling**: If the LLM returns an error or times out, skip the file, log the error, and continue with the next file. Show a final toast summarizing successes and failures.
+  - **Timeout**: 60 seconds per request.
+- **Concurrency**: Process files **sequentially** (one at a time) to avoid overwhelming the local LLM server. No parallel requests.
+- **Toast notifications**:
+  - On completion: toast with summary count, e.g., "Auto-caption: 10 succeeded, 2 failed".
+  - On interrupt: toast confirming cancellation, e.g., "Auto-caption interrupted: 7/12 captioned".
 
 ---
 
@@ -165,29 +246,30 @@ Action buttons for the active tab appear on the **right side of the top bar**.
 ### Gallery Mode
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  [Video] [Gallery]    ...       [Select All] [Convert] [Delete]│
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐                       │
-│  │          │ │          │ │          │  ← 500px min (dynamic)│
-│  │  THUMB   │ │  THUMB   │ │  THUMB   │   square cells        │
-│  │ (cover)  │ │ (cover)  │ │ (cover)  │   object-fit: cover   │
-│  ├──────────┤ ├──────────┤ ├──────────┤                       │
-│  │ "A cat   │ │ "Dog     │ │ "Bird    │  ← dark overlay       │
-│  │ running  │ │ playing  │ │ flying   │   caption overlay     │
-│  │ in the   │ │ in park" │ │ high"    │   click to edit       │
-│  │ park"    │ │          │ │          │                       │
-│  └──────────┘ └──────────┘ └──────────┘                       │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────┐
+│  [Video] [Gallery]    ...  [Select All] [Auto-caption ⋮] [Convert]  │
+│                                          [Delete] [Refresh]           │
+├───────────────────────────────────────────────────────────────────────┤
+│                                                                       │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐                             │
+│  │          │ │          │ │          │  ← 500px min (dynamic)      │
+│  │  THUMB   │ │  THUMB   │ │  THUMB   │   square cells              │
+│  │ (cover)  │ │ (cover)  │ │ (cover)  │   object-fit: cover         │
+│  ├──────────┤ ├──────────┤ ├──────────┤                             │
+│  │ "A cat   │ │ "Dog     │ │ "Bird    │  ← dark overlay             │
+│  │ running  │ │ playing  │ │ flying   │   caption overlay           │
+│  │ in the   │ │ in park" │ │ high"    │   click to edit             │
+│  │ park"    │ │          │ │          │                             │
+│  └──────────┘ └──────────┘ └──────────┘                            │
+│                                                                       │
+└───────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Expanded Player
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  [Video] [Gallery]    ...       [Select All] [Convert] [Delete]│
+│  [Video] [Gallery]    ...       [Auto-caption] [Convert] [Delete]│
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐    │
@@ -202,6 +284,7 @@ Action buttons for the active tab appear on the **right side of the top bar**.
 │  ┌─────────────────────────────────────────────────────────┐    │
 │  │                                                         │    │
 │  │   Caption text area (below video, not overlaying)       │    │
+│  │   [Auto-caption] button (next to text area)             │    │
 │  │   with scroll support for long text                     │    │
 │  │                                                         │    │
 │  └─────────────────────────────────────────────────────────┘    │
@@ -275,8 +358,21 @@ video-clipper/
 ### Settings Persistence
 
 - Use JSON config file for persistent storage of app settings and preferences.
-- Store: bulk conversion settings (codec, resolution, fps, bitrate), clip length default, window size/position.
+- Store: bulk conversion settings (codec, resolution, fps, bitrate), clip length default, window size/position, auto-caption configuration.
 - Settings are loaded on app start and saved on change.
+- New settings key: `AUTO_CAPTION_CONFIG` (object: `{ baseUrl: string, model: string, apiKey: string }`, defaults: `{ baseUrl: "http://localhost:8080", model: "model", apiKey: "DUMMY" }`).
+
+### Auto-caption LLM Integration
+
+- **IPC channel**: `auto-caption:run` (R→M), returns `{ success, results?: Array<{ file: string; success: boolean; error?: string }> }`.
+- **IPC channel**: `auto-caption:progress` (M→R), payload: `{ file: string; current: number; total: number; status: 'processing' | 'done' | 'error' }`.
+- **IPC channel**: `auto-caption:interrupt` (R→M), triggers cancellation of ongoing bulk operation.
+- **Service**: `src/main/services/auto-caption.service.ts` — handles sequential file processing, LLM HTTP requests, response parsing, and caption file writing.
+- **HTTP client**: Use Node.js `fetch` (native, Node 18+) to send requests to the configured endpoint URL. Set a 60-second timeout per request.
+- **Authorization**: Send `Authorization: Bearer <apiKey>` header if an API key is configured (skip header if key is `"DUMMY"`).
+- **Image payload**: Read the thumbnail JPEG file, base64-encode it, embed as `data:image/jpeg;base64,<base64>` in the request body.
+- **Sequential processing**: Files are processed one at a time in order. No concurrency.
+- **Interrupt support**: Use an `AbortController` or a shared flag to cancel in-flight requests and skip remaining files.
 
 ---
 

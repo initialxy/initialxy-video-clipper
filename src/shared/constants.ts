@@ -5,4 +5,5 @@ export const SETTINGS_KEYS = {
   CONVERT_HEIGHT: 'convert_height',
   CONVERT_FPS: 'convert_fps',
   CONVERT_BITRATE: 'convert_bitrate',
+  AUTO_CAPTION_CONFIG: 'auto_caption_config',
 } as const;
