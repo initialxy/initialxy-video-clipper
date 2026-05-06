@@ -18,7 +18,15 @@ import {
 } from '@renderer/components/ui/select';
 import { Input } from '@renderer/components/ui/input';
 import { Button } from '@renderer/components/ui/button';
-import { Label } from '@renderer/components/ui/label';
+import {
+  Field,
+  FieldLabel,
+  FieldContent,
+  FieldGroup,
+  FieldSet,
+  FieldSeparator,
+} from '@renderer/components/ui/field';
+import { Progress } from '@renderer/components/ui/progress';
 
 interface BulkConvertDrawerProps {
   onClose: () => void;
@@ -79,134 +87,132 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
           <SheetTitle>Bulk Convert</SheetTitle>
         </SheetHeader>
 
-        {/* Settings */}
-        <div className="px-4">
-          {/* Codec */}
-          <div className="space-y-2">
-            <Label htmlFor="codec">Codec</Label>
-            <Select value={codec} onValueChange={(v) => setCodec(v || '')}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Same as source" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Same as source</SelectItem>
-                <SelectItem value="libx264">H.264 (libx264)</SelectItem>
-                <SelectItem value="libx265">H.265 (libx265)</SelectItem>
-                <SelectItem value="libsvtav1">AV1 (SVT-AV1)</SelectItem>
-                <SelectItem value="mpeg4">MPEG-4</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="flex-1 overflow-y-auto px-4">
+          <FieldGroup>
+            <FieldSet>
+              <Field>
+                <FieldLabel>Codec</FieldLabel>
+                <Select value={codec} onValueChange={(v) => setCodec(v || '')}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Same as source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Same as source</SelectItem>
+                    <SelectItem value="libx264">H.264 (libx264)</SelectItem>
+                    <SelectItem value="libx265">H.265 (libx265)</SelectItem>
+                    <SelectItem value="libsvtav1">AV1 (SVT-AV1)</SelectItem>
+                    <SelectItem value="mpeg4">MPEG-4</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
 
-          {/* Resolution */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="resolution">Resolution</Label>
-              {width || height ? (
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => {
-                    setWidth(0);
-                    setHeight(0);
-                  }}
-                  title="Reset to same as source"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              ) : null}
-            </div>
-            <div className="flex items-center gap-2">
-              <Input
-                id="width"
-                type="number"
-                placeholder="W"
-                value={width ? width : ''}
-                onChange={(e) => {
-                  const v = parseInt(e.target.value, 10);
-                  setWidth(isNaN(v) ? 0 : v);
-                }}
-              />
-              <span className="text-muted-foreground/40 text-xs">×</span>
-              <Input
-                id="height"
-                type="number"
-                placeholder="H"
-                value={height ? height : ''}
-                onChange={(e) => {
-                  const v = parseInt(e.target.value, 10);
-                  setHeight(isNaN(v) ? 0 : v);
-                }}
-              />
-            </div>
-          </div>
+              <Field>
+                <FieldLabel>Resolution</FieldLabel>
+                <FieldContent>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="width"
+                      type="number"
+                      placeholder="W"
+                      value={width ? width : ''}
+                      onChange={(e) => {
+                        const v = parseInt(e.target.value, 10);
+                        setWidth(isNaN(v) ? 0 : v);
+                      }}
+                    />
+                    <span className="text-muted-foreground/40 text-xs">×</span>
+                    <Input
+                      id="height"
+                      type="number"
+                      placeholder="H"
+                      value={height ? height : ''}
+                      onChange={(e) => {
+                        const v = parseInt(e.target.value, 10);
+                        setHeight(isNaN(v) ? 0 : v);
+                      }}
+                    />
+                    {(width || height) && (
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={() => {
+                          setWidth(0);
+                          setHeight(0);
+                        }}
+                        title="Reset to same as source"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                </FieldContent>
+              </Field>
 
-          {/* FPS */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="fps">Frame Rate</Label>
-              {fps > 0 && (
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => setFps(0)}
-                  title="Reset to same as source"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
+              <Field>
+                <FieldLabel>Frame Rate</FieldLabel>
+                <FieldContent>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="fps"
+                      type="number"
+                      placeholder="Same as source"
+                      value={fps > 0 ? fps : ''}
+                      onChange={(e) => setFps(parseInt(e.target.value) || 0)}
+                    />
+                    {fps > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={() => setFps(0)}
+                        title="Reset to same as source"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                </FieldContent>
+              </Field>
+
+              <FieldSeparator />
+
+              <Field>
+                <FieldLabel>Bitrate</FieldLabel>
+                <FieldContent>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="bitrate"
+                      type="text"
+                      placeholder="e.g. 5000k, 10M"
+                      value={bitrate}
+                      onChange={(e) => setBitrate(e.target.value)}
+                    />
+                    {bitrate && (
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={() => setBitrate('')}
+                        title="Reset to same as source"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                </FieldContent>
+              </Field>
+
+              {isConverting && (
+                <Field>
+                  <Progress value={convertProgress} className="h-2" />
+                  <p className="text-muted-foreground text-center text-xs">
+                    Converting... {convertProgress}%
+                  </p>
+                </Field>
               )}
-            </div>
-            <Input
-              id="fps"
-              type="number"
-              placeholder="Same as source"
-              value={fps > 0 ? fps : ''}
-              onChange={(e) => setFps(parseInt(e.target.value) || 0)}
-            />
-          </div>
-
-          {/* Bitrate */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="bitrate">Bitrate</Label>
-              {bitrate && (
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => setBitrate('')}
-                  title="Reset to same as source"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              )}
-            </div>
-            <Input
-              id="bitrate"
-              type="text"
-              placeholder="e.g. 5000k, 10M"
-              value={bitrate}
-              onChange={(e) => setBitrate(e.target.value)}
-            />
-          </div>
-
-          {/* Progress */}
-          {isConverting && (
-            <div className="space-y-2">
-              <div className="bg-muted/50 h-2 w-full overflow-hidden rounded-sm">
-                <div
-                  className="bg-primary h-full transition-all duration-300"
-                  style={{ width: `${convertProgress}%` }}
-                />
-              </div>
-              <p className="text-muted-foreground text-center text-xs">
-                Converting... {convertProgress}%
-              </p>
-            </div>
-          )}
+            </FieldSet>
+          </FieldGroup>
         </div>
 
-        {/* Footer */}
-        <SheetFooter>
+        <SheetFooter className="gap-2">
           <Button onClick={() => reset()} variant="secondary" className="w-full">
             Reset
           </Button>

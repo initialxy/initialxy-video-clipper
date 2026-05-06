@@ -10,7 +10,13 @@ import {
 } from '@renderer/components/ui/dialog';
 import { Button } from '@renderer/components/ui/button';
 import { Input } from '@renderer/components/ui/input';
-import { Label } from '@renderer/components/ui/label';
+import {
+  Field,
+  FieldLabel,
+  FieldGroup,
+  FieldSet,
+  FieldLegend,
+} from '@renderer/components/ui/field';
 import { SETTINGS_KEYS } from '@shared/constants';
 
 interface AutoCaptionConfig {
@@ -71,37 +77,42 @@ export function AutoCaptionModal({ open, onOpenChange }: AutoCaptionModalProps) 
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col">
-          <div className="flex flex-col">
-            <Label htmlFor="baseUrl">Base URL</Label>
-            <Input
-              id="baseUrl"
-              value={config.baseUrl}
-              onChange={handleChange('baseUrl')}
-              placeholder="http://localhost:8080"
-            />
-          </div>
+        <FieldGroup>
+          <FieldSet>
+            <FieldLegend>Endpoint Configuration</FieldLegend>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="baseUrl">Base URL</FieldLabel>
+                <Input
+                  id="baseUrl"
+                  value={config.baseUrl}
+                  onChange={handleChange('baseUrl')}
+                  placeholder="http://localhost:8080"
+                />
+              </Field>
 
-          <div className="flex flex-col">
-            <Label htmlFor="model">Model</Label>
-            <Input
-              id="model"
-              value={config.model}
-              onChange={handleChange('model')}
-              placeholder="model"
-            />
-          </div>
+              <Field>
+                <FieldLabel htmlFor="model">Model</FieldLabel>
+                <Input
+                  id="model"
+                  value={config.model}
+                  onChange={handleChange('model')}
+                  placeholder="model"
+                />
+              </Field>
 
-          <div className="flex flex-col">
-            <Label htmlFor="apiKey">API Key</Label>
-            <Input
-              id="apiKey"
-              value={config.apiKey}
-              onChange={handleChange('apiKey')}
-              placeholder="DUMMY"
-            />
-          </div>
-        </div>
+              <Field>
+                <FieldLabel htmlFor="apiKey">API Key</FieldLabel>
+                <Input
+                  id="apiKey"
+                  value={config.apiKey}
+                  onChange={handleChange('apiKey')}
+                  placeholder="DUMMY"
+                />
+              </Field>
+            </FieldGroup>
+          </FieldSet>
+        </FieldGroup>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

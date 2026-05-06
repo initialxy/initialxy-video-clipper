@@ -58,7 +58,8 @@ src/
 │   │   └── ui/                # shadcn/ui components (all Base UI primitives)
 │   │       ├── button.tsx, select.tsx, sheet.tsx, tabs.tsx, sonner.tsx
 │   │       ├── input.tsx, input-group.tsx, textarea.tsx, slider.tsx
-│   │       ├── dialog.tsx, label.tsx, card.tsx
+│   │       ├── dialog.tsx, label.tsx, card.tsx, progress.tsx
+│   │       ├── field.tsx, button-group.tsx, separator.tsx
 │   ├── hooks/
 │   │   ├── useVideoPlayer.ts  # Playback state (play/pause/seek/mute/volume)
 │   │   ├── useGallery.ts      # Gallery file scanning & state
@@ -153,6 +154,10 @@ All shadcn/ui components use **Base UI** (`@base-ui/react`) via `"style": "base-
 | Card | native `<div>` |
 | Sonner | `sonner` (independent) |
 | InputGroup | custom composition (Input + Button + Textarea wrappers) |
+| Field | custom composition (Label + Separator primitives) |
+| Progress | native `<div>` with ARIA |
+| ButtonGroup | custom composition (div + Separator) |
+| Separator | `@base-ui/react/separator` |
 
 When adding new shadcn components, use `base-nova` style. Never use `@radix-ui/react-*`.
 
