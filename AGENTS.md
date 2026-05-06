@@ -22,6 +22,7 @@ video-clipper/
 ├── converted/                  # Bulk-converted output (runtime)
 ├── src/
 │   ├── shared/                 # Shared types and utilities (main + preload + renderer)
+│   │   ├── constants.ts        # Shared constants (SETTINGS_KEYS)
 │   │   ├── ipc.ts              # IPC channel names, payload types, return types
 │   │   ├── types.ts            # Domain types (VideoInfo, ClipResult, ConvertSettings, GalleryFile)
 │   │   └── utils.ts            # Pure utilities (time formatting, path helpers, counter formatting)
@@ -29,7 +30,7 @@ video-clipper/
 │   │   ├── index.ts            # Window creation, app lifecycle, CSP headers, Menu.setApplicationMenu(null)
 │   │   ├── ipc-handlers.ts     # IPC route registration (thin delegates to services)
 │   │   ├── ffmpeg.ts           # ffmpeg command builder (pure functions, no side effects)
-│   │   ├── constants.ts        # VIDEO_EXTENSIONS, SETTINGS_KEYS
+│   │   ├── constants.ts        # VIDEO_EXTENSIONS
 │   │   ├── db.ts               # JSON config file persistence (node:sqlite unavailable in Electron)
 │   │   └── services/           # Business logic layer
 │   │       ├── ffmpeg-executor.ts    # Shared runFfmpeg executor (spawns child_process)
@@ -53,20 +54,17 @@ video-clipper/
 │   │   │   ├── CaptionEditor.tsx       # Text area with debounced autosave
 │   │   │   ├── CaptionOverlay.tsx      # Inline caption overlay for gallery grid cells
 │   │   │   ├── BulkConvertDrawer.tsx   # Slide-out drawer for bulk conversion settings
-│   │   │   ├── Toast.tsx               # Toast notification system
 │   │   │   └── DeleteConfirmModal.tsx  # Confirmation modal for clip deletion
 │   │   ├── components/ui/              # shadcn/ui components (all Base UI primitives)
 │   │   │   ├── button.tsx              # Button (default, outline, secondary, ghost, destructive, link)
 │   │   │   ├── select.tsx              # Select dropdown
 │   │   │   ├── sheet.tsx               # Sheet (Base UI dialog, BulkConvertDrawer side pane, confirmation modals)
-│   │   │   ├── drawer.tsx              # Drawer (vaul, unused — replaced by Sheet)
 │   │   │   ├── tabs.tsx                # Tabs
-│   │   │   ├── sonner.tsx              # Toast notifications
+│   │   │   ├── sonner.tsx              # Toast notifications (Toaster + ToastType)
 │   │   │   ├── input.tsx               # Text input
 │   │   │   ├── textarea.tsx            # Multi-line text input
 │   │   │   ├── slider.tsx              # Range slider
 │   │   │   ├── dialog.tsx              # Modal dialog
-│   │   │   ├── progress.tsx            # Progress indicator
 │   │   │   ├── label.tsx               # Form label
 │   │   │   └── card.tsx                # Card container
 │   │   ├── hooks/
@@ -75,7 +73,8 @@ video-clipper/
 │   │   │   ├── useGallery.ts           # Gallery file scanning & state
 │   │   │   ├── useCaption.ts           # Caption CRUD with debounced save
 │   │   │   ├── useConvertSettings.ts   # Bulk conversion settings (load/save/reset)
-│   │   │   └── useToast.ts             # Toast notification management
+│   │   │   ├── useLoadVideo.ts         # Shared video loading pattern (getVideoInfo → SET_VIDEO → SET_TAB)
+│   │   │   └── useDebouncedCallback.ts # Shared debounced callback wrapper
 │   │   ├── lib/
 │   │   │   └── utils.ts                # Utility (cn function)
 │   │   ├── store/
@@ -90,6 +89,7 @@ video-clipper/
 ├── .prettierrc                 # Prettier config with tailwindcss plugin
 ├── components.json             # shadcn/ui configuration
 ├── .husky/pre-commit           # Pre-commit hook (lint-staged → typecheck → lint → build)
+├── .lintstagedrc.json          # lint-staged configuration
 ├── .gitignore
 ├── package.json
 ├── PRD.md
@@ -139,7 +139,7 @@ src/main/
 ├── index.ts          # Window creation, app lifecycle, CSP headers, Menu.setApplicationMenu(null)
 ├── ipc-handlers.ts   # IPC route registration (thin delegates to services)
 ├── ffmpeg.ts         # ffmpeg command builder (pure functions, no side effects)
-├── constants.ts      # VIDEO_EXTENSIONS, SETTINGS_KEYS
+├── constants.ts      # VIDEO_EXTENSIONS
 ├── db.ts             # JSON config file persistence (node:sqlite unavailable in Electron)
 └── services/
     ├── ffmpeg-executor.ts    # Shared runFfmpeg executor (spawns child_process)
@@ -149,6 +149,8 @@ src/main/
     ├── gallery.service.ts    # File scanning, thumbnail caching
     └── caption.service.ts    # Caption file CRUD
 ```
+
+**SETTINGS_KEYS** lives in `src/shared/constants.ts` — imported by both main process and `useConvertSettings` hook.
 
 **ipc-handlers.ts** is thin — receives IPC payloads, validates them, delegates to services:
 ```typescript
@@ -160,7 +162,7 @@ ipcMain.handle('clip:create', async (_event, payload) => {
 **ffmpeg.ts** is a pure command builder — no child_process calls:
 ```typescript
 export function buildClipCommand(input: string, output: string, start: number, duration: number): string[] {
-  return ['ffmpeg', '-ss', String(start), '-i', input, '-t', String(duration), output];
+  return ['ffmpeg', '-i', input, '-ss', String(start), '-t', String(duration), '-c', 'copy', '-avoid_negative_ts', 'make_zero', output];
 }
 ```
 
@@ -215,6 +217,11 @@ Components subscribe to only the slice they need via custom hooks derived from t
 - **No ExpandedPlayer SET_VIDEO** — prevents gallery expansion from overwriting video tab state
 - **No `galleryFiles` in BulkConvertDrawer** — removed unused import, uses `selectedFiles` from app state only
 - **No Radix UI primitives** — all shadcn components use `@base-ui/react`, never `@radix-ui/react-*`
+- **No `ScannedFile` type** — consolidated to `GalleryFile` everywhere
+- **No `VideoInfo` duplication** — `VideoState` extends `VideoInfo`, ffprobe.service imports from shared
+- **No `SETTINGS_KEYS` duplication** — shared in `src/shared/constants.ts`
+- **No inline debounce** — shared `useDebouncedCallback` hook
+- **No `useToast` hook** — direct `sonner.toast` calls
 
 #### UI Primitives
 
@@ -223,16 +230,16 @@ All shadcn/ui components in this project use **Base UI** (`@base-ui/react`) as t
 - **Button** → `@base-ui/react/button`
 - **Select** → `@base-ui/react/select`
 - **Sheet** → `@base-ui/react/dialog` (BulkConvertDrawer side pane, confirmation modals)
-- **Drawer** → `vaul` (unused — replaced by Sheet)
 - **Tabs** → `@base-ui/react/tabs`
 - **Input** → `@base-ui/react/checkbox` (uses Base UI checkbox primitive)
 - **Textarea** → native `<textarea>` (no primitive needed)
 - **Slider** → `@base-ui/react/slider` (uses Base UI slider primitive)
 - **Dialog** → `@base-ui/react/dialog` (uses Base UI dialog primitive)
-- **Progress** → `@base-ui/react/progress` (uses Base UI progress primitive)
 - **Label** → `@base-ui/react/label` (uses Base UI label primitive)
 - **Card** → native `<div>` with consistent styling (no primitive needed)
 - **Sonner** → `sonner` (independent package, not a Base UI component)
+
+**Removed UI components:** `drawer.tsx` (replaced by Sheet), `button-group.tsx`, `separator.tsx`, `progress.tsx` (BulkConvertDrawer uses custom progress bar).
 
 When adding new shadcn components, always use the Base UI variant. Do NOT use `@radix-ui/react-*` packages. When running `npx shadcn@latest add <component>`, specify the `base-nova` style to get the correct primitives.
 
@@ -321,7 +328,6 @@ Define all IPC channels explicitly in the preload script. Never use `contextIsol
 | Channel | Direction | Payload | Returns |
 |---------|-----------|---------|---------|
 | `clip:create` | renderer → main | `{ inputPath, outputPath, start, duration }` | `{ success, outputPath, error? }` |
-| `clip:warn-insufficient` | main → renderer | `{ remaining, requested }` | — |
 | `convert:bulk` | renderer → main | `{ files[], settings, outputDir }` | `{ success, results[] }` |
 | `convert:progress` | main → renderer | `{ file, progress, status }` | — |
 | `convert:warn-no-changes` | main → renderer | — | — |
@@ -329,11 +335,9 @@ Define all IPC channels explicitly in the preload script. Never use `contextIsol
 | `fs:extract-thumbnail` | renderer → main | `{ filePath, outputPath }` | `{ success, outputPath }` |
 | `fs:read-caption` | renderer → main | `{ filePath }` | `{ content, exists }` |
 | `fs:write-caption` | renderer → main | `{ filePath, content }` | `{ success }` |
-| `fs:scan-outputs` | renderer → main | `{}` | `{ files[] }` |
+| `fs:scan-outputs` | renderer → main | `{}` | `{ files: GalleryFile[] }` |
 | `fs:delete-clip` | renderer → main | `{ filePath }` | `{ success, error? }` |
 | `fs:bulk-delete` | renderer → main | `{ paths: string[] }` | `{ success, errors: string[] }` |
-| `app:drag-drop` | renderer → main | `{ filePath }` | `{ success }` |
-| `app:check-ffmpeg` | renderer → main | `{}` | `{ available, path? }` |
 | `app:open-file` | renderer → main | `{}` | `{ filePath?, cancelled }` |
 | `settings:get` | renderer → main | `{ key }` | `{ value }` |
 | `settings:set` | renderer → main | `{ key, value }` | `{ success }` |
@@ -361,9 +365,12 @@ The `ElectronAPI` interface is declared in `src/env.d.ts` and derives its payloa
 
 **Clipping (stream copy ONLY — no re-encode ever):**
 ```bash
-ffmpeg -i <INPUT> -ss <START> -t <DURATION> <OUTPUT>
+ffmpeg -i <INPUT> -ss <START> -t <DURATION> -c copy -avoid_negative_ts make_zero <OUTPUT>
 ```
-- `-ss` after `-i` for accurate seeking.
+- `-ss` after `-i` for frame-accurate seeking (decodes from beginning but lands on exact position).
+- `-ss` before `-i` would seek to nearest keyframe (fast but inaccurate).
+- `-c copy` ensures stream copy (no re-encode).
+- `-avoid_negative_ts make_zero` fixes timestamp issues.
 
 **Bulk conversion (each param is optional — omit if "Same as source"):**
 ```bash
@@ -638,3 +645,4 @@ Build the app in this sequence:
 16. ~~**UI polish & bug fixes**: CaptionOverlay consistent styling (h-full, leading-relaxed, p-3 in both states), BulkConvertDrawer resolution inputs show empty when unset (0 treated as unset, no confusing "0" display), Sonner toast dark theme via toastOptions, bulk convert button disabled when no files selected.~~ ✅ DONE
 17. **UI polish & bug fixes**: Tab type renamed from `'clip'` to `'video'` across all files (app-state, App, TopBar), BulkConvertDrawer title alignment fixed (`px-4`), file count counter removed from drawer, codec dropdown styling fixed (explicit bg/fg via style prop), gallery bulk delete button added (destructive color, disabled when no selection), ExpandedPlayer close button moved inside video container (top-right absolute), clip length label replaced with RulerDimensionLine icon, 's' size fixed to `text-sm`, BulkConvertDrawer removed unused `galleryFiles` import.
 18. **UI consistency audit & shadcn migration**: Full audit of all UI components — replaced raw HTML form elements with shadcn/ui components (Input, Textarea, Slider, Dialog, Progress, Label). Removed custom focus ring styling, custom progress bar styling, and inline button styles. All components now use consistent shadcn variants (default, outline, destructive, ghost, secondary). Input fields use `bg-transparent` for consistent dark theme appearance. Progress uses shadcn Progress component with custom styling. Dialog uses shadcn Dialog with proper backdrop blur and animation. Label uses shadcn Label with form-label class. Slider uses shadcn Slider with track/thumb styling.
+19. **Code quality audit fixes**: Fixed ffmpeg clip command (`-c copy`, `-avoid_negative_ts make_zero`), removed duplicated `VideoInfo` (ffprobe.service imports from shared), added `FS_BULK_DELETE` to `IPCReturns`, moved `SETTINGS_KEYS` to shared constants, removed dead code (4 UI components, `vaul` dependency, `closeDb`, `ensureThumbnail`, `getCurrentTime`, `debounce`/`getDirectory` utils, dead sonner functions), extracted `useLoadVideo` hook for shared video loading pattern, created `useDebouncedCallback` hook replacing inline debounce, unified toast usage (direct `sonner.toast`), removed unused IPC channels (`clip:warn-insufficient`, `app:drag-drop`, `app:check-ffmpeg`), fixed GalleryView text ("Clip mode" → "Video mode"), consolidated `ScannedFile` → `GalleryFile`, `VideoState` now extends `VideoInfo`.
