@@ -10,6 +10,7 @@ import { GalleryView } from '@renderer/components/GalleryView';
 import { ExpandedPlayer } from '@renderer/components/ExpandedPlayer';
 import { BulkConvertDrawer } from '@renderer/components/BulkConvertDrawer';
 import { DeleteConfirmModal } from '@renderer/components/DeleteConfirmModal';
+import { AutoCaptionModal } from '@renderer/components/AutoCaptionModal';
 import { Toaster } from '@renderer/components/ui/sonner';
 import {
   Dialog,
@@ -21,10 +22,19 @@ import {
 } from '@renderer/components/ui/dialog';
 import { Button } from '@renderer/components/ui/button';
 import { cn } from '@renderer/lib/utils';
+import { SETTINGS_KEYS } from '@shared/constants';
+import type { AutoCaptionResult } from '@shared/types';
 
 function AppContent() {
-  const { activeTab, currentVideo, expandedFile, selectedFiles, currentTime, clipLength } =
-    useAppState();
+  const {
+    activeTab,
+    currentVideo,
+    expandedFile,
+    selectedFiles,
+    currentTime,
+    clipLength,
+    isAutoCaptioning,
+  } = useAppState();
   const dispatch = useAppDispatch();
   const { galleryFiles, refreshGallery, selectAll, isAllSelected, deleteFile } = useGallery();
   const convertSettings = useConvertSettings();
@@ -33,7 +43,9 @@ function AppContent() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [bulkDeleteCount, setBulkDeleteCount] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [autoCaptionSettingsOpen, setAutoCaptionSettingsOpen] = useState(false);
   const videoTimeRef = useRef(0);
+  const toastIdRef = useRef<string | number | null>(null);
 
   const handleTabChange = useCallback(
     (tab: 'video' | 'gallery') => {
@@ -155,6 +167,30 @@ function AppContent() {
   }, [dispatch]);
 
   useEffect(() => {
+    return window.electronAPI.onAutoCaptionProgress((data) => {
+      if (data.status === 'processing') {
+        if (toastIdRef.current == null) {
+          toastIdRef.current = toast.custom(
+            () => (
+              <div className="flex items-center gap-3">
+                <span className="text-sm">
+                  {data.current} / {data.total} captioned
+                </span>
+              </div>
+            ),
+            { duration: Infinity, id: 'auto-caption-progress' },
+          );
+        } else {
+          toast(`Auto-caption: ${data.current} / ${data.total} captioned`, {
+            id: 'auto-caption-progress',
+            duration: Infinity,
+          });
+        }
+      }
+    });
+  }, []);
+
+  useEffect(() => {
     return window.electronAPI.onConvertWarnNoChanges(() => {
       if (!currentVideo) return;
       const clipRemaining = currentVideo.duration - currentTime;
@@ -235,6 +271,56 @@ function AppContent() {
     dispatch({ type: 'SET_VIDEO', payload: null });
   }, [dispatch]);
 
+  const loadAutoCaptionConfig = useCallback(async (): Promise<{
+    baseUrl: string;
+    model: string;
+    apiKey: string;
+  }> => {
+    const res = await window.electronAPI.getSetting(SETTINGS_KEYS.AUTO_CAPTION_CONFIG);
+    if (res.value) {
+      try {
+        return JSON.parse(res.value) as { baseUrl: string; model: string; apiKey: string };
+      } catch {
+        // fall through
+      }
+    }
+    return { baseUrl: 'http://localhost:8080', model: 'model', apiKey: 'DUMMY' };
+  }, []);
+
+  const handleAutoCaption = useCallback(
+    async (filePath?: string) => {
+      const files = filePath ? [filePath] : Array.from(selectedFiles);
+      if (files.length === 0) return;
+
+      dispatch({ type: 'SET_AUTO_CAPTIONING', payload: true });
+
+      const config = await loadAutoCaptionConfig();
+
+      try {
+        const res = await window.electronAPI.autoCaptionRun({ files, config });
+        const results = res.results ?? [];
+        const succeeded = results.filter((r: AutoCaptionResult) => r.success).length;
+        const failed = results.filter((r: AutoCaptionResult) => !r.success).length;
+
+        if (toastIdRef.current != null) {
+          toast.dismiss('auto-caption-progress');
+          toastIdRef.current = null;
+        }
+
+        toast.info(`Auto-caption: ${succeeded} succeeded, ${failed} failed`);
+        refreshGallery();
+      } catch {
+        if (toastIdRef.current != null) {
+          toast.dismiss('auto-caption-progress');
+          toastIdRef.current = null;
+        }
+      } finally {
+        dispatch({ type: 'SET_AUTO_CAPTIONING', payload: false });
+      }
+    },
+    [selectedFiles, dispatch, loadAutoCaptionConfig, refreshGallery],
+  );
+
   return (
     <div className="dark bg-background text-foreground flex h-screen flex-col overflow-hidden">
       {/* Top Bar */}
@@ -248,7 +334,10 @@ function AppContent() {
         }}
         onToggleSelectAll={handleToggleSelectAll}
         onBulkDelete={handleBulkDelete}
+        onAutoCaption={() => handleAutoCaption()}
+        onOpenAutoCaptionSettings={() => setAutoCaptionSettingsOpen(true)}
         isAllSelected={isAllSelected}
+        isAutoCaptioning={isAutoCaptioning}
       />
 
       {/* Main Content */}
@@ -262,7 +351,11 @@ function AppContent() {
         onDrop={handleDropMain}
       >
         {expandedFile ? (
-          <ExpandedPlayer filePath={expandedFile} onClose={handleCloseExpanded} />
+          <ExpandedPlayer
+            filePath={expandedFile}
+            onClose={handleCloseExpanded}
+            onAutoCaption={handleAutoCaption}
+          />
         ) : activeTab === 'video' ? (
           <div className="flex min-h-0 flex-1 flex-col p-4">
             {currentVideo ? (
@@ -289,6 +382,9 @@ function AppContent() {
           </div>
         )}
       </div>
+
+      {/* Auto-caption Settings Modal */}
+      <AutoCaptionModal open={autoCaptionSettingsOpen} onOpenChange={setAutoCaptionSettingsOpen} />
 
       {/* Bulk Convert Drawer */}
       <BulkConvertDrawer onClose={convertSettings.close} />

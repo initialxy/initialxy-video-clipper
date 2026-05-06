@@ -250,3 +250,48 @@ Other helpers: `__setVideoTime(t)`, `__getVideoTime()`, `__seekAndWait(t)`. Test
 ### Navigation
 
 Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by_text` over screenshots. Use `electron_take_screenshot` only for visual validation.
+
+---
+
+## Implementation Status
+
+### Auto-caption Feature (In Progress)
+
+**Milestone: Initial implementation complete, manual testing in progress**
+
+#### Completed
+| Component | File | Status |
+|-----------|------|--------|
+| Service | `src/main/services/auto-caption.service.ts` | ✅ Created |
+| IPC handlers | `src/main/ipc-handlers.ts` | ✅ Added 3 handlers |
+| Shared types | `src/shared/types.ts` | ✅ Added `AutoCaptionProgress`, `AutoCaptionResult` |
+| IPC channels | `src/shared/ipc.ts` | ✅ Added 3 channels with payloads/returns |
+| Settings key | `src/shared/constants.ts` | ✅ Added `AUTO_CAPTION_CONFIG` |
+| State | `src/renderer/store/app-state.tsx` | ✅ Added `isAutoCaptioning` state + action |
+| Settings dialog | `src/renderer/components/AutoCaptionModal.tsx` | ✅ Created |
+| Gallery button group | `src/renderer/components/TopBar.tsx` | ✅ Added Auto-caption + settings buttons |
+| Expanded player button | `src/renderer/components/ExpandedPlayer.tsx` | ✅ Added Auto-caption button |
+| App wiring | `src/renderer/App.tsx` | ✅ Progress toast, config loading, handlers |
+| Preload | `src/preload/index.ts` | ✅ Added 3 methods |
+| ElectronAPI | `src/env.d.ts` | ✅ Added 3 methods |
+| Build | — | ✅ Passes typecheck, lint, build |
+
+#### In Testing
+| Feature | Status |
+|---------|--------|
+| Gallery UI renders with Auto-caption button | ✅ Verified |
+| Button disabled when no files selected | ✅ Verified |
+| Button enabled when files selected | ✅ Verified |
+| Settings dialog opens on ellipsis click | ⏳ Pending |
+| Bulk auto-caption execution | ⏳ Pending |
+| Progress toast | ⏳ Pending |
+| Cancel interrupt | ⏳ Pending |
+| Summary toast on completion | ⏳ Pending |
+| Expanded player auto-caption | ⏳ Pending |
+
+#### Pending
+| Feature | Notes |
+|---------|-------|
+| Auto-caption execution test | Requires LLM server running |
+| Edge cases | Empty thumbnails, network errors, timeout |
+| Default config seeding | On first install, `AUTO_CAPTION_CONFIG` not set |

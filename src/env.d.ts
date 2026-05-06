@@ -27,6 +27,13 @@ declare global {
     setSetting: (key: string, value: string) => Promise<IPCReturns['settings:set']>;
     onConvertProgress: (callback: (data: IPCPayloads['convert:progress']) => void) => () => void;
     onConvertWarnNoChanges: (callback: () => void) => () => void;
+    autoCaptionRun: (
+      payload: IPCPayloads['auto-caption:run'],
+    ) => Promise<IPCReturns['auto-caption:run']>;
+    autoCaptionInterrupt: () => Promise<IPCReturns['auto-caption:interrupt']>;
+    onAutoCaptionProgress: (
+      callback: (data: IPCPayloads['auto-caption:progress']) => void,
+    ) => () => void;
   }
 
   interface Window {

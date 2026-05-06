@@ -55,6 +55,20 @@ const electronAPI = {
     return () =>
       ipcRenderer.removeListener(IPC_CHANNELS.CONVERT_WARN_NO_CHANGES, listener as never);
   },
+
+  // Auto-caption
+  autoCaptionRun: (payload: IPCPayloads['auto-caption:run']) =>
+    ipcRenderer.invoke('auto-caption:run', payload),
+
+  autoCaptionInterrupt: () => ipcRenderer.invoke('auto-caption:interrupt', {}),
+
+  onAutoCaptionProgress: (callback: (data: IPCPayloads['auto-caption:progress']) => void) => {
+    const listener = (_event: Event, data: IPCPayloads['auto-caption:progress']) => {
+      callback(data);
+    };
+    ipcRenderer.on(IPC_CHANNELS.AUTO_CAPTION_PROGRESS, listener as never);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.AUTO_CAPTION_PROGRESS, listener as never);
+  },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

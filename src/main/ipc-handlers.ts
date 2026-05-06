@@ -14,6 +14,7 @@ import {
 import { readCaption, writeCaption } from './services/caption.service';
 import { getSetting, setSetting } from './db';
 import { getVideoInfo } from './services/ffprobe.service';
+import { runAutoCaption } from './services/auto-caption.service';
 
 function getMainWindow(): BrowserWindowType | null {
   const windows = BrowserWindow.getAllWindows();
@@ -128,5 +129,41 @@ export function registerIpcHandlers(): void {
     } catch {
       return { success: false };
     }
+  });
+
+  // auto-caption:run
+  ipcMain.handle(
+    IPC_CHANNELS.AUTO_CAPTION_RUN,
+    async (
+      _event,
+      payload: { files: string[]; config: { baseUrl: string; model: string; apiKey: string } },
+    ) => {
+      const { files, config } = payload;
+      let cancelled = false;
+
+      const onceListener = (_evt: unknown, _data: unknown) => {
+        cancelled = true;
+      };
+      ipcMain.once(IPC_CHANNELS.AUTO_CAPTION_INTERRUPT, onceListener);
+
+      const checkCancelled = () => cancelled;
+
+      const { results } = await runAutoCaption(
+        files,
+        config,
+        (progressEvent) => {
+          const win = getMainWindow();
+          win?.webContents.send(IPC_CHANNELS.AUTO_CAPTION_PROGRESS, progressEvent);
+        },
+        checkCancelled,
+      );
+
+      return { success: true, results };
+    },
+  );
+
+  // auto-caption:interrupt
+  ipcMain.handle(IPC_CHANNELS.AUTO_CAPTION_INTERRUPT, async () => {
+    return { cancelled: true };
   });
 }

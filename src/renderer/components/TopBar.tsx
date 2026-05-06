@@ -8,6 +8,8 @@ import {
   Scissors,
   RulerDimensionLine,
   Trash2,
+  MessageSquare,
+  MoreVertical,
 } from 'lucide-react';
 import { Video, Images } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs';
@@ -23,7 +25,10 @@ interface TopBarProps {
   onOpenBulkConvert: () => void;
   onToggleSelectAll: () => void;
   onBulkDelete: () => void;
+  onAutoCaption: () => void;
+  onOpenAutoCaptionSettings: () => void;
   isAllSelected: boolean;
+  isAutoCaptioning: boolean;
 }
 
 export function TopBar({
@@ -33,7 +38,10 @@ export function TopBar({
   onOpenBulkConvert,
   onToggleSelectAll,
   onBulkDelete,
+  onAutoCaption,
+  onOpenAutoCaptionSettings,
   isAllSelected,
+  isAutoCaptioning,
 }: TopBarProps) {
   const { activeTab, clipLength, currentVideo, selectedFiles } = useAppState();
   const selectedFilesCount = selectedFiles.size;
@@ -123,6 +131,27 @@ export function TopBar({
               <span className="hidden sm:inline">
                 {isAllSelected ? 'Deselect All' : 'Select All'}
               </span>
+            </Button>
+
+            <Button
+              onClick={onAutoCaption}
+              variant="secondary"
+              disabled={selectedFilesCount === 0 || isAutoCaptioning}
+              title="Auto-caption Selected"
+              className="shrink-0"
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">Auto-caption</span>
+            </Button>
+
+            <Button
+              onClick={onOpenAutoCaptionSettings}
+              variant="secondary"
+              size="icon-sm"
+              className="border-border/50 -ml-px rounded-l-none border-l"
+              title="Auto-caption Settings"
+            >
+              <MoreVertical className="h-3.5 w-3.5" />
             </Button>
 
             <Button
