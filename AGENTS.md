@@ -58,8 +58,8 @@ video-clipper/
 │   │   ├── components/ui/              # shadcn/ui components (all Base UI primitives)
 │   │   │   ├── button.tsx              # Button (default, outline, secondary, ghost, destructive, link)
 │   │   │   ├── select.tsx              # Select dropdown
-│   │   │   ├── sheet.tsx               # Sheet (Base UI dialog, confirmation modals)
-│   │   │   ├── drawer.tsx              # Drawer (vaul, BulkConvertDrawer side pane)
+│   │   │   ├── sheet.tsx               # Sheet (Base UI dialog, BulkConvertDrawer side pane, confirmation modals)
+│   │   │   ├── drawer.tsx              # Drawer (vaul, unused — replaced by Sheet)
 │   │   │   ├── tabs.tsx                # Tabs
 │   │   │   ├── sonner.tsx              # Toast notifications
 │   │   │   ├── input.tsx               # Text input
@@ -221,8 +221,8 @@ All shadcn/ui components in this project use **Base UI** (`@base-ui/react`) as t
 
 - **Button** → `@base-ui/react/button`
 - **Select** → `@base-ui/react/select`
-- **Sheet** → `@base-ui/react/dialog` (confirmation modals)
-- **Drawer** → `vaul` (BulkConvertDrawer side pane)
+- **Sheet** → `@base-ui/react/dialog` (BulkConvertDrawer side pane, confirmation modals)
+- **Drawer** → `vaul` (unused — replaced by Sheet)
 - **Tabs** → `@base-ui/react/tabs`
 - **Input** → `@base-ui/react/checkbox` (uses Base UI checkbox primitive)
 - **Textarea** → native `<textarea>` (no primitive needed)

@@ -8,7 +8,6 @@ import {
   SheetHeader,
   SheetTitle,
   SheetFooter,
-  SheetDescription,
 } from '@renderer/components/ui/sheet';
 import {
   Select,
@@ -78,13 +77,10 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
       <SheetContent side="right" className="flex flex-col sm:max-w-[340px]">
         <SheetHeader>
           <SheetTitle>Bulk Convert</SheetTitle>
-          <SheetDescription>
-            Configure settings for bulk conversion of selected files.
-          </SheetDescription>
         </SheetHeader>
 
         {/* Settings */}
-        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
+        <div className="px-4">
           {/* Codec */}
           <div className="space-y-2">
             <Label htmlFor="codec">Codec</Label>
@@ -210,7 +206,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
         </div>
 
         {/* Footer */}
-        <SheetFooter className="space-y-2">
+        <SheetFooter>
           <Button onClick={() => reset()} variant="secondary" className="w-full">
             Reset
           </Button>
