@@ -38,6 +38,9 @@ export function useVideoPlayer(filePath?: string, options?: UseVideoPlayerOption
             : 0;
         setPlayerTime(restoreTime);
         video.currentTime = restoreTime;
+        if (options?.autoPlay && restoreTime === 0) {
+          video.play().catch(() => {});
+        }
       } else {
         setPlayerTime(0);
         video.currentTime = 0;
@@ -74,7 +77,7 @@ export function useVideoPlayer(filePath?: string, options?: UseVideoPlayerOption
       video.removeEventListener('timeupdate', onTimeUpdatePlayback);
       video.removeEventListener('seeked', onSeeked);
     };
-  }, [filePath, useGlobalState]);
+  }, [filePath, useGlobalState, options?.autoPlay]);
 
   const updateTime = useCallback(() => {
     const video = videoRef.current;

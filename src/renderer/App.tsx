@@ -364,6 +364,7 @@ function AppContent() {
                 className="flex-1"
                 onClose={handleCloseVideo}
                 currentTimeRef={videoTimeRef}
+                autoPlay
               />
             ) : (
               <div className="flex flex-1 items-center justify-center">
