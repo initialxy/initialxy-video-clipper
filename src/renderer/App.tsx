@@ -10,7 +10,7 @@ import { GalleryView } from '@renderer/components/GalleryView';
 import { ExpandedPlayer } from '@renderer/components/ExpandedPlayer';
 import { BulkConvertDrawer } from '@renderer/components/BulkConvertDrawer';
 import { DeleteConfirmModal } from '@renderer/components/DeleteConfirmModal';
-import { AutoCaptionModal } from '@renderer/components/AutoCaptionModal';
+import { AutoCaptionDrawer } from '@renderer/components/AutoCaptionDrawer';
 import { Toaster } from '@renderer/components/ui/sonner';
 import {
   Dialog,
@@ -43,7 +43,6 @@ function AppContent() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [bulkDeleteCount, setBulkDeleteCount] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [autoCaptionSettingsOpen, setAutoCaptionSettingsOpen] = useState(false);
   const videoTimeRef = useRef(0);
   const toastIdRef = useRef<string | number | null>(null);
 
@@ -335,7 +334,9 @@ function AppContent() {
         onToggleSelectAll={handleToggleSelectAll}
         onBulkDelete={handleBulkDelete}
         onAutoCaption={() => handleAutoCaption()}
-        onOpenAutoCaptionSettings={() => setAutoCaptionSettingsOpen(true)}
+        onOpenAutoCaptionSettings={() =>
+          dispatch({ type: 'SET_AUTO_CAPTION_DRAWER_OPEN', payload: true })
+        }
         isAllSelected={isAllSelected}
         isAutoCaptioning={isAutoCaptioning}
       />
@@ -383,8 +384,10 @@ function AppContent() {
         )}
       </div>
 
-      {/* Auto-caption Settings Modal */}
-      <AutoCaptionModal open={autoCaptionSettingsOpen} onOpenChange={setAutoCaptionSettingsOpen} />
+      {/* LLM API Settings Drawer */}
+      <AutoCaptionDrawer
+        onClose={() => dispatch({ type: 'SET_AUTO_CAPTION_DRAWER_OPEN', payload: false })}
+      />
 
       {/* Bulk Convert Drawer */}
       <BulkConvertDrawer onClose={convertSettings.close} />

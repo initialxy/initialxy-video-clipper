@@ -1,22 +1,15 @@
-import { useState, useCallback, useEffect } from 'react';
-import type { ChangeEvent } from 'react';
+import { useState, useCallback, useEffect, type ChangeEvent } from 'react';
+import { useAppState } from '@renderer/store/app-state';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@renderer/components/ui/dialog';
-import { Button } from '@renderer/components/ui/button';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from '@renderer/components/ui/sheet';
 import { Input } from '@renderer/components/ui/input';
-import {
-  Field,
-  FieldLabel,
-  FieldGroup,
-  FieldSet,
-  FieldLegend,
-} from '@renderer/components/ui/field';
+import { Button } from '@renderer/components/ui/button';
+import { Field, FieldLabel, FieldGroup, FieldSet } from '@renderer/components/ui/field';
 import { SETTINGS_KEYS } from '@shared/constants';
 
 interface AutoCaptionConfig {
@@ -25,9 +18,8 @@ interface AutoCaptionConfig {
   apiKey: string;
 }
 
-interface AutoCaptionModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+interface AutoCaptionDrawerProps {
+  onClose: () => void;
 }
 
 const DEFAULT_CONFIG: AutoCaptionConfig = {
@@ -36,12 +28,13 @@ const DEFAULT_CONFIG: AutoCaptionConfig = {
   apiKey: 'DUMMY',
 };
 
-export function AutoCaptionModal({ open, onOpenChange }: AutoCaptionModalProps) {
+export function AutoCaptionDrawer({ onClose }: AutoCaptionDrawerProps) {
+  const { isAutoCaptioning, isAutoCaptionDrawerOpen } = useAppState();
   const [config, setConfig] = useState<AutoCaptionConfig>(DEFAULT_CONFIG);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    if (open && !loaded) {
+    if (!loaded) {
       window.electronAPI.getSetting(SETTINGS_KEYS.AUTO_CAPTION_CONFIG).then((res) => {
         if (res.value) {
           try {
@@ -53,12 +46,12 @@ export function AutoCaptionModal({ open, onOpenChange }: AutoCaptionModalProps) 
         setLoaded(true);
       });
     }
-  }, [open, loaded]);
+  }, [loaded]);
 
   const handleSave = useCallback(() => {
     window.electronAPI.setSetting(SETTINGS_KEYS.AUTO_CAPTION_CONFIG, JSON.stringify(config));
-    onOpenChange(false);
-  }, [config, onOpenChange]);
+    onClose();
+  }, [config, onClose]);
 
   const handleChange = useCallback(
     (field: keyof AutoCaptionConfig) => (e: ChangeEvent<HTMLInputElement>) => {
@@ -68,19 +61,22 @@ export function AutoCaptionModal({ open, onOpenChange }: AutoCaptionModalProps) 
   );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Auto-caption Settings</DialogTitle>
-          <DialogDescription>
-            Configure the LLM endpoint for automatic video captioning.
-          </DialogDescription>
-        </DialogHeader>
+    <Sheet
+      open={isAutoCaptionDrawerOpen}
+      onOpenChange={(open: boolean) => {
+        if (!open) {
+          onClose();
+        }
+      }}
+    >
+      <SheetContent side="right" className="flex flex-col sm:max-w-[340px]">
+        <SheetHeader>
+          <SheetTitle>LLM API Settings</SheetTitle>
+        </SheetHeader>
 
-        <FieldGroup>
-          <FieldSet>
-            <FieldLegend>Endpoint Configuration</FieldLegend>
-            <FieldGroup>
+        <div className="flex-1 overflow-y-auto px-4">
+          <FieldGroup>
+            <FieldSet>
               <Field>
                 <FieldLabel htmlFor="baseUrl">Base URL</FieldLabel>
                 <Input
@@ -110,17 +106,16 @@ export function AutoCaptionModal({ open, onOpenChange }: AutoCaptionModalProps) 
                   placeholder="DUMMY"
                 />
               </Field>
-            </FieldGroup>
-          </FieldSet>
-        </FieldGroup>
+            </FieldSet>
+          </FieldGroup>
+        </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+        <SheetFooter>
+          <Button onClick={handleSave} disabled={isAutoCaptioning}>
+            Save
           </Button>
-          <Button onClick={handleSave}>Save</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

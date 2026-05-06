@@ -127,6 +127,10 @@ export function TopBar({
 
         {activeTab === 'gallery' && (
           <>
+            <Button onClick={onRefreshGallery} variant="ghost" size="icon" title="Refresh Gallery">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+
             <Button onClick={onToggleSelectAll} variant="ghost">
               {isAllSelected ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
               <span className="hidden sm:inline">
@@ -152,7 +156,7 @@ export function TopBar({
                 disabled={selectedFilesCount === 0 || isAutoCaptioning}
                 size="icon"
                 className="border-border/50 -ml-px rounded-l-none border-l"
-                title="Auto-caption Settings"
+                title="LLM API Settings"
               >
                 <MoreVertical className="h-3.5 w-3.5" />
               </Button>
@@ -175,10 +179,6 @@ export function TopBar({
             >
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">Convert</span>
-            </Button>
-
-            <Button onClick={onRefreshGallery} variant="ghost" size="icon" title="Refresh Gallery">
-              <RefreshCw className="h-4 w-4" />
             </Button>
           </>
         )}

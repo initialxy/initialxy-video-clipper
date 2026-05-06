@@ -25,6 +25,7 @@ export interface AppState {
   isConverting: boolean;
   convertProgress: number;
   isConvertDrawerOpen: boolean;
+  isAutoCaptionDrawerOpen: boolean;
   isAutoCaptioning: boolean;
   currentTime: number;
 }
@@ -40,6 +41,7 @@ type AppAction =
   | { type: 'SET_CONVERTING'; payload: boolean }
   | { type: 'SET_CONVERT_PROGRESS'; payload: number }
   | { type: 'SET_CONVERT_DRAWER_OPEN'; payload: boolean }
+  | { type: 'SET_AUTO_CAPTION_DRAWER_OPEN'; payload: boolean }
   | { type: 'SET_AUTO_CAPTIONING'; payload: boolean }
   | { type: 'SET_CURRENT_TIME'; payload: number };
 
@@ -77,6 +79,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, convertProgress: action.payload };
     case 'SET_CONVERT_DRAWER_OPEN':
       return { ...state, isConvertDrawerOpen: action.payload };
+    case 'SET_AUTO_CAPTION_DRAWER_OPEN':
+      return { ...state, isAutoCaptionDrawerOpen: action.payload };
     case 'SET_AUTO_CAPTIONING':
       return { ...state, isAutoCaptioning: action.payload };
     case 'SET_CURRENT_TIME':
@@ -96,6 +100,7 @@ const initialState: AppState = {
   isConverting: false,
   convertProgress: 0,
   isConvertDrawerOpen: false,
+  isAutoCaptionDrawerOpen: false,
   isAutoCaptioning: false,
   currentTime: 0,
 };
