@@ -63,7 +63,7 @@ export function AutoCaptionModal({ open, onOpenChange }: AutoCaptionModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Auto-caption Settings</DialogTitle>
           <DialogDescription>
@@ -71,8 +71,8 @@ export function AutoCaptionModal({ open, onOpenChange }: AutoCaptionModalProps) 
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 py-2">
-          <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col">
+          <div className="flex flex-col">
             <Label htmlFor="baseUrl">Base URL</Label>
             <Input
               id="baseUrl"
@@ -82,7 +82,7 @@ export function AutoCaptionModal({ open, onOpenChange }: AutoCaptionModalProps) 
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col">
             <Label htmlFor="model">Model</Label>
             <Input
               id="model"
@@ -92,7 +92,7 @@ export function AutoCaptionModal({ open, onOpenChange }: AutoCaptionModalProps) 
             />
           </div>
 
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col">
             <Label htmlFor="apiKey">API Key</Label>
             <Input
               id="apiKey"

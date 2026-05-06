@@ -16,6 +16,7 @@ import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs';
 import { useAppState, useAppDispatch, type ActiveTab } from '@renderer/store/app-state';
 import { useLoadVideo } from '@renderer/hooks/useLoadVideo';
 import { Button } from '@renderer/components/ui/button';
+import { ButtonGroup, ButtonGroupSeparator } from '@renderer/components/ui/button-group';
 import { InputGroup, InputGroupInput, InputGroupAddon } from '@renderer/components/ui/input-group';
 
 interface TopBarProps {
@@ -77,7 +78,7 @@ export function TopBar({
   }, [loadVideo]);
 
   return (
-    <div className="border-border/50 bg-background/80 flex items-center justify-between border-b px-4 py-2 backdrop-blur-sm">
+    <div className="bg-background flex items-center justify-between px-4 pt-4">
       {/* Left: Tabs */}
       <Tabs value={activeTab} onValueChange={(v: string) => onTabChange(v as ActiveTab)}>
         <TabsList>
@@ -96,7 +97,7 @@ export function TopBar({
       <div className="flex items-center gap-2">
         {activeTab === 'video' && (
           <>
-            <Button onClick={handleOpenFile} variant="ghost" size="sm" title="Open File">
+            <Button onClick={handleOpenFile} variant="ghost" title="Open File">
               <FolderOpen className="h-4 w-4" />
               <span className="hidden sm:inline">Open</span>
             </Button>
@@ -126,33 +127,36 @@ export function TopBar({
 
         {activeTab === 'gallery' && (
           <>
-            <Button onClick={onToggleSelectAll} variant="ghost" size="sm">
+            <Button onClick={onToggleSelectAll} variant="ghost">
               {isAllSelected ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
               <span className="hidden sm:inline">
                 {isAllSelected ? 'Deselect All' : 'Select All'}
               </span>
             </Button>
 
-            <Button
-              onClick={onAutoCaption}
-              variant="secondary"
-              disabled={selectedFilesCount === 0 || isAutoCaptioning}
-              title="Auto-caption Selected"
-              className="shrink-0"
-            >
-              <MessageSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">Auto-caption</span>
-            </Button>
-
-            <Button
-              onClick={onOpenAutoCaptionSettings}
-              variant="secondary"
-              size="icon-sm"
-              className="border-border/50 -ml-px rounded-l-none border-l"
-              title="Auto-caption Settings"
-            >
-              <MoreVertical className="h-3.5 w-3.5" />
-            </Button>
+            <ButtonGroup>
+              <Button
+                onClick={onAutoCaption}
+                variant="secondary"
+                disabled={selectedFilesCount === 0 || isAutoCaptioning}
+                title="Auto-caption Selected"
+                className="shrink-0"
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span className="hidden sm:inline">Auto-caption</span>
+              </Button>
+              <ButtonGroupSeparator />
+              <Button
+                onClick={onOpenAutoCaptionSettings}
+                variant="secondary"
+                disabled={selectedFilesCount === 0 || isAutoCaptioning}
+                size="icon"
+                className="border-border/50 -ml-px rounded-l-none border-l"
+                title="Auto-caption Settings"
+              >
+                <MoreVertical className="h-3.5 w-3.5" />
+              </Button>
+            </ButtonGroup>
 
             <Button
               onClick={onBulkDelete}
