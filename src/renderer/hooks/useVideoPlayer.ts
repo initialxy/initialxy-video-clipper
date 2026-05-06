@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAppState } from '@renderer/store/app-state';
-import { isInputFocused } from '@renderer/lib/utils';
 
 interface UseVideoPlayerOptions {
   useGlobalState?: boolean;
@@ -165,27 +164,15 @@ export function useVideoPlayer(filePath?: string, options?: UseVideoPlayerOption
     setIsMuted(video.muted);
   }, []);
 
-  // Global keyboard shortcuts (only in global mode)
-  useEffect(() => {
-    if (!useGlobalState) return;
+  const getVolume = useCallback(() => {
+    const video = videoRef.current;
+    return video ? video.volume : 0;
+  }, []);
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (isInputFocused()) return;
-
-      if (e.code === 'Space') {
-        e.preventDefault();
-        togglePlay();
-      } else if (e.key === 'm' || e.key === 'M') {
-        e.preventDefault();
-        toggleMute();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlay, toggleMute, useGlobalState]);
-
-  // Cleanup animation frame on unmount
+  const getCurrentTime = useCallback(() => {
+    const video = videoRef.current;
+    return video ? video.currentTime : playerTime;
+  }, [playerTime]);
   useEffect(() => {
     return () => {
       stopAnimationLoop();
@@ -202,6 +189,8 @@ export function useVideoPlayer(filePath?: string, options?: UseVideoPlayerOption
     seek,
     setVolumeLevel,
     toggleMute,
+    getVolume,
+    getCurrentTime,
     onTimeUpdate,
     onPlay,
     onPause,

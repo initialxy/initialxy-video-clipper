@@ -8,11 +8,11 @@ interface VolumeControlProps {
   isMuted: boolean;
   toggleMute: () => void;
   setVolumeLevel: (vol: number) => void;
+  volume: number;
 }
 
-export function VolumeControl({ isMuted, toggleMute, setVolumeLevel }: VolumeControlProps) {
+export function VolumeControl({ isMuted, toggleMute, setVolumeLevel, volume }: VolumeControlProps) {
   const [showSlider, setShowSlider] = useState(false);
-  const [volume, setVolume] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const effectiveVolume = isMuted ? 0 : volume;
@@ -20,7 +20,6 @@ export function VolumeControl({ isMuted, toggleMute, setVolumeLevel }: VolumeCon
   const handleVolumeChange = useCallback(
     (_value: number | readonly number[]) => {
       const vol = Array.isArray(_value) ? _value[0] : _value;
-      setVolume(vol);
       setVolumeLevel(vol);
     },
     [setVolumeLevel],

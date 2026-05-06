@@ -4,6 +4,19 @@
 
 ---
 
+### Editing This File
+
+**CRITICAL: Never edit `AGENTS.md` directly.** Direct edits cause KV cache invalidation and token reprocessing, which is extremely slow.
+
+Instead:
+1. `cp AGENTS.md AGENTS.new.md` — copy to a working file
+2. Edit `AGENTS.new.md` with all required changes
+3. `mv AGENTS.new.md AGENTS.md` — replace the original
+
+This applies to every edit session, even single-line changes.
+
+---
+
 ## Project Summary
 
 Desktop app for clipping video files to create training data for video diffusion models. Electron + React + TypeScript + Tailwind CSS + shadcn/ui (Base UI primitives). Uses ffmpeg for all video operations.
@@ -61,12 +74,13 @@ src/
 │   │       ├── dialog.tsx, label.tsx, card.tsx, progress.tsx
 │   │       ├── field.tsx, button-group.tsx, separator.tsx
 │   ├── hooks/
-│   │   ├── useVideoPlayer.ts  # Playback state (play/pause/seek/mute/volume)
-│   │   ├── useGallery.ts      # Gallery file scanning & state
-│   │   ├── useCaption.ts      # Caption CRUD with debounced save
-│   │   ├── useConvertSettings.ts # Bulk conversion settings (load/save/reset)
-│   │   ├── useLoadVideo.ts    # Shared video loading (getVideoInfo → SET_VIDEO → SET_TAB)
-│   │   └── useDebouncedCallback.ts # Shared debounced callback wrapper
+│   │   ├── useVideoPlayer.ts             # Playback state (play/pause/seek/mute/volume)
+│   │   ├── useVideoKeyboardShortcuts.ts  # Global keyboard shortcuts (Space, M, arrows, Escape)
+│   │   ├── useGallery.ts                 # Gallery file scanning & state
+│   │   ├── useCaption.ts                 # Caption CRUD with debounced save
+│   │   ├── useConvertSettings.ts         # Bulk conversion settings (load/save/reset)
+│   │   ├── useLoadVideo.ts               # Shared video loading (getVideoInfo → SET_VIDEO → SET_TAB)
+│   │   └── useDebouncedCallback.ts       # Shared debounced callback wrapper
 │   ├── lib/utils.ts           # cn function
 │   ├── store/app-state.tsx    # Central state (context + useReducer)
 │   └── styles/globals.css     # Tailwind + ZFlow theme (dark-first)
@@ -301,3 +315,31 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 | Auto-caption execution test | Requires LLM server running |
 | Edge cases | Empty thumbnails, network errors, timeout |
 | Default config seeding | On first install, `AUTO_CAPTION_CONFIG` not set |
+
+### Video Keyboard Shortcuts (Complete)
+
+**Milestone: Implementation complete**
+
+#### Implementation
+| Component | File | Description |
+|-----------|------|-------------|
+| Hook | `src/renderer/hooks/useVideoKeyboardShortcuts.ts` | Shared keyboard shortcut handler |
+| VideoPlayer | `src/renderer/components/VideoPlayer.tsx` | Calls hook, passes playback callbacks |
+| ExpandedPlayer | `src/renderer/components/ExpandedPlayer.tsx` | Inherits shortcuts via VideoPlayer |
+| VolumeControl | `src/renderer/components/VolumeControl.tsx` | Receives `volume` prop for UI sync |
+| useVideoPlayer | `src/renderer/hooks/useVideoPlayer.ts` | Added `getVolume`, `getCurrentTime` |
+
+#### Keyboard Shortcuts
+| Key | Action | Scope |
+|-----|--------|-------|
+| `Space` | Toggle play/pause | Video tab + ExpandedPlayer |
+| `M` | Toggle mute | Video tab + ExpandedPlayer |
+| `←` / `→` | Seek ±2% of duration | Video tab + ExpandedPlayer |
+| `↑` / `↓` | Volume ±0.1 | Video tab + ExpandedPlayer |
+| `Escape` | Close expanded player | ExpandedPlayer only |
+
+**Design notes:**
+- All shortcuts registered via `window.addEventListener('keydown', ..., { capture: true })` — fires before native video element behavior
+- `isInputFocused()` guard prevents shortcuts when text input/textarea is focused
+- Volume tracking uses `useRef` in the hook + `volume` prop in VolumeControl for UI sync
+- Seeking uses percentage of duration (2%) instead of fixed seconds for consistent experience across videos of any length

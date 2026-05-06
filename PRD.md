@@ -41,6 +41,26 @@ Action buttons for the active tab appear on the **right side of the top bar**.
 - **Time display**: Show current time and total duration in `MM:SS.xx` format (hundredths of a second).
 - **No skip buttons**: No `<<` / `>>` skip controls.
 
+### 3.1 Keyboard Shortcuts (Unified)
+
+Keyboard shortcuts work globally across both Video mode and the Expanded Player (Gallery mode), as long as no text input or textarea is focused. All shortcuts are registered on the `window` object using the capturing event phase to ensure they fire before any native video element behavior.
+
+| Key | Action |
+|-----|--------|
+| `Space` | Toggle play / pause |
+| `M` | Toggle mute / unmute |
+| `←` (Left Arrow) | Seek backward by 2% of total video duration |
+| `→` (Right Arrow) | Seek forward by 2% of total video duration |
+| `↑` (Up Arrow) | Increase volume by 0.1 (10%) |
+| `↓` (Down Arrow) | Decrease volume by 0.1 (10%) |
+| `Escape` | Close the Expanded Player (Gallery mode only) |
+
+**Notes:**
+- `isInputFocused()` guard: shortcuts are ignored when a `<textarea>` or `<input>` (except range inputs like sliders) has focus.
+- Seeking uses a percentage of the video duration (2%) rather than a fixed number of seconds, so the experience is consistent across videos of any length.
+- Volume changes are reflected in the VolumeControl UI slider and icon.
+- The `Escape` key only applies in Expanded Player mode (closes the player and returns to the gallery grid).
+
 ### 4. Clip Extraction (Video Mode)
 
 - **Clip length input**: A floating-point number field in the top bar, defaulting to `10.0` seconds. The user can set any positive float value (e.g., `2.5`, `15.0`, `0.1`).

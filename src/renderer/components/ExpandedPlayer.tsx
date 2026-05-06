@@ -1,8 +1,6 @@
-import { useEffect, useRef } from 'react';
 import { useCaption } from '@renderer/hooks/useCaption';
 import { CaptionEditor } from './CaptionEditor';
 import { VideoPlayer } from './VideoPlayer';
-import { isInputFocused } from '@renderer/lib/utils';
 import { useAppState } from '@renderer/store/app-state';
 
 interface ExpandedPlayerProps {
@@ -13,36 +11,12 @@ interface ExpandedPlayerProps {
 
 export function ExpandedPlayer({ filePath, onClose, onAutoCaption }: ExpandedPlayerProps) {
   const { caption, updateCaption } = useCaption(filePath);
-  const togglePlayRef = useRef<(() => void) | undefined>(undefined);
   const { isAutoCaptioning } = useAppState();
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-        return;
-      }
-      if (isInputFocused()) return;
-
-      if (e.code === 'Space') {
-        e.preventDefault();
-        togglePlayRef.current?.();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col p-4">
       {/* Video player - takes remaining vertical space */}
-      <VideoPlayer
-        className="min-h-0 flex-1"
-        filePath={filePath}
-        onClose={onClose}
-        togglePlayRef={togglePlayRef}
-        autoPlay
-      />
+      <VideoPlayer className="min-h-0 flex-1" filePath={filePath} onClose={onClose} autoPlay />
 
       {/* Caption editor - fixed height */}
       <div className="mt-4 shrink-0">

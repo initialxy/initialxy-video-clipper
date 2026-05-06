@@ -1,6 +1,7 @@
 import { Play, Pause, X } from 'lucide-react';
 import { useRef, useEffect, type MutableRefObject } from 'react';
 import { useVideoPlayer } from '@renderer/hooks/useVideoPlayer';
+import { useVideoKeyboardShortcuts } from '@renderer/hooks/useVideoKeyboardShortcuts';
 import { VolumeControl } from './VolumeControl';
 import { formatTime } from '@shared/utils';
 import { cn } from '@renderer/lib/utils';
@@ -12,7 +13,6 @@ interface VideoPlayerProps {
   className?: string;
   onClose?: () => void;
   currentTimeRef?: MutableRefObject<number>;
-  togglePlayRef?: MutableRefObject<(() => void) | undefined>;
   autoPlay?: boolean;
   filePath?: string;
 }
@@ -21,7 +21,6 @@ export function VideoPlayer({
   className,
   onClose,
   currentTimeRef,
-  togglePlayRef,
   autoPlay,
   filePath,
 }: VideoPlayerProps) {
@@ -43,22 +42,28 @@ export function VideoPlayer({
     seek,
     setVolumeLevel,
     toggleMute,
+    getVolume,
+    getCurrentTime,
     onTimeUpdate,
     onPlay,
     onPause,
   } = player;
+
+  useVideoKeyboardShortcuts({
+    togglePlay,
+    toggleMute,
+    seek,
+    setVolumeLevel,
+    getCurrentTime,
+    getDuration: () => duration,
+    onClose,
+  });
 
   useEffect(() => {
     if (currentTimeRef) {
       currentTimeRef.current = currentTime;
     }
   }, [currentTime, currentTimeRef]);
-
-  useEffect(() => {
-    if (togglePlayRef) {
-      togglePlayRef.current = togglePlay;
-    }
-  }, [togglePlay, togglePlayRef]);
 
   useEffect(() => {
     if (!isGlobalMode) return;
@@ -118,7 +123,12 @@ export function VideoPlayer({
         </Button>
 
         {/* Volume */}
-        <VolumeControl isMuted={isMuted} toggleMute={toggleMute} setVolumeLevel={setVolumeLevel} />
+        <VolumeControl
+          isMuted={isMuted}
+          toggleMute={toggleMute}
+          setVolumeLevel={setVolumeLevel}
+          volume={getVolume()}
+        />
 
         {/* Seek slider */}
         <Slider
