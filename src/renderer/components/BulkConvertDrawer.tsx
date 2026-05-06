@@ -3,13 +3,13 @@ import { useAppState } from '@renderer/store/app-state';
 import { useAppDispatch } from '@renderer/store/app-state';
 import { useConvertSettings } from '@renderer/hooks/useConvertSettings';
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerFooter,
-  DrawerClose,
-} from '@renderer/components/ui/drawer';
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+  SheetDescription,
+} from '@renderer/components/ui/sheet';
 import {
   Select,
   SelectContent,
@@ -66,8 +66,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
   };
 
   return (
-    <Drawer
-      direction="right"
+    <Sheet
       open={isConvertDrawerOpen}
       onOpenChange={(open: boolean) => {
         if (!open) {
@@ -76,17 +75,13 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
         }
       }}
     >
-      <DrawerContent className="flex flex-col sm:w-[340px]">
-        <DrawerHeader className="border-border/50 border-b px-4 pt-4 pb-3">
-          <div className="flex items-center justify-between">
-            <DrawerTitle className="text-base">Bulk Convert</DrawerTitle>
-            <DrawerClose>
-              <Button variant="ghost" size="icon-sm">
-                <X className="h-4 w-4" />
-              </Button>
-            </DrawerClose>
-          </div>
-        </DrawerHeader>
+      <SheetContent side="right" className="flex flex-col sm:max-w-[340px]">
+        <SheetHeader>
+          <SheetTitle>Bulk Convert</SheetTitle>
+          <SheetDescription>
+            Configure settings for bulk conversion of selected files.
+          </SheetDescription>
+        </SheetHeader>
 
         {/* Settings */}
         <div className="flex-1 space-y-4 overflow-y-auto px-6 py-4">
@@ -215,7 +210,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
         </div>
 
         {/* Footer */}
-        <DrawerFooter className="border-border/50 space-y-2 border-t">
+        <SheetFooter className="space-y-2">
           <Button onClick={() => reset()} variant="secondary" className="w-full">
             Reset
           </Button>
@@ -226,8 +221,8 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
           >
             {isConverting ? 'Converting...' : `Convert ${selectedFiles.size} files`}
           </Button>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
