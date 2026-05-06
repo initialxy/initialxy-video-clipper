@@ -59,43 +59,42 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Delete button */}
-      {isHovered && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className="bg-background/80 hover:bg-background absolute top-3 right-3 z-10 text-red-400 opacity-0 transition-opacity group-hover:opacity-100"
-          title="Delete clip"
-        >
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
+        className={cn(
+          'bg-background/80 hover:bg-background absolute top-3 right-3 z-10 text-red-400 transition-opacity duration-100 ease-in',
+          isHovered ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+        )}
+        title="Delete clip"
+      >
+        <Trash2 className="h-5 w-5" />
+      </Button>
 
       {/* Selection checkbox - always visible when selected, visible on hover when not selected */}
-      {(isSelected || isHovered) && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleSelect();
-          }}
-          className={cn(
-            'bg-background/80 hover:bg-background absolute top-3 left-3 z-10 transition-opacity',
-            isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
-          )}
-          title={isSelected ? 'Deselect' : 'Select'}
-        >
-          {isSelected ? (
-            <CheckSquare className="text-primary h-5 w-5" />
-          ) : (
-            <Square className="h-5 w-5" />
-          )}
-        </Button>
-      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleSelect();
+        }}
+        className={cn(
+          'bg-background/80 hover:bg-background absolute top-3 left-3 z-10 transition-opacity duration-100 ease-in',
+          isSelected || isHovered ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+        )}
+        title={isSelected ? 'Deselect' : 'Select'}
+      >
+        {isSelected ? (
+          <CheckSquare className="text-primary h-5 w-5" />
+        ) : (
+          <Square className="h-5 w-5" />
+        )}
+      </Button>
 
       {/* Thumbnail covering whole cell */}
       <div

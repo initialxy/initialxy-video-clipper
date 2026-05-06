@@ -77,8 +77,9 @@ export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps
 
   return (
     <div className="bg-background/60 h-full w-full cursor-text p-3" onClick={handleClick}>
-      <p className="text-foreground/80 h-full text-sm leading-relaxed overflow-ellipsis">
+      <p className="text-foreground/80 relative h-full overflow-hidden text-justify text-sm leading-relaxed">
         {caption || <span className="text-muted-foreground/80 italic">Click to add caption</span>}
+        <div className="from-background/70 absolute bottom-0 h-4 w-full bg-gradient-to-t to-transparent" />
       </p>
     </div>
   );
