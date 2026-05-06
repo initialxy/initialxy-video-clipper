@@ -78,7 +78,7 @@ export function TopBar({
   }, [loadVideo]);
 
   return (
-    <div className="bg-background flex items-center justify-between px-4 pt-4">
+    <div className="bg-background border-border flex items-center justify-between border-b p-4 drop-shadow-sm">
       {/* Left: Tabs */}
       <Tabs value={activeTab} onValueChange={(v: string) => onTabChange(v as ActiveTab)}>
         <TabsList>

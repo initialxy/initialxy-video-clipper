@@ -54,7 +54,7 @@ src/
 │   │   ├── CaptionOverlay.tsx # Inline caption overlay for gallery cells
 │   │   ├── BulkConvertDrawer.tsx # Slide-out drawer for bulk conversion
 │   │   ├── DeleteConfirmModal.tsx # Confirmation modal for deletion
-│   │   ├── AutoCaptionModal.tsx # Dialog for auto-caption endpoint settings
+│   │   ├── AutoCaptionDrawer.tsx # Slide-out drawer for LLM API settings
 │   │   └── ui/                # shadcn/ui components (all Base UI primitives)
 │   │       ├── button.tsx, select.tsx, sheet.tsx, tabs.tsx, sonner.tsx
 │   │       ├── input.tsx, input-group.tsx, textarea.tsx, slider.tsx
@@ -98,8 +98,8 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 | `isConverting` | `boolean` | Bulk conversion in progress |
 | `convertProgress` | `number` | Conversion progress percentage |
 | `isConvertDrawerOpen` | `boolean` | Bulk convert drawer visibility |
+| `isAutoCaptionDrawerOpen` | `boolean` | Auto-caption settings drawer visibility |
 | `isAutoCaptioning` | `boolean` | Auto-caption in progress |
-| `autoCaptionProgress` | `{ current: number; total: number }` | Auto-caption progress (current/total) |
 | `currentTime` | `number` | Current playback position |
 
 **Key behaviors:**
@@ -273,8 +273,8 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 | IPC channels | `src/shared/ipc.ts` | ✅ Added 3 channels with payloads/returns |
 | Settings key | `src/shared/constants.ts` | ✅ Added `AUTO_CAPTION_CONFIG` |
 | State | `src/renderer/store/app-state.tsx` | ✅ Added `isAutoCaptioning` state + action |
-| Settings dialog | `src/renderer/components/AutoCaptionModal.tsx` | ✅ Created |
-| Gallery button group | `src/renderer/components/TopBar.tsx` | ✅ Added Auto-caption + settings buttons |
+| Settings drawer | `src/renderer/components/AutoCaptionDrawer.tsx` | ✅ Created (Sheet, always mounted) |
+| Gallery button group | `src/renderer/components/TopBar.tsx` | ✅ Added Auto-caption + LLM API Settings buttons (refresh first) |
 | Expanded player button | `src/renderer/components/ExpandedPlayer.tsx` | ✅ Added Auto-caption button |
 | App wiring | `src/renderer/App.tsx` | ✅ Progress toast, config loading, handlers |
 | Preload | `src/preload/index.ts` | ✅ Added 3 methods |
@@ -287,7 +287,8 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 | Gallery UI renders with Auto-caption button | ✅ Verified |
 | Button disabled when no files selected | ✅ Verified |
 | Button enabled when files selected | ✅ Verified |
-| Settings dialog opens on ellipsis click | ⏳ Pending |
+| Settings drawer opens on ellipsis click | ✅ Verified |
+| Drawer transition (in/out) | ✅ Verified |
 | Bulk auto-caption execution | ⏳ Pending |
 | Progress toast | ⏳ Pending |
 | Cancel interrupt | ⏳ Pending |
