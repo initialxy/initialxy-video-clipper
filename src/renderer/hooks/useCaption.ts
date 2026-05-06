@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useDebouncedCallback } from '@renderer/hooks/useDebouncedCallback';
 
 export function useCaption(videoPath: string | null) {
   const [caption, setCaption] = useState('');
-  const debounceRef = useRef<number | null>(null);
   const lastSavedRef = useRef('');
 
   // Load caption when video path changes
@@ -21,36 +21,21 @@ export function useCaption(videoPath: string | null) {
     });
   }, [videoPath]);
 
+  const debouncedSave = useDebouncedCallback(async (newCaption: string) => {
+    if (!videoPath) return;
+    if (newCaption === lastSavedRef.current) return;
+
+    await window.electronAPI.writeCaption({ filePath: videoPath, content: newCaption });
+    lastSavedRef.current = newCaption;
+  }, 2000);
+
   const updateCaption = useCallback(
     (newCaption: string) => {
       setCaption(newCaption);
-
-      // Debounce save
-      if (debounceRef.current !== null) {
-        clearTimeout(debounceRef.current);
-      }
-
-      debounceRef.current = window.setTimeout(async () => {
-        if (!videoPath) return;
-        if (newCaption === lastSavedRef.current) return;
-
-        await window.electronAPI.writeCaption({ filePath: videoPath, content: newCaption });
-        lastSavedRef.current = newCaption;
-        debounceRef.current = null;
-      }, 2000);
+      debouncedSave(newCaption);
     },
-    [videoPath],
+    [debouncedSave],
   );
-
-  // Flush on unmount
-  useEffect(() => {
-    const savedDebounce = debounceRef.current;
-    return () => {
-      if (savedDebounce !== null) {
-        clearTimeout(savedDebounce);
-      }
-    };
-  }, []);
 
   return { caption, updateCaption };
 }

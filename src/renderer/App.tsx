@@ -3,8 +3,7 @@ import { toast } from 'sonner';
 import { useAppState, useAppDispatch } from '@renderer/store/app-state';
 import { useGallery } from '@renderer/hooks/useGallery';
 import { useConvertSettings } from '@renderer/hooks/useConvertSettings';
-import { useToast } from '@renderer/hooks/useToast';
-
+import { useLoadVideo } from '@renderer/hooks/useLoadVideo';
 import { TopBar } from '@renderer/components/TopBar';
 import { VideoPlayer } from '@renderer/components/VideoPlayer';
 import { GalleryView } from '@renderer/components/GalleryView';
@@ -29,7 +28,7 @@ function AppContent() {
   const dispatch = useAppDispatch();
   const { galleryFiles, refreshGallery, selectAll, isAllSelected, deleteFile } = useGallery();
   const convertSettings = useConvertSettings();
-  const { success: toastSuccess, error: toastError } = useToast();
+  const loadVideo = useLoadVideo();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [bulkDeleteCount, setBulkDeleteCount] = useState<number | null>(null);
@@ -45,14 +44,9 @@ function AppContent() {
 
   const handleDrop = useCallback(
     async (filePath: string) => {
-      const info = await window.electronAPI.getVideoInfo(filePath);
-      dispatch({
-        type: 'SET_VIDEO',
-        payload: { path: filePath, ...info },
-      });
-      dispatch({ type: 'SET_TAB', payload: 'video' });
+      await loadVideo(filePath);
     },
-    [dispatch],
+    [loadVideo],
   );
 
   const handleDragOver = useCallback(
@@ -112,13 +106,13 @@ function AppContent() {
     const remaining = currentVideo.duration - actualTime;
 
     if (remaining <= 0) {
-      toastError('Already at end of video');
+      toast.error('Already at end of video');
       return;
     }
 
     if (remaining < clipLength) {
       if (currentVideo.duration < clipLength) {
-        toastError(`Cannot save clip — video is only ${currentVideo.duration.toFixed(2)}s long`);
+        toast.error(`Cannot save clip — video is only ${currentVideo.duration.toFixed(2)}s long`);
         return;
       }
 
@@ -134,7 +128,7 @@ function AppContent() {
         refreshGallery();
         toast.warning(`Clipped last ${clipLength}s instead`);
       } else if (result.error) {
-        toastError(result.error);
+        toast.error(result.error);
       }
       return;
     }
@@ -148,11 +142,11 @@ function AppContent() {
 
     if (result.success) {
       refreshGallery();
-      toastSuccess('Clip saved');
+      toast.success('Clip saved');
     } else if (result.error) {
-      toastError(result.error);
+      toast.error(result.error);
     }
-  }, [currentVideo, clipLength, refreshGallery, toastSuccess, toastError]);
+  }, [currentVideo, clipLength, refreshGallery]);
 
   useEffect(() => {
     return window.electronAPI.onConvertProgress((data) => {
@@ -227,11 +221,11 @@ function AppContent() {
     if (result.success) {
       dispatch({ type: 'SELECT_ALL_FILES', payload: false });
       refreshGallery();
-      toastSuccess(`${paths.length} file(s) deleted`);
+      toast.success(`${paths.length} file(s) deleted`);
     } else if (result.errors?.length) {
-      toastError(`${result.errors.length} file(s) failed to delete`);
+      toast.error(`${result.errors.length} file(s) failed to delete`);
     }
-  }, [bulkDeleteCount, selectedFiles, dispatch, refreshGallery, toastSuccess, toastError]);
+  }, [bulkDeleteCount, selectedFiles, dispatch, refreshGallery]);
 
   const handleCloseExpanded = useCallback(() => {
     dispatch({ type: 'SET_EXPANDED_FILE', payload: null });

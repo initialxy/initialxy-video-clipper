@@ -39,7 +39,7 @@ export function GalleryView({ onOpenExpanded, onDeleteFile }: GalleryViewProps) 
       <div className="flex flex-1 items-center justify-center">
         <div className="text-muted-foreground text-center">
           <p className="text-lg">No clips yet</p>
-          <p className="mt-1 text-sm">Switch to Clip mode to create your first clip</p>
+          <p className="mt-1 text-sm">Switch to Video mode to create your first clip</p>
         </div>
       </div>
     );

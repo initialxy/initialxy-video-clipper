@@ -1,5 +1,5 @@
 import electron from 'electron';
-const { app, BrowserWindow, session, ipcMain, Menu } = electron;
+const { app, BrowserWindow, session, Menu } = electron;
 import type { BrowserWindow as BrowserWindowType } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -78,11 +78,6 @@ app.whenReady().then(() => {
 
   // Register all IPC handlers
   registerIpcHandlers();
-
-  // Handle insufficient duration warning
-  ipcMain.on('clip:warn-insufficient', (_event, data) => {
-    mainWindow?.webContents.send('clip:warn-insufficient', data);
-  });
 
   createWindow();
 

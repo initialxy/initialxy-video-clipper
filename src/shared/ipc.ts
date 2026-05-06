@@ -1,7 +1,8 @@
+import type { GalleryFile } from '@shared/types';
+
 /** IPC channel names */
 export const IPC_CHANNELS = {
   CLIP_CREATE: 'clip:create',
-  CLIP_WARN_INSUFFICIENT: 'clip:warn-insufficient',
   CONVERT_BULK: 'convert:bulk',
   CONVERT_PROGRESS: 'convert:progress',
   CONVERT_WARN_NO_CHANGES: 'convert:warn-no-changes',
@@ -12,8 +13,6 @@ export const IPC_CHANNELS = {
   FS_SCAN_OUTPUTS: 'fs:scan-outputs',
   FS_DELETE_CLIP: 'fs:delete-clip',
   FS_BULK_DELETE: 'fs:bulk-delete',
-  APP_DRAG_DROP: 'app:drag-drop',
-  APP_CHECK_FFMPEG: 'app:check-ffmpeg',
   APP_OPEN_FILE: 'app:open-file',
   SETTINGS_GET: 'settings:get',
   SETTINGS_SET: 'settings:set',
@@ -27,7 +26,6 @@ export interface IPCPayloads {
     start: number;
     duration: number;
   };
-  [IPC_CHANNELS.CLIP_WARN_INSUFFICIENT]: { remaining: number; requested: number };
   [IPC_CHANNELS.CONVERT_BULK]: {
     files: string[];
     settings: {
@@ -51,8 +49,6 @@ export interface IPCPayloads {
   [IPC_CHANNELS.FS_SCAN_OUTPUTS]: {};
   [IPC_CHANNELS.FS_DELETE_CLIP]: { filePath: string };
   [IPC_CHANNELS.FS_BULK_DELETE]: { paths: string[] };
-  [IPC_CHANNELS.APP_DRAG_DROP]: { filePath: string };
-  [IPC_CHANNELS.APP_CHECK_FFMPEG]: {};
   [IPC_CHANNELS.APP_OPEN_FILE]: {};
   [IPC_CHANNELS.SETTINGS_GET]: { key: string };
   [IPC_CHANNELS.SETTINGS_SET]: { key: string; value: string };
@@ -76,11 +72,10 @@ export interface IPCReturns {
   [IPC_CHANNELS.FS_READ_CAPTION]: { content?: string; exists: boolean };
   [IPC_CHANNELS.FS_WRITE_CAPTION]: { success: boolean };
   [IPC_CHANNELS.FS_SCAN_OUTPUTS]: {
-    files: Array<{ path: string; name: string; size: number; modified: string }>;
+    files: GalleryFile[];
   };
   [IPC_CHANNELS.FS_DELETE_CLIP]: { success: boolean; error?: string };
-  [IPC_CHANNELS.APP_DRAG_DROP]: { success: boolean };
-  [IPC_CHANNELS.APP_CHECK_FFMPEG]: { available: boolean; path?: string };
+  [IPC_CHANNELS.FS_BULK_DELETE]: { success: boolean; errors: string[] };
   [IPC_CHANNELS.APP_OPEN_FILE]: { filePath?: string; cancelled: boolean };
   [IPC_CHANNELS.SETTINGS_GET]: { value?: string };
   [IPC_CHANNELS.SETTINGS_SET]: { success: boolean };

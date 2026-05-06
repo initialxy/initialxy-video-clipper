@@ -1,12 +1,5 @@
 import { useState, useCallback } from 'react';
-
-const SETTINGS = {
-  CODEC: 'convert_codec',
-  WIDTH: 'convert_width',
-  HEIGHT: 'convert_height',
-  FPS: 'convert_fps',
-  BITRATE: 'convert_bitrate',
-} as const;
+import { SETTINGS_KEYS } from '@shared/constants';
 
 export function useConvertSettings() {
   const [codec, setCodec] = useState('');
@@ -17,11 +10,11 @@ export function useConvertSettings() {
 
   const loadSettings = useCallback(async () => {
     const [codecRes, widthRes, heightRes, fpsRes, bitrateRes] = await Promise.all([
-      window.electronAPI.getSetting(SETTINGS.CODEC),
-      window.electronAPI.getSetting(SETTINGS.WIDTH),
-      window.electronAPI.getSetting(SETTINGS.HEIGHT),
-      window.electronAPI.getSetting(SETTINGS.FPS),
-      window.electronAPI.getSetting(SETTINGS.BITRATE),
+      window.electronAPI.getSetting(SETTINGS_KEYS.CONVERT_CODEC),
+      window.electronAPI.getSetting(SETTINGS_KEYS.CONVERT_WIDTH),
+      window.electronAPI.getSetting(SETTINGS_KEYS.CONVERT_HEIGHT),
+      window.electronAPI.getSetting(SETTINGS_KEYS.CONVERT_FPS),
+      window.electronAPI.getSetting(SETTINGS_KEYS.CONVERT_BITRATE),
     ]);
     setCodec(codecRes.value ?? '');
     const w = parseInt(widthRes.value ?? '', 10);
@@ -42,11 +35,11 @@ export function useConvertSettings() {
 
   const saveSettings = useCallback(async () => {
     await Promise.all([
-      window.electronAPI.setSetting(SETTINGS.CODEC, codec),
-      window.electronAPI.setSetting(SETTINGS.WIDTH, width ? String(width) : ''),
-      window.electronAPI.setSetting(SETTINGS.HEIGHT, height ? String(height) : ''),
-      window.electronAPI.setSetting(SETTINGS.FPS, String(fps)),
-      window.electronAPI.setSetting(SETTINGS.BITRATE, bitrate),
+      window.electronAPI.setSetting(SETTINGS_KEYS.CONVERT_CODEC, codec),
+      window.electronAPI.setSetting(SETTINGS_KEYS.CONVERT_WIDTH, width ? String(width) : ''),
+      window.electronAPI.setSetting(SETTINGS_KEYS.CONVERT_HEIGHT, height ? String(height) : ''),
+      window.electronAPI.setSetting(SETTINGS_KEYS.CONVERT_FPS, String(fps)),
+      window.electronAPI.setSetting(SETTINGS_KEYS.CONVERT_BITRATE, bitrate),
     ]);
   }, [codec, width, height, fps, bitrate]);
 

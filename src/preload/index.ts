@@ -31,10 +31,6 @@ const electronAPI = {
     ipcRenderer.invoke('fs:bulk-delete', payload),
 
   // App
-  dragDrop: (filePath: string) => ipcRenderer.invoke('app:drag-drop', { filePath }),
-
-  checkFfmpeg: () => ipcRenderer.invoke('app:check-ffmpeg', {}),
-
   openFile: () => ipcRenderer.invoke('app:open-file', {}),
 
   // Settings
@@ -43,14 +39,6 @@ const electronAPI = {
   setSetting: (key: string, value: string) => ipcRenderer.invoke('settings:set', { key, value }),
 
   // Event listeners (one-way: main → renderer)
-  onClipWarnInsufficient: (callback: (data: IPCPayloads['clip:warn-insufficient']) => void) => {
-    const listener = (_event: Event, data: IPCPayloads['clip:warn-insufficient']) => {
-      callback(data);
-    };
-    ipcRenderer.on(IPC_CHANNELS.CLIP_WARN_INSUFFICIENT, listener as never);
-    return () => ipcRenderer.removeListener(IPC_CHANNELS.CLIP_WARN_INSUFFICIENT, listener as never);
-  },
-
   onConvertProgress: (callback: (data: IPCPayloads['convert:progress']) => void) => {
     const listener = (_event: Event, data: IPCPayloads['convert:progress']) => {
       callback(data);

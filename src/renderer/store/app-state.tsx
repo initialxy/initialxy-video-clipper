@@ -7,23 +7,19 @@ import {
   useEffect,
   useRef,
 } from 'react';
+import type { GalleryFile, VideoInfo } from '@shared/types';
 
 export type ActiveTab = 'video' | 'gallery';
 
-export interface VideoState {
+export interface VideoState extends VideoInfo {
   path: string;
-  duration: number;
-  width: number;
-  height: number;
-  codec: string;
-  fps: number;
 }
 
 export interface AppState {
   activeTab: ActiveTab;
   currentVideo: VideoState | null;
   clipLength: number;
-  galleryFiles: Array<{ path: string; name: string; size: number; modified: string }>;
+  galleryFiles: GalleryFile[];
   selectedFiles: Set<string>;
   expandedFile: string | null;
   isConverting: boolean;

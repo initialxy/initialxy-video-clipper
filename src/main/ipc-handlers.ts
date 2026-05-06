@@ -1,8 +1,6 @@
 import electron from 'electron';
 const { ipcMain, dialog, BrowserWindow } = electron;
 import type { BrowserWindow as BrowserWindowType } from 'electron';
-import fs from 'fs';
-import path from 'path';
 
 import { IPC_CHANNELS } from '@shared/ipc';
 import { createClip } from './services/clip.service';
@@ -15,8 +13,7 @@ import {
 } from './services/gallery.service';
 import { readCaption, writeCaption } from './services/caption.service';
 import { getSetting, setSetting } from './db';
-import { VIDEO_EXTENSIONS } from './constants';
-import { getVideoInfo, checkFfmpeg } from './services/ffprobe.service';
+import { getVideoInfo } from './services/ffprobe.service';
 
 function getMainWindow(): BrowserWindowType | null {
   const windows = BrowserWindow.getAllWindows();
@@ -97,21 +94,6 @@ export function registerIpcHandlers(): void {
   // fs:bulk-delete
   ipcMain.handle(IPC_CHANNELS.FS_BULK_DELETE, async (_event, payload) => {
     return bulkDeleteFiles(payload.paths);
-  });
-
-  // app:drag-drop
-  ipcMain.handle(IPC_CHANNELS.APP_DRAG_DROP, async (_event, payload) => {
-    const filePath = payload.filePath;
-    const ext = path.extname(filePath).toLowerCase();
-    if (VIDEO_EXTENSIONS.has(ext) && fs.existsSync(filePath)) {
-      return { success: true };
-    }
-    return { success: false };
-  });
-
-  // app:check-ffmpeg
-  ipcMain.handle(IPC_CHANNELS.APP_CHECK_FFMPEG, async () => {
-    return checkFfmpeg();
   });
 
   // app:open-file

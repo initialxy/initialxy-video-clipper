@@ -24,12 +24,6 @@ export function getExtension(filePath: string): string {
   return dotIndex > 0 ? basename.slice(dotIndex) : '';
 }
 
-/** Get the directory of a file path */
-export function getDirectory(filePath: string): string {
-  const parts = filePath.split('/');
-  return parts.slice(0, -1).join('/');
-}
-
 /** Get the caption file path for a video (<base_name>.txt in same directory) */
 export function getCaptionPath(videoPath: string): string {
   return videoPath.replace(/\.[^.]+$/, '.txt');
@@ -38,44 +32,4 @@ export function getCaptionPath(videoPath: string): string {
 /** Get the thumbnail file path for a video (<path>.thumb.jpg) */
 export function getThumbnailPath(videoPath: string): string {
   return `${videoPath}.thumb.jpg`;
-}
-
-export type DebouncedFunction<T extends (...args: never[]) => void> = {
-  (...args: Parameters<T>): void;
-  cancel: () => void;
-  flush: () => void;
-};
-
-export function debounce<T extends (...args: never[]) => void>(
-  fn: T,
-  ms: number,
-): DebouncedFunction<T> {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-
-  const debounced = ((...args: Parameters<T>) => {
-    if (timer) {
-      clearTimeout(timer);
-    }
-    timer = setTimeout(() => {
-      fn(...args);
-      timer = null;
-    }, ms);
-  }) as DebouncedFunction<T>;
-
-  debounced.cancel = () => {
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
-    }
-  };
-
-  debounced.flush = () => {
-    if (timer) {
-      clearTimeout(timer);
-      fn();
-      timer = null;
-    }
-  };
-
-  return debounced;
 }

@@ -2,26 +2,19 @@ import fs from 'fs';
 import path from 'path';
 import { buildThumbnailCommand } from '@main/ffmpeg';
 import { runFfmpeg } from './ffmpeg-executor';
-import { getThumbnailPath } from '@shared/utils';
+import type { GalleryFile } from '@shared/types';
 import { deleteFileWithMetadata } from '@main/utils';
 import { VIDEO_EXTENSIONS } from '@main/constants';
 
 const PROJECT_ROOT = process.cwd();
 const OUTPUTS_DIR = path.join(PROJECT_ROOT, 'outputs');
 
-export interface ScannedFile {
-  path: string;
-  name: string;
-  size: number;
-  modified: string;
-}
-
-export function scanOutputs(): ScannedFile[] {
+export function scanOutputs(): GalleryFile[] {
   if (!fs.existsSync(OUTPUTS_DIR)) {
     return [];
   }
 
-  const files: ScannedFile[] = [];
+  const files: GalleryFile[] = [];
   const entries = fs.readdirSync(OUTPUTS_DIR, { withFileTypes: true });
 
   for (const entry of entries) {
@@ -75,14 +68,4 @@ export async function extractThumbnail(
   const args = buildThumbnailCommand(filePath, outputPath);
   const result = await runFfmpeg(args);
   return result.success && fs.existsSync(outputPath) ? { success: true } : { success: false };
-}
-
-export function ensureThumbnail(videoPath: string): Promise<string | null> {
-  const thumbPath = getThumbnailPath(videoPath);
-  if (fs.existsSync(thumbPath)) {
-    return Promise.resolve(thumbPath);
-  }
-  return extractThumbnail(videoPath, thumbPath).then((result) => {
-    return result.success ? thumbPath : null;
-  });
 }

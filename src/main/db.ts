@@ -49,7 +49,3 @@ export function setSetting(key: string, value: string): void {
   settings[key] = value;
   saveSettings(settings);
 }
-
-export function closeDb(): void {
-  // No-op for JSON backend
-}

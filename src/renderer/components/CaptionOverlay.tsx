@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect, type MouseEvent, type ChangeEvent } from 'react';
+import { useDebouncedCallback } from '@renderer/hooks/useDebouncedCallback';
 import { Textarea } from '@renderer/components/ui/textarea';
 
 interface CaptionOverlayProps {
@@ -10,9 +11,15 @@ interface CaptionOverlayProps {
 export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(caption);
-  const debounceRef = useRef<number | null>(null);
   const lastSavedRef = useRef(caption);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleDebouncedSave = useDebouncedCallback((newText: string) => {
+    if (newText !== lastSavedRef.current) {
+      onSave(newText);
+      lastSavedRef.current = newText;
+    }
+  }, 2000);
 
   const handleClick = useCallback(
     (e: MouseEvent) => {
@@ -36,27 +43,10 @@ export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps
     (e: ChangeEvent<HTMLTextAreaElement>) => {
       const newText = e.target.value;
       setEditText(newText);
-
-      if (debounceRef.current !== null) {
-        clearTimeout(debounceRef.current);
-      }
-
-      debounceRef.current = window.setTimeout(() => {
-        if (newText !== lastSavedRef.current) {
-          onSave(newText);
-          lastSavedRef.current = newText;
-        }
-        debounceRef.current = null;
-      }, 2000);
+      handleDebouncedSave(newText);
     },
-    [onSave],
+    [handleDebouncedSave],
   );
-
-  const handleUnmount = useCallback(() => {
-    if (debounceRef.current !== null) {
-      clearTimeout(debounceRef.current);
-    }
-  }, []);
 
   // Focus at end when editing starts
   useEffect(() => {
@@ -71,7 +61,7 @@ export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps
 
   if (isEditing) {
     return (
-      <div className="bg-background/80 h-full w-full" onBlur={handleUnmount}>
+      <div className="bg-background/80 h-full w-full" onBlur={handleBlur}>
         <Textarea
           ref={textareaRef}
           value={editText}

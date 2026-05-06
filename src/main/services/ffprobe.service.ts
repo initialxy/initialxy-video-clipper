@@ -1,12 +1,5 @@
 import { spawn, spawnSync } from 'child_process';
-
-export interface VideoInfo {
-  duration: number;
-  width: number;
-  height: number;
-  codec: string;
-  fps: number;
-}
+import type { VideoInfo } from '@shared/types';
 
 /**
  * Extract video metadata using ffprobe.

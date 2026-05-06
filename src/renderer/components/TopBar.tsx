@@ -12,6 +12,7 @@ import {
 import { Video, Images } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs';
 import { useAppState, useAppDispatch, type ActiveTab } from '@renderer/store/app-state';
+import { useLoadVideo } from '@renderer/hooks/useLoadVideo';
 import { Button } from '@renderer/components/ui/button';
 import { InputGroup, InputGroupInput, InputGroupAddon } from '@renderer/components/ui/input-group';
 
@@ -37,6 +38,7 @@ export function TopBar({
   const { activeTab, clipLength, currentVideo, selectedFiles } = useAppState();
   const selectedFilesCount = selectedFiles.size;
   const dispatch = useAppDispatch();
+  const loadVideo = useLoadVideo();
   const [clipLengthInput, setClipLengthInput] = useState(String(clipLength));
   const prevClipLength = useRef(clipLength);
 
@@ -62,14 +64,9 @@ export function TopBar({
   const handleOpenFile = useCallback(async () => {
     const result = await window.electronAPI.openFile();
     if (!result.cancelled && result.filePath) {
-      const info = await window.electronAPI.getVideoInfo(result.filePath);
-      dispatch({
-        type: 'SET_VIDEO',
-        payload: { path: result.filePath, ...info },
-      });
-      dispatch({ type: 'SET_TAB', payload: 'video' });
+      await loadVideo(result.filePath);
     }
-  }, [dispatch]);
+  }, [loadVideo]);
 
   return (
     <div className="border-border/50 bg-background/80 flex items-center justify-between border-b px-4 py-2 backdrop-blur-sm">

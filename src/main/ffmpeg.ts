@@ -16,7 +16,20 @@ export function buildClipCommand(
   start: number,
   duration: number,
 ): string[] {
-  return ['ffmpeg', '-i', input, '-ss', String(start), '-t', String(duration), output];
+  return [
+    'ffmpeg',
+    '-i',
+    input,
+    '-ss',
+    String(start),
+    '-t',
+    String(duration),
+    '-c',
+    'copy',
+    '-avoid_negative_ts',
+    'make_zero',
+    output,
+  ];
 }
 
 /**
