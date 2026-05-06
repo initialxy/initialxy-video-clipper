@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useCaption } from '@renderer/hooks/useCaption';
 import { CaptionEditor } from './CaptionEditor';
 import { VideoPlayer } from './VideoPlayer';
+import { isInputFocused } from '@renderer/lib/utils';
 
 interface ExpandedPlayerProps {
   filePath: string;
@@ -18,12 +19,7 @@ export function ExpandedPlayer({ filePath, onClose }: ExpandedPlayerProps) {
         onClose();
         return;
       }
-      const target = e.target;
-      if (
-        target instanceof HTMLTextAreaElement ||
-        (target instanceof HTMLInputElement && target.type !== 'range')
-      )
-        return;
+      if (isInputFocused()) return;
 
       if (e.code === 'Space') {
         e.preventDefault();

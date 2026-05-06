@@ -75,5 +75,5 @@ export function useToast() {
   const warning = useCallback((message: string) => addToast(message, 'warning'), [addToast]);
   const info = useCallback((message: string) => addToast(message, 'info'), [addToast]);
 
-  return { toasts: [], addToast, removeToast, success, error, warning, info };
+  return { addToast, removeToast, success, error, warning, info };
 }

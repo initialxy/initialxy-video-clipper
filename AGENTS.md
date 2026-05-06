@@ -22,7 +22,7 @@ video-clipper/
 ├── converted/                  # Bulk-converted output (runtime)
 ├── src/
 │   ├── shared/                 # Shared types and utilities (main + preload + renderer)
-│   │   ├── ipc.ts              # IPC channel names, payload types, return types, IPCRegistry, ElectronAPI
+│   │   ├── ipc.ts              # IPC channel names, payload types, return types
 │   │   ├── types.ts            # Domain types (VideoInfo, ClipResult, ConvertSettings, GalleryFile)
 │   │   └── utils.ts            # Pure utilities (time formatting, path helpers, counter formatting)
 │   ├── main/                   # Electron main process (Node.js)
@@ -126,7 +126,7 @@ video-clipper/
 
 All types used across process boundaries live here. This eliminates duplication between preload, main, and renderer.
 
-- **`ipc.ts`** — IPC channel names, payload types, return types, `IPCRegistry` type mapping each channel to its invoke signature, and `ElectronAPI` type derived from `IPCRegistry` (not manually typed).
+- **`ipc.ts`** — IPC channel names, payload types, return types.
 - **`types.ts`** — Domain types (`VideoInfo`, `ClipResult`, `ConvertSettings`, `GalleryFile`, `ConvertResult`, `ConvertProgress`).
 - **`utils.ts`** — Pure utilities usable by any process (time formatting `MM:SS.xx`, file path helpers, counter formatting, `getCaptionPath`, `getThumbnailPath`).
 
@@ -178,17 +178,18 @@ This makes ffmpeg logic testable and easy to reason about.
 - `selectedFiles` (Set) — files selected for bulk convert
 - `expandedFile` (string | null) — gallery file currently in expanded player
 - `isConvertDrawerOpen` (boolean) — bulk convert drawer visibility
-- `savedTime` (number) — playback position saved before tab switch, restored when video reloads
+- `currentTime` (number) — current playback position (updated during playback)
 
 Components subscribe to only the slice they need via custom hooks derived from the context.
 
-**Tab switch behavior:** When switching from video to gallery tab, the current video's playback position is saved to `savedTime` via `SET_SAVED_TIME` action (dispatched from App.tsx before `SET_TAB`). When the video tab is reactivated and VideoPlayer mounts, `useVideoPlayer(savedTime)` restores the playback position. The original `currentVideo` state is preserved across tab switches — switching tabs does NOT load a different video.
+**Tab switch behavior:** Switching tabs dispatches `SET_TAB` which resets `expandedFile`. The `currentVideo` state is preserved across tab switches — switching tabs does NOT load a different video.
+
+**SET_VIDEO behavior:** The `SET_VIDEO` action sets `currentTime: 0` — this is intentional. When a new video is loaded (via drag-drop, open file, or debug hook), playback starts from the beginning.
 
 **Key state preservation:**
 - `currentVideo` persists across tab switches (never reset by tab change)
-- `savedTime` captures `currentTime` before leaving video tab
-- VideoPlayer restores `savedTime` on mount via `video.currentTime = savedTime`
-- ExpandedPlayer does NOT dispatch `SET_VIDEO` (was overwriting video tab state)
+- `SET_VIDEO` resets `currentTime: 0` (new video = start from beginning, intentional)
+- ExpandedPlayer does NOT dispatch `SET_VIDEO` (prevents gallery expansion from overwriting video tab state)
 
 #### Key Design Decisions
 
@@ -200,7 +201,7 @@ Components subscribe to only the slice they need via custom hooks derived from t
 | State | React context + useReducer | Simple, no external deps, per PRD |
 | Settings | JSON config file in main, accessed via IPC | Only main process touches disk |
 | Shared utils | `src/shared/utils.ts` | Time formatting, path helpers used by both processes |
-| Video persistence | `savedTime` state + restore on mount | Preserves playback position across tab switches |
+| Video persistence | `currentVideo` preserved across tabs, `currentTime` reset on new video | Simpler model; tab-switch time restore not yet implemented |
 | UI primitives | Base UI (`@base-ui/react`) for all shadcn components | Consistent primitive library across all components. Do NOT use `@radix-ui/react-*` |
 
 #### What This Avoids
@@ -465,7 +466,6 @@ ffmpeg -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
 - Gallery mode: grid view, captions, bulk convert, bulk delete, refresh.
 - Action buttons in the top bar change based on the active tab.
 - Switching tabs closes the expanded player and stops video playback.
-- **Tab switch saves playback position**: Before dispatching `SET_TAB`, App.tsx dispatches `SET_SAVED_TIME` with the current video time. This ensures the video resumes at the same position when returning to the Video tab.
 
 ### 14. State Management
 
@@ -473,7 +473,6 @@ ffmpeg -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
 - Use a simple context-based global store for cross-component state (active tab, current video, clip length).
 - Avoid external state management libraries (no Redux, Zustand, etc.) — keep it simple.
 - Extract complex UI logic into custom hooks (e.g., `useConvertSettings`, `useVideoPlayer`).
-- `savedTime` in app state preserves video playback position across tab switches.
 
 ### 15. Styling
 
@@ -500,11 +499,11 @@ Both focused (editing) and unfocused (display) states must be visually consisten
 
 ### 18. useVideoPlayer Hook
 
-- Accepts `savedTime` parameter: `useVideoPlayer(savedTime?: number)`.
-- On video load (when `currentVideo` changes), restores `savedTime` if it's a valid position within the video duration.
-- Uses `savedTimeRef` to avoid re-running the `loadedmetadata` listener on every `savedTime` state update.
-- The `loadedmetadata` event handler checks: `savedTimeRef.current !== undefined && savedTimeRef.current > 0 && savedTimeRef.current < video.duration` before seeking.
-- `savedTime` is NOT a dependency of the `loadedmetadata` useEffect — only `currentVideo` and `currentVideo?.path`.
+- Accepts `filePath` and options: `useVideoPlayer(filePath?: string, options?: { useGlobalState?: boolean; autoPlay?: boolean })`.
+- When `useGlobalState` is true, restores time from `currentTimeRef.current` on video load (for tab-switch persistence).
+- Uses `currentTimeRef` to track global playback position shared via `VideoPlayer.currentTimeRef`.
+- The `loadedmetadata` event handler checks: `currentTimeRef.current > 0 && currentTimeRef.current < video.duration` before seeking.
+- Global mode syncs `currentTime` to app state via `SET_CURRENT_TIME` in VideoPlayer component.
 
 ---
 
@@ -633,9 +632,9 @@ Build the app in this sequence:
 10. ~~**Bulk conversion**: Slide-out drawer, optional params with "Same as source", settings persistence via JSON config, ffmpeg batch processing, progress indicators, no-changes toast warning, caption file copying.~~ ✅ DONE
 11. ~~**ffmpeg check on launch**: Verify ffmpeg availability, show error dialog if missing.~~ ✅ DONE
 12. ~~**Settings persistence**: JSON config file for bulk conversion settings, clip length default, window size/position.~~ ✅ DONE
-13. ~~**Code quality refactor**: Shared `runFfmpeg` executor, extracted `ffprobe.service`, `useConvertSettings` hook, deduplicated interfaces, derived `ElectronAPI` from `IPCRegistry`, removed dead code (unused components/hooks/state), cleaned up config files.~~ ✅ DONE
+13. ~~**Code quality refactor**: Shared `runFfmpeg` executor, extracted `ffprobe.service`, `useConvertSettings` hook, deduplicated interfaces, removed dead code (unused components/hooks/state), cleaned up config files.~~ ✅ DONE
 14. ~~**UI polish & UX improvements**: Sonner toast notifications, shadcn Tabs/Sheet/Button widgets, vertical volume slider on hover, drag-drop on main content area, close button on video player, scissors icon on Clip button, renamed tabs to Video/Gallery with icons, hover selection UX for gallery, clip length persistence via settings, requestAnimationFrame for smooth seek, stop video on expanded player close, cursor at end on caption edit start.~~ ✅ DONE
 15. ~~**Bug fixes**: Bulk convert drawer state management (moved `isOpen` from hook to app state), larger gallery select/delete buttons, full-cover gallery thumbnails, removed caption input focus ring, vertical chevron icons for caption editor, tab switch closes expanded player, correct Select All checkbox icons, toast notification integration, 'c' hotkey works after seeking, video player sizing with min-h-0 and object-contain.~~ ✅ DONE
-16. ~~**UI polish & bug fixes**: Video playback position preservation across tab switches (savedTime state + restore on mount), CaptionOverlay consistent styling (h-full, leading-relaxed, p-3 in both states), BulkConvertDrawer resolution inputs show empty when unset (0 treated as unset, no confusing "0" display), Sonner toast dark theme via toastOptions, bulk convert button disabled when no files selected, tab switch saves current time before dispatching SET_TAB.~~ ✅ DONE
+16. ~~**UI polish & bug fixes**: CaptionOverlay consistent styling (h-full, leading-relaxed, p-3 in both states), BulkConvertDrawer resolution inputs show empty when unset (0 treated as unset, no confusing "0" display), Sonner toast dark theme via toastOptions, bulk convert button disabled when no files selected.~~ ✅ DONE
 17. **UI polish & bug fixes**: Tab type renamed from `'clip'` to `'video'` across all files (app-state, App, TopBar), BulkConvertDrawer title alignment fixed (`px-4`), file count counter removed from drawer, codec dropdown styling fixed (explicit bg/fg via style prop), gallery bulk delete button added (destructive color, disabled when no selection), ExpandedPlayer close button moved inside video container (top-right absolute), clip length label replaced with RulerDimensionLine icon, 's' size fixed to `text-sm`, BulkConvertDrawer removed unused `galleryFiles` import.
 18. **UI consistency audit & shadcn migration**: Full audit of all UI components — replaced raw HTML form elements with shadcn/ui components (Input, Textarea, Slider, Dialog, Progress, Label). Removed custom focus ring styling, custom progress bar styling, and inline button styles. All components now use consistent shadcn variants (default, outline, destructive, ghost, secondary). Input fields use `bg-transparent` for consistent dark theme appearance. Progress uses shadcn Progress component with custom styling. Dialog uses shadcn Dialog with proper backdrop blur and animation. Label uses shadcn Label with form-label class. Slider uses shadcn Slider with track/thumb styling.

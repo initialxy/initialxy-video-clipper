@@ -24,15 +24,6 @@ function getMainWindow(): BrowserWindowType | null {
 }
 
 export function registerIpcHandlers(): void {
-  // Check ffmpeg on launch
-  const ffmpegCheck = checkFfmpeg();
-  if (!ffmpegCheck.available) {
-    dialog.showErrorBox(
-      'ffmpeg Not Found',
-      'ffmpeg is required but not found in PATH.\nPlease install ffmpeg and restart the app.',
-    );
-  }
-
   // clip:create
   ipcMain.handle(IPC_CHANNELS.CLIP_CREATE, async (_event, payload) => {
     const result = await createClip(payload);

@@ -22,7 +22,7 @@ declare global {
     scanOutputs: () => Promise<IPCReturns['fs:scan-outputs']>;
     deleteClip: (filePath: string) => Promise<IPCReturns['fs:delete-clip']>;
     bulkDelete: (payload: IPCPayloads['fs:bulk-delete']) => Promise<IPCReturns['fs:bulk-delete']>;
-    handleDragDrop: (filePath: string) => Promise<IPCReturns['app:drag-drop']>;
+    dragDrop: (filePath: string) => Promise<IPCReturns['app:drag-drop']>;
     checkFfmpeg: () => Promise<IPCReturns['app:check-ffmpeg']>;
     openFile: () => Promise<IPCReturns['app:open-file']>;
     getSetting: (key: string) => Promise<IPCReturns['settings:get']>;

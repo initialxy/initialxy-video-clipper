@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { buildThumbnailCommand } from '@main/ffmpeg';
 import { runFfmpeg } from './ffmpeg-executor';
-import { getCaptionPath, getThumbnailPath } from '@shared/utils';
+import { getThumbnailPath } from '@shared/utils';
+import { deleteFileWithMetadata } from '@main/utils';
 import { VIDEO_EXTENSIONS } from '@main/constants';
 
 const PROJECT_ROOT = process.cwd();
@@ -46,23 +47,7 @@ export function scanOutputs(): ScannedFile[] {
 
 export function deleteClip(filePath: string): { success: boolean; error?: string } {
   try {
-    // Delete the video file
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-
-    // Delete the caption file if it exists
-    const captionPath = filePath.replace(path.extname(filePath), '.txt');
-    if (fs.existsSync(captionPath)) {
-      fs.unlinkSync(captionPath);
-    }
-
-    // Delete the thumbnail if it exists
-    const thumbPath = getThumbnailPath(filePath);
-    if (fs.existsSync(thumbPath)) {
-      fs.unlinkSync(thumbPath);
-    }
-
+    deleteFileWithMetadata(filePath);
     return { success: true };
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
@@ -75,17 +60,7 @@ export async function bulkDeleteFiles(
   const errors: string[] = [];
   for (const filePath of paths) {
     try {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-      const captionPath = getCaptionPath(filePath);
-      if (fs.existsSync(captionPath)) {
-        fs.unlinkSync(captionPath);
-      }
-      const thumbPath = getThumbnailPath(filePath);
-      if (fs.existsSync(thumbPath)) {
-        fs.unlinkSync(thumbPath);
-      }
+      deleteFileWithMetadata(filePath);
     } catch {
       errors.push(filePath);
     }

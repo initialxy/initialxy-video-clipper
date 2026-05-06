@@ -15,8 +15,6 @@ import { useAppState, useAppDispatch, type ActiveTab } from '@renderer/store/app
 import { Button } from '@renderer/components/ui/button';
 import { InputGroup, InputGroupInput, InputGroupAddon } from '@renderer/components/ui/input-group';
 
-const CLIP_LENGTH_KEY = 'clip_length';
-
 interface TopBarProps {
   onClip: () => void;
   onRefreshGallery: () => void;
@@ -49,18 +47,6 @@ export function TopBar({
       setClipLengthInput(String(clipLength));
     }
   }, [clipLength]);
-
-  // Persist clip length to settings
-  const prevInputRef = useRef(clipLengthInput);
-  useEffect(() => {
-    if (prevInputRef.current !== clipLengthInput) {
-      prevInputRef.current = clipLengthInput;
-      const val = parseFloat(clipLengthInput);
-      if (!isNaN(val) && val > 0) {
-        window.electronAPI.setSetting(CLIP_LENGTH_KEY, String(val));
-      }
-    }
-  }, [clipLengthInput]);
 
   const handleClipLengthChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {

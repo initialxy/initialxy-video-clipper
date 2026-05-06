@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAppState } from '@renderer/store/app-state';
+import { isInputFocused } from '@renderer/lib/utils';
 
 interface UseVideoPlayerOptions {
   useGlobalState?: boolean;
@@ -174,12 +175,7 @@ export function useVideoPlayer(filePath?: string, options?: UseVideoPlayerOption
     if (!useGlobalState) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target;
-      if (
-        target instanceof HTMLTextAreaElement ||
-        (target instanceof HTMLInputElement && target.type !== 'range')
-      )
-        return;
+      if (isInputFocused()) return;
 
       if (e.code === 'Space') {
         e.preventDefault();

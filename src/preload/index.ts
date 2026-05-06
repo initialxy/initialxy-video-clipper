@@ -31,7 +31,7 @@ const electronAPI = {
     ipcRenderer.invoke('fs:bulk-delete', payload),
 
   // App
-  handleDragDrop: (filePath: string) => ipcRenderer.invoke('app:drag-drop', { filePath }),
+  dragDrop: (filePath: string) => ipcRenderer.invoke('app:drag-drop', { filePath }),
 
   checkFfmpeg: () => ipcRenderer.invoke('app:check-ffmpeg', {}),
 

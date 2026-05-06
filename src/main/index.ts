@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { registerIpcHandlers } from './ipc-handlers';
+import { checkFfmpeg } from './services/ffprobe.service';
 
 // Resolve __dirname in ES module context
 const __filename = fileURLToPath(import.meta.url);
@@ -87,6 +88,16 @@ app.whenReady().then(() => {
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
+      // Check ffmpeg availability before creating the window
+      const ffmpegCheck = checkFfmpeg();
+      if (!ffmpegCheck.available) {
+        const { dialog } = electron;
+        dialog.showErrorBox(
+          'ffmpeg Not Found',
+          'ffmpeg is required but not found in PATH.\nPlease install ffmpeg and restart the app.',
+        );
+      }
+
       createWindow();
     }
   });

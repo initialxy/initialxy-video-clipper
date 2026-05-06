@@ -3,6 +3,7 @@ import path from 'path';
 import { buildConvertCommand } from '@main/ffmpeg';
 import { runFfmpeg } from './ffmpeg-executor';
 import { getCaptionPath } from '@shared/utils';
+import { ensureDir, safeUnlink } from '@main/utils';
 import type { ConvertSettings, ConvertProgress } from '@shared/types';
 
 const CONVERTED_DIR = path.join(process.cwd(), 'converted');
@@ -14,9 +15,7 @@ export function isNoOpConversion(settings: ConvertSettings): boolean {
 }
 
 function ensureConvertedDir(): void {
-  if (!fs.existsSync(CONVERTED_DIR)) {
-    fs.mkdirSync(CONVERTED_DIR, { recursive: true });
-  }
+  ensureDir(CONVERTED_DIR);
 }
 
 function copyCaption(inputPath: string, outputName: string): void {
@@ -88,9 +87,7 @@ export async function bulkConvert(
       onProgress({ file: fileName, progress, status: 'done' });
     } else {
       // Clean up failed output
-      if (fs.existsSync(destPath)) {
-        fs.unlinkSync(destPath);
-      }
+      safeUnlink(destPath);
       results.push({ file: fileName, success: false, error: result.error });
       onProgress({ file: fileName, progress, status: 'error' });
     }

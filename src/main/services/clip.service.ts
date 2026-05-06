@@ -3,6 +3,7 @@ import path from 'path';
 import { buildClipCommand } from '@main/ffmpeg';
 import { formatCounter, getBaseName, getExtension } from '@shared/utils';
 import { runFfmpeg } from './ffmpeg-executor';
+import { ensureDir, safeUnlink } from '@main/utils';
 import type { ClipResult } from '@shared/types';
 
 const PROJECT_ROOT = process.cwd();
@@ -10,9 +11,7 @@ const OUTPUTS_DIR = path.join(PROJECT_ROOT, 'outputs');
 const COUNTERS_FILE = path.join(PROJECT_ROOT, 'clip-counters.json');
 
 function ensureOutputsDir(): void {
-  if (!fs.existsSync(OUTPUTS_DIR)) {
-    fs.mkdirSync(OUTPUTS_DIR, { recursive: true });
-  }
+  ensureDir(OUTPUTS_DIR);
 }
 
 function loadCounters(): Record<string, number> {
@@ -65,9 +64,7 @@ export async function createClip(payload: ClipPayload): Promise<ClipResult> {
   }
 
   // Clean up failed output
-  if (fs.existsSync(outputPath)) {
-    fs.unlinkSync(outputPath);
-  }
+  safeUnlink(outputPath);
 
   return { success: false, error: result.error };
 }
