@@ -69,6 +69,14 @@ const electronAPI = {
     ipcRenderer.on(IPC_CHANNELS.AUTO_CAPTION_PROGRESS, listener as never);
     return () => ipcRenderer.removeListener(IPC_CHANNELS.AUTO_CAPTION_PROGRESS, listener as never);
   },
+
+  onCaptionChanged: (callback: (data: IPCPayloads['caption:changed']) => void) => {
+    const listener = (_event: Event, data: IPCPayloads['caption:changed']) => {
+      callback(data);
+    };
+    ipcRenderer.on(IPC_CHANNELS.CAPTION_CHANGED, listener as never);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.CAPTION_CHANGED, listener as never);
+  },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

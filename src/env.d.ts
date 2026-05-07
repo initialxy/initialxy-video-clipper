@@ -34,6 +34,7 @@ declare global {
     onAutoCaptionProgress: (
       callback: (data: IPCPayloads['auto-caption:progress']) => void,
     ) => () => void;
+    onCaptionChanged: (callback: (data: IPCPayloads['caption:changed']) => void) => () => void;
   }
 
   interface Window {

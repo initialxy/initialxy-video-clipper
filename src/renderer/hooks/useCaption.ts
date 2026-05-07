@@ -1,49 +1,53 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useDebouncedCallback } from '@renderer/hooks/useDebouncedCallback';
+import { useState, useCallback, useEffect } from 'react';
+import { useCaptionStore } from '@renderer/store/caption-store';
+import { useDebouncedCaptionSave } from '@renderer/hooks/useDebouncedCaptionSave';
 
 export function useCaption(videoPath: string | null) {
-  const [caption, setCaption] = useState('');
-  const lastSavedRef = useRef('');
+  const store = useCaptionStore();
+  const [localCaption, setLocalCaption] = useState('');
+  const { saveCaption, resetDirty } = useDebouncedCaptionSave(videoPath);
 
   // Load caption when video path changes
   useEffect(() => {
     if (!videoPath) {
-      // This is safe: reset state when the video path changes to avoid stale data
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCaption('');
+      setLocalCaption('');
       return;
     }
 
-    window.electronAPI.readCaption(videoPath).then((result) => {
-      const content = result.content ?? '';
-      setCaption(content);
-      lastSavedRef.current = content;
-    });
-  }, [videoPath]);
+    const cached = store.getCaption(videoPath);
+    if (cached !== undefined) {
+      setLocalCaption(cached);
+      resetDirty(cached);
+    } else {
+      store.refreshCaption(videoPath).then((content) => {
+        setLocalCaption(content);
+        resetDirty(content);
+      });
+    }
+  }, [videoPath, store, resetDirty, localCaption]);
 
-  const debouncedSave = useDebouncedCallback(async (newCaption: string) => {
+  // Listen for caption changes from other sources (auto-caption, other tabs)
+  useEffect(() => {
     if (!videoPath) return;
-    if (newCaption === lastSavedRef.current) return;
 
-    await window.electronAPI.writeCaption({ filePath: videoPath, content: newCaption });
-    lastSavedRef.current = newCaption;
-  }, 2000);
+    const cleanup = window.electronAPI.onCaptionChanged((data) => {
+      if (data.filePath === videoPath) {
+        setLocalCaption(data.content);
+        resetDirty(data.content);
+      }
+    });
+
+    return cleanup;
+  }, [videoPath, resetDirty]);
 
   const updateCaption = useCallback(
     (newCaption: string) => {
-      setCaption(newCaption);
-      debouncedSave(newCaption);
+      setLocalCaption(newCaption);
+      saveCaption(newCaption);
     },
-    [debouncedSave],
+    [saveCaption],
   );
 
-  const refreshCaption = useCallback(async () => {
-    if (!videoPath) return;
-    const result = await window.electronAPI.readCaption(videoPath);
-    const content = result.content ?? '';
-    setCaption(content);
-    lastSavedRef.current = content;
-  }, [videoPath]);
-
-  return { caption, updateCaption, refreshCaption };
+  return { caption: localCaption, updateCaption };
 }

@@ -13,6 +13,7 @@ export const IPC_CHANNELS = {
   FS_EXTRACT_THUMBNAIL: 'fs:extract-thumbnail',
   FS_READ_CAPTION: 'fs:read-caption',
   FS_WRITE_CAPTION: 'fs:write-caption',
+  CAPTION_CHANGED: 'caption:changed',
   FS_SCAN_OUTPUTS: 'fs:scan-outputs',
   FS_DELETE_CLIP: 'fs:delete-clip',
   FS_BULK_DELETE: 'fs:bulk-delete',
@@ -60,6 +61,7 @@ export interface IPCPayloads {
   [IPC_CHANNELS.FS_EXTRACT_THUMBNAIL]: { filePath: string; outputPath: string };
   [IPC_CHANNELS.FS_READ_CAPTION]: { filePath: string };
   [IPC_CHANNELS.FS_WRITE_CAPTION]: { filePath: string; content: string };
+  [IPC_CHANNELS.CAPTION_CHANGED]: { filePath: string; content: string };
   [IPC_CHANNELS.FS_SCAN_OUTPUTS]: {};
   [IPC_CHANNELS.FS_DELETE_CLIP]: { filePath: string };
   [IPC_CHANNELS.FS_BULK_DELETE]: { paths: string[] };

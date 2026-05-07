@@ -3,6 +3,8 @@ import { Trash2, CheckSquare, Square } from 'lucide-react';
 import { cn } from '@renderer/lib/utils';
 import { CaptionOverlay } from './CaptionOverlay';
 import { useAppState } from '@renderer/store/app-state';
+import { useCaptionStore } from '@renderer/store/caption-store';
+import { useDebouncedCaptionSave } from '@renderer/hooks/useDebouncedCaptionSave';
 import { Button } from '@renderer/components/ui/button';
 
 interface GalleryItemProps {
@@ -20,19 +22,30 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
   const [isHovered, setIsHovered] = useState(false);
   const thumbRef = useRef<HTMLImageElement>(null);
   const captionRef = useRef(file.caption);
+  const store = useCaptionStore();
+  const { saveCaption, resetDirty } = useDebouncedCaptionSave(file.path);
 
+  // Sync when file.caption prop changes (gallery refresh)
   useEffect(() => {
     if (captionRef.current !== file.caption) {
       captionRef.current = file.caption;
       setCaption(file.caption ?? '');
+      resetDirty(file.caption ?? '');
     }
-  }, [file.caption]);
+  }, [file.caption, resetDirty]);
+
+  // Listen for caption changes from other sources (auto-caption, other tabs)
+  useEffect(() => {
+    const cleanup = window.electronAPI.onCaptionChanged((data) => {
+      if (data.filePath === file.path) {
+        setCaption(data.content);
+        resetDirty(data.content);
+      }
+    });
+    return cleanup;
+  }, [file.path, resetDirty]);
 
   useEffect(() => {
-    window.electronAPI.readCaption(file.path).then((result) => {
-      setCaption(result.content ?? '');
-    });
-
     const checkThumb = async () => {
       const thumbPath = file.path + '.thumb.jpg';
       const img = new Image();
@@ -55,9 +68,10 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
   const handleCaptionSave = useCallback(
     (newCaption: string) => {
       setCaption(newCaption);
-      window.electronAPI.writeCaption({ filePath: file.path, content: newCaption });
+      store.setCaption(file.path, newCaption);
+      saveCaption(newCaption);
     },
-    [file.path],
+    [file.path, store, saveCaption],
   );
 
   return (

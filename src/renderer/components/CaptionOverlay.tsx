@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, useEffect, type MouseEvent, type ChangeEvent } from 'react';
-import { useDebouncedCallback } from '@renderer/hooks/useDebouncedCallback';
 import { Textarea } from '@renderer/components/ui/textarea';
 
 interface CaptionOverlayProps {
@@ -11,15 +10,7 @@ interface CaptionOverlayProps {
 export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(caption);
-  const lastSavedRef = useRef(caption);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const handleDebouncedSave = useDebouncedCallback((newText: string) => {
-    if (newText !== lastSavedRef.current) {
-      onSave(newText);
-      lastSavedRef.current = newText;
-    }
-  }, 2000);
 
   const handleClick = useCallback(
     (e: MouseEvent) => {
@@ -33,20 +24,15 @@ export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps
 
   const handleBlur = useCallback(() => {
     setIsEditing(false);
-    if (editText !== lastSavedRef.current) {
+    if (editText !== caption) {
       onSave(editText);
-      lastSavedRef.current = editText;
     }
-  }, [editText, onSave]);
+  }, [editText, caption, onSave]);
 
-  const handleChange = useCallback(
-    (e: ChangeEvent<HTMLTextAreaElement>) => {
-      const newText = e.target.value;
-      setEditText(newText);
-      handleDebouncedSave(newText);
-    },
-    [handleDebouncedSave],
-  );
+  const handleChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
+    const newText = e.target.value;
+    setEditText(newText);
+  }, []);
 
   // Focus at end when editing starts
   useEffect(() => {

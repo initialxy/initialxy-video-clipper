@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, useRef, type DragEvent } from 'react';
 import { toast } from 'sonner';
 import { useAppState, useAppDispatch } from '@renderer/store/app-state';
+import { CaptionStoreProvider } from '@renderer/store/caption-store';
 import { useGallery } from '@renderer/hooks/useGallery';
 import { useConvertSettings } from '@renderer/hooks/useConvertSettings';
 import { useLoadVideo } from '@renderer/hooks/useLoadVideo';
@@ -326,121 +327,123 @@ function AppContent() {
   );
 
   return (
-    <div className="dark bg-background text-foreground flex h-screen flex-col overflow-hidden">
-      {/* Top Bar */}
-      <TopBar
-        onClip={handleClipAction}
-        onRefreshGallery={refreshGallery}
-        onTabChange={handleTabChange}
-        onOpenBulkConvert={() => {
-          dispatch({ type: 'SET_CONVERT_DRAWER_OPEN', payload: true });
-          convertSettings.open();
-        }}
-        onToggleSelectAll={handleToggleSelectAll}
-        onBulkDelete={handleBulkDelete}
-        onAutoCaption={() => handleAutoCaption()}
-        onOpenAutoCaptionSettings={() =>
-          dispatch({ type: 'SET_AUTO_CAPTION_DRAWER_OPEN', payload: true })
-        }
-        isAllSelected={isAllSelected}
-        isAutoCaptioning={isAutoCaptioning}
-      />
-
-      {/* Main Content */}
-      <div
-        className={cn(
-          'flex min-h-0 flex-1 transition-colors',
-          isDragOver && 'border-primary/50 bg-primary/5',
-        )}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDropMain}
-      >
-        {expandedFile ? (
-          <ExpandedPlayer
-            filePath={expandedFile}
-            onClose={handleCloseExpanded}
-            onAutoCaption={handleAutoCaption}
-          />
-        ) : activeTab === 'video' ? (
-          <div className="flex min-h-0 flex-1 flex-col p-4">
-            {currentVideo ? (
-              <VideoPlayer
-                className="flex-1"
-                onClose={handleCloseVideo}
-                currentTimeRef={videoTimeRef}
-                autoPlay
-              />
-            ) : (
-              <div className="flex flex-1 items-center justify-center">
-                <div className="text-muted-foreground text-center">
-                  <p className="text-lg">No video loaded</p>
-                  <p className="mt-1 text-sm">Drag a video file here or click Open</p>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex min-h-0 flex-1 flex-col">
-            <GalleryView
-              onOpenExpanded={(path) => dispatch({ type: 'SET_EXPANDED_FILE', payload: path })}
-              onDeleteFile={(path) => setDeleteTarget(path)}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* LLM API Settings Drawer */}
-      <AutoCaptionDrawer
-        onClose={() => dispatch({ type: 'SET_AUTO_CAPTION_DRAWER_OPEN', payload: false })}
-      />
-
-      {/* Bulk Convert Drawer */}
-      <BulkConvertDrawer onClose={convertSettings.close} />
-
-      {/* Delete Confirmation Modal */}
-      {deleteTarget && (
-        <DeleteConfirmModal
-          fileName={galleryFiles.find((f) => f.path === deleteTarget)?.name ?? 'Unknown'}
-          onConfirm={handleDeleteConfirm}
-          onCancel={() => setDeleteTarget(null)}
+    <CaptionStoreProvider>
+      <div className="dark bg-background text-foreground flex h-screen flex-col overflow-hidden">
+        {/* Top Bar */}
+        <TopBar
+          onClip={handleClipAction}
+          onRefreshGallery={refreshGallery}
+          onTabChange={handleTabChange}
+          onOpenBulkConvert={() => {
+            dispatch({ type: 'SET_CONVERT_DRAWER_OPEN', payload: true });
+            convertSettings.open();
+          }}
+          onToggleSelectAll={handleToggleSelectAll}
+          onBulkDelete={handleBulkDelete}
+          onAutoCaption={() => handleAutoCaption()}
+          onOpenAutoCaptionSettings={() =>
+            dispatch({ type: 'SET_AUTO_CAPTION_DRAWER_OPEN', payload: true })
+          }
+          isAllSelected={isAllSelected}
+          isAutoCaptioning={isAutoCaptioning}
         />
-      )}
 
-      {/* Bulk Delete Confirmation Modal */}
-      {bulkDeleteCount !== null && (
-        <Dialog open={true} onOpenChange={(open) => !open && setBulkDeleteCount(null)}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Delete Clips</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete{' '}
-                <span className="text-foreground font-medium">{bulkDeleteCount} file(s)</span>? This
-                will also remove their caption files.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setBulkDeleteCount(null)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleBulkDeleteConfirm}>
-                Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+        {/* Main Content */}
+        <div
+          className={cn(
+            'flex min-h-0 flex-1 transition-colors',
+            isDragOver && 'border-primary/50 bg-primary/5',
+          )}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDropMain}
+        >
+          {expandedFile ? (
+            <ExpandedPlayer
+              filePath={expandedFile}
+              onClose={handleCloseExpanded}
+              onAutoCaption={handleAutoCaption}
+            />
+          ) : activeTab === 'video' ? (
+            <div className="flex min-h-0 flex-1 flex-col p-4">
+              {currentVideo ? (
+                <VideoPlayer
+                  className="flex-1"
+                  onClose={handleCloseVideo}
+                  currentTimeRef={videoTimeRef}
+                  autoPlay
+                />
+              ) : (
+                <div className="flex flex-1 items-center justify-center">
+                  <div className="text-muted-foreground text-center">
+                    <p className="text-lg">No video loaded</p>
+                    <p className="mt-1 text-sm">Drag a video file here or click Open</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex min-h-0 flex-1 flex-col">
+              <GalleryView
+                onOpenExpanded={(path) => dispatch({ type: 'SET_EXPANDED_FILE', payload: path })}
+                onDeleteFile={(path) => setDeleteTarget(path)}
+              />
+            </div>
+          )}
+        </div>
 
-      <Toaster
-        toastOptions={{
-          style: {
-            background: 'var(--background)',
-            color: 'var(--foreground)',
-            border: '1px solid var(--border)',
-          },
-        }}
-      />
-    </div>
+        {/* LLM API Settings Drawer */}
+        <AutoCaptionDrawer
+          onClose={() => dispatch({ type: 'SET_AUTO_CAPTION_DRAWER_OPEN', payload: false })}
+        />
+
+        {/* Bulk Convert Drawer */}
+        <BulkConvertDrawer onClose={convertSettings.close} />
+
+        {/* Delete Confirmation Modal */}
+        {deleteTarget && (
+          <DeleteConfirmModal
+            fileName={galleryFiles.find((f) => f.path === deleteTarget)?.name ?? 'Unknown'}
+            onConfirm={handleDeleteConfirm}
+            onCancel={() => setDeleteTarget(null)}
+          />
+        )}
+
+        {/* Bulk Delete Confirmation Modal */}
+        {bulkDeleteCount !== null && (
+          <Dialog open={true} onOpenChange={(open) => !open && setBulkDeleteCount(null)}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Delete Clips</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete{' '}
+                  <span className="text-foreground font-medium">{bulkDeleteCount} file(s)</span>?
+                  This will also remove their caption files.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setBulkDeleteCount(null)}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={handleBulkDeleteConfirm}>
+                  Delete
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        <Toaster
+          toastOptions={{
+            style: {
+              background: 'var(--background)',
+              color: 'var(--foreground)',
+              border: '1px solid var(--border)',
+            },
+          }}
+        />
+      </div>
+    </CaptionStoreProvider>
   );
 }
 

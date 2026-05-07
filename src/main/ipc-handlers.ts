@@ -78,7 +78,13 @@ export function registerIpcHandlers(): void {
 
   // fs:write-caption
   ipcMain.handle(IPC_CHANNELS.FS_WRITE_CAPTION, async (_event, payload) => {
-    return writeCaption(payload.filePath, payload.content);
+    const result = writeCaption(payload.filePath, payload.content);
+    const win = getMainWindow();
+    win?.webContents.send(IPC_CHANNELS.CAPTION_CHANGED, {
+      filePath: payload.filePath,
+      content: payload.content,
+    });
+    return result;
   });
 
   // fs:scan-outputs
