@@ -188,11 +188,13 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
   - If `## Caption` is **not** found, fallback to using the entire LLM response (trimmed).
   - Write the parsed caption to the `.txt` file, overwriting any existing content.
 - **Bulk processing UI state** (persistent Sonner toast):
-  - During processing, a **persistent toast** appears (using `toast.custom()` with `duration: Infinity`) showing:
-    - Progress text: `i / n captioned` (e.g., "3 / 12 captioned")
-    - A **Cancel** button (secondary, using Sonner's `cancel` prop) to interrupt the operation
-  - The toast updates dynamically as progress changes (by calling `toast()` with the same toast ID to replace content).
-  - On completion or cancellation, the toast is dismissed and a summary toast appears (e.g., "Auto-caption completed: 10/12 success").
+  - During processing, a **persistent toast** appears (using `toast.custom()` with `duration: Infinity` and a fixed toast ID) showing:
+    - Description: "Auto-captioning..."
+    - A thin progress bar (full width)
+    - Counter at the right: `n / total`
+  - The toast updates dynamically as progress changes (by calling `toast.custom()` with the same fixed ID).
+  - The progress toast is only dismissed when `current === total` (all files done), not on per-file `done` events.
+  - On completion: a standard info toast appears — "Auto-captioned n clips" (all success) or "Auto-caption failed for n clips" (any failures).
   - The operation is **interruptible**: clicking Cancel stops processing remaining files.
 - **Button states during processing**:
   - Both the Gallery top bar Auto-caption button and the expanded player Auto-caption button are **disabled** (grayed out) while captioning is in progress.
@@ -227,8 +229,9 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
   - **Timeout**: 60 seconds per request.
 - **Concurrency**: Process files **sequentially** (one at a time) to avoid overwhelming the local LLM server. No parallel requests.
 - **Toast notifications**:
-  - On completion: toast with summary count, e.g., "Auto-caption: 10 succeeded, 2 failed".
-  - On interrupt: toast confirming cancellation, e.g., "Auto-caption interrupted: 7/12 captioned".
+  - On completion (all success): info toast — "Auto-captioned n clips".
+  - On completion (any failures): error toast — "Auto-caption failed for n clips".
+  - On interrupt: error toast — "Auto-caption failed".
 
 ---
 

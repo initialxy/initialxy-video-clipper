@@ -12,6 +12,7 @@ import { ExpandedPlayer } from '@renderer/components/ExpandedPlayer';
 import { BulkConvertDrawer } from '@renderer/components/BulkConvertDrawer';
 import { DeleteConfirmModal } from '@renderer/components/DeleteConfirmModal';
 import { AutoCaptionDrawer } from '@renderer/components/AutoCaptionDrawer';
+import { AutoCaptionProgressToast } from '@renderer/components/AutoCaptionProgressToast';
 import { Toaster } from '@renderer/components/ui/sonner';
 import {
   Dialog,
@@ -25,6 +26,8 @@ import { Button } from '@renderer/components/ui/button';
 import { cn } from '@renderer/lib/utils';
 import { SETTINGS_KEYS } from '@shared/constants';
 import type { AutoCaptionResult } from '@shared/types';
+
+const AUTO_CAPTION_TOAST_ID = 'auto-caption-progress';
 
 function AppContent() {
   const {
@@ -45,7 +48,6 @@ function AppContent() {
   const [bulkDeleteCount, setBulkDeleteCount] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const videoTimeRef = useRef(0);
-  const toastIdRef = useRef<string | number | null>(null);
 
   const handleTabChange = useCallback(
     (tab: 'video' | 'gallery') => {
@@ -169,27 +171,13 @@ function AppContent() {
   useEffect(() => {
     return window.electronAPI.onAutoCaptionProgress((data) => {
       if (data.status === 'processing') {
-        if (toastIdRef.current == null) {
-          toastIdRef.current = toast.custom(
-            () => (
-              <div className="flex items-center gap-3">
-                <span className="text-sm">
-                  {data.current} / {data.total} captioned
-                </span>
-              </div>
-            ),
-            { duration: Infinity, id: 'auto-caption-progress' },
-          );
-        } else {
-          toast(`Auto-caption: ${data.current} / ${data.total} captioned`, {
-            id: 'auto-caption-progress',
-            duration: Infinity,
-          });
-        }
+        toast(<AutoCaptionProgressToast current={data.current} total={data.total} />, {
+          duration: Infinity,
+          id: AUTO_CAPTION_TOAST_ID,
+        });
       } else if (data.status === 'done' || data.status === 'error') {
-        if (toastIdRef.current != null) {
-          toast.dismiss('auto-caption-progress');
-          toastIdRef.current = null;
+        if (data.current === data.total) {
+          toast.dismiss(AUTO_CAPTION_TOAST_ID);
         }
       }
     });
@@ -307,18 +295,17 @@ function AppContent() {
         const succeeded = results.filter((r: AutoCaptionResult) => r.success).length;
         const failed = results.filter((r: AutoCaptionResult) => !r.success).length;
 
-        if (toastIdRef.current != null) {
-          toast.dismiss('auto-caption-progress');
-          toastIdRef.current = null;
-        }
+        toast.dismiss(AUTO_CAPTION_TOAST_ID);
 
-        toast.info(`Auto-caption: ${succeeded} succeeded, ${failed} failed`);
+        if (failed > 0) {
+          toast.error(`Auto-caption failed for ${failed} clips`);
+        } else {
+          toast.info(`Auto-captioned ${succeeded} clips`);
+        }
         refreshGallery();
       } catch {
-        if (toastIdRef.current != null) {
-          toast.dismiss('auto-caption-progress');
-          toastIdRef.current = null;
-        }
+        toast.dismiss(AUTO_CAPTION_TOAST_ID);
+        toast.error('Auto-caption failed');
       } finally {
         dispatch({ type: 'SET_AUTO_CAPTIONING', payload: false });
       }

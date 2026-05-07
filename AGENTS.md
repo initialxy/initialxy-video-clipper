@@ -297,6 +297,24 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 | Gallery caption prop | `src/renderer/components/GalleryItem.tsx` | ✅ Accepts caption prop, re-syncs on update |
 | Build | — | ✅ Passes typecheck, lint, build |
 
+### Auto-caption Toast (Complete)
+
+**Milestone: Implementation complete — progress toast with Sonner default styling**
+
+#### Implementation
+| Component | File | Description |
+|-----------|------|-------------|
+| Progress toast component | `src/renderer/components/AutoCaptionProgressToast.tsx` | Reusable toast with "Auto-captioning...", progress bar, "n / total" |
+| Progress toast rendering | `src/renderer/App.tsx` | Uses `toast.custom()` with component, `duration: Infinity`, fixed ID |
+| Toast dismissal | `src/renderer/App.tsx` | Only dismisses when `current === total` (all files done), not per-file |
+| Completion toasts | `src/renderer/App.tsx` | Success: "Auto-captioned n clips" (info); Failure: "Auto-caption failed for n clips" (error) |
+
+**Design notes:**
+- Progress toast uses `toast.custom()` (not `toast()`) to support `duration: Infinity` — `toast()` with JSX ignores the duration option
+- Toast dismissal only triggers when `data.current === data.total` to avoid premature dismissal when per-file `done` events fire rapidly
+- Uses fixed toast ID (`AUTO_CAPTION_TOAST_ID` const) — no ref tracking needed since `toast.dismiss()` is idempotent
+- Progress toast component is a standalone exported component, reused via `toast.custom()`
+
 #### Tested
 | Feature | Status |
 |---------|--------|
@@ -306,9 +324,9 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 | Settings drawer opens on ellipsis click | ✅ Verified |
 | Drawer transition (in/out) | ✅ Verified |
 | Bulk auto-caption execution | ✅ Verified |
-| Progress toast | ✅ Verified |
-| Cancel interrupt | ✅ Verified |
-| Summary toast on completion | ✅ Verified |
+| Progress toast visible and updating | ✅ Verified |
+| Toast only dismissed when all files done | ✅ Verified |
+| Completion toasts (success/failure) | ✅ Verified |
 | Expanded player auto-caption | ✅ Verified |
 | Reasoning model support (reasoning_content fallback) | ✅ Verified |
 | Caption refresh on gallery update | ✅ Verified |
