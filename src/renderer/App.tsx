@@ -171,7 +171,7 @@ function AppContent() {
   useEffect(() => {
     return window.electronAPI.onAutoCaptionProgress((data) => {
       if (data.status === 'processing') {
-        toast.loading(`Auto-captioned ${data.current}/${data.total}`, {
+        toast.loading(`Auto-captioning ${data.current}/${data.total} file(s)`, {
           duration: Infinity,
           id: AUTO_CAPTION_TOAST_ID,
           action: {
@@ -305,9 +305,9 @@ function AppContent() {
         toast.dismiss(AUTO_CAPTION_TOAST_ID);
 
         if (failed > 0) {
-          toast.error(`Auto-caption failed for ${failed} clips`);
+          toast.error(`Auto-caption failed for ${failed} file(s)`);
         } else {
-          toast.info(`Auto-captioned ${succeeded} clips`);
+          toast.info(`Auto-captioned ${succeeded} file(s)`);
         }
         refreshGallery();
       } catch {

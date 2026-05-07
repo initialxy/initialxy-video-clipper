@@ -68,7 +68,7 @@ async function captionFile(
     : '';
 
   const userPrompt = existingCaption
-    ? `This video has an existing description: ${existingCaption}. Please improve and rephrase it. Describe what is happening in this video clip.`
+    ? `Existing caption: "${existingCaption}". Add visual description of what you see in the image that complements the existing caption. Preserve the existing caption's dialogue and spoken content — do not rewrite or remove it. Combine the existing caption with your visual description into a single cohesive caption.`
     : 'Describe what is happening in this video clip.';
 
   const thumbnailData = fs.readFileSync(thumbnailPath);
