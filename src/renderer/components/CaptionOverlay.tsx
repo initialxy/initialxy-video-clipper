@@ -54,7 +54,7 @@ export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps
           onChange={handleChange}
           onBlur={handleBlur}
           autoFocus
-          className="h-full w-full resize-none bg-transparent p-3 text-sm leading-relaxed outline-none"
+          className="h-full w-full resize-none bg-transparent p-3 text-justify text-sm leading-relaxed outline-none"
           placeholder="Enter caption..."
         />
       </div>
