@@ -68,6 +68,7 @@ npm run dev
 |-----|--------|
 | `Space` | Toggle play / pause |
 | `M` | Toggle mute / unmute |
+| `C` | Clip current video (Video tab only) |
 | `←` / `→` | Seek backward / forward by 2% of duration |
 | `↑` / `↓` | Increase / decrease volume by 10% |
 | `Escape` | Close expanded player (Gallery mode only) |
