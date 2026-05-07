@@ -4,11 +4,14 @@
  */
 
 /**
- * Build a clip command using stream copy (no re-encode).
- * ffmpeg -i <INPUT> -ss <START> -t <DURATION> -c copy -avoid_negative_ts make_zero <OUTPUT>
+ * Build a clip command with re-encoding for accurate frame-level clipping.
+ * ffmpeg -i <INPUT> -ss <START> -t <DURATION> <OUTPUT>
  *
  * -ss AFTER -i for frame-accurate seeking (decodes from beginning but lands on exact position).
  * -ss BEFORE -i would seek to nearest keyframe (fast but inaccurate, can be off by up to one GOP).
+ *
+ * Re-encoding is used instead of stream copy (-c copy) because stream copy cannot decode
+ * frames between keyframes, causing missing content at the clip start.
  */
 export function buildClipCommand(
   input: string,
@@ -16,20 +19,7 @@ export function buildClipCommand(
   start: number,
   duration: number,
 ): string[] {
-  return [
-    'ffmpeg',
-    '-i',
-    input,
-    '-ss',
-    String(start),
-    '-t',
-    String(duration),
-    '-c',
-    'copy',
-    '-avoid_negative_ts',
-    'make_zero',
-    output,
-  ];
+  return ['ffmpeg', '-i', input, '-ss', String(start), '-t', String(duration), output];
 }
 
 /**

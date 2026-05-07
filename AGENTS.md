@@ -209,11 +209,11 @@ Pre-commit: lint-staged → typecheck → lint → build (all must pass).
 
 ## ffmpeg Commands
 
-**Clipping** (stream copy, no re-encode):
+**Clipping** (re-encode for accurate frame-level clipping):
 ```
-ffmpeg -i <INPUT> -ss <START> -t <DURATION> -c copy -avoid_negative_ts make_zero <OUTPUT>
+ffmpeg -i <INPUT> -ss <START> -t <DURATION> <OUTPUT>
 ```
-`-ss` AFTER `-i` for frame-accurate seeking.
+`-ss` AFTER `-i` for frame-accurate seeking. Re-encoding is used instead of stream copy because stream copy cannot decode frames between keyframes, causing missing content at the clip start.
 
 **Bulk conversion** (omit params for "Same as source"):
 ```

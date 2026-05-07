@@ -344,9 +344,9 @@ video-clipper/
 
 - All video operations use ffmpeg via child process execution.
 - **ffmpeg check on launch**: On app startup, verify ffmpeg is available in PATH. If not found, show an error dialog and prevent the app from functioning until resolved.
-- **Clip command template** (stream copy mode — no re-encode):
+- **Clip command template** (re-encode for accurate frame-level clipping):
   ```
-  ffmpeg -i <input> -ss <start> -t <duration> -c copy -avoid_negative_ts make_zero <output>
+  ffmpeg -i <input> -ss <start> -t <duration> <output>
   ```
 - **Bulk convert command template** (params omitted if "Same as source"):
   ```
