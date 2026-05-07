@@ -7,8 +7,10 @@ import electron from 'electron';
 const { BrowserWindow } = electron;
 
 const SYSTEM_PROMPT =
-  'You are a helpful assistant that describes and captions images for AI training data.\n' +
-  'Your response must include a caption under a "## Caption" heading.';
+  'You are a helpful assistant that writes short, descriptive captions for video clips used in AI training data.\n' +
+  'You will be shown a single image (a frame from a video). Write a plain-text caption describing what is happening in this video clip.\n' +
+  'Do NOT use markdown, headings, bullet points, or any formatting — just return the raw caption text.\n' +
+  'Prefix your caption with "Caption: " at the very beginning of your response.';
 
 const REQUEST_TIMEOUT_MS = 60_000;
 
@@ -28,9 +30,9 @@ export interface AutoCaptionProgressEvent {
 export type ProgressCallback = (event: AutoCaptionProgressEvent) => void;
 
 function parseCaption(response: string): string {
-  const captionHeading = response.match(/##\s*Caption\s*\n([\s\S]*)/i);
-  if (captionHeading) {
-    return captionHeading[1].trim();
+  const idx = response.indexOf('Caption:');
+  if (idx !== -1) {
+    return response.substring(idx + 'Caption:'.length).trim();
   }
   return response.trim();
 }
@@ -66,8 +68,8 @@ async function captionFile(
     : '';
 
   const userPrompt = existingCaption
-    ? `This image has an existing description: ${existingCaption}. Please improve and rephrase it. Describe the content of this image.`
-    : 'Describe the content of this image.';
+    ? `This video has an existing description: ${existingCaption}. Please improve and rephrase it. Describe what is happening in this video clip.`
+    : 'Describe what is happening in this video clip.';
 
   const thumbnailData = fs.readFileSync(thumbnailPath);
   const base64Image = thumbnailData.toString('base64');

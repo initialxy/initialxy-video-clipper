@@ -173,19 +173,21 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
   - **Gallery grid single-cell**: No direct auto-caption from the grid — only accessible via the expanded player.
   - **Video tab**: No auto-caption in the Video tab. Gallery-only feature.
 - **Prompt construction**:
-  - **System prompt**: Instruct the LLM to provide its caption under a `## Caption` heading. Example:
+  - **System prompt**: Instruct the LLM to write a plain-text caption prefixed with `Caption: `. Example:
     ```
-    You are a helpful assistant that describes and captions images for AI training data.
-    Your response must include a caption under a "## Caption" heading.
+    You are a helpful assistant that writes short, descriptive captions for video clips used in AI training data.
+    You will be shown a single image (a frame from a video). Write a plain-text caption describing what is happening in this video clip.
+    Do NOT use markdown, headings, bullet points, or any formatting — just return the raw caption text.
+    Prefix your caption with "Caption: " at the very beginning of your response.
     ```
-  - **User prompt** (per image):
-    - If **no existing caption**: `"Describe the content of this image."`
-    - If **existing caption exists**: `"This image has an existing description: <existing caption>. Please improve and rephrase it. Describe the content of this image."`
-  - The image is sent as part of the request as a base64-encoded string (see API contract below).
+  - **User prompt** (per frame):
+    - If **no existing caption**: `"Describe what is happening in this video clip."`
+    - If **existing caption exists**: `"This video has an existing description: <existing caption>. Please improve and rephrase it. Describe what is happening in this video clip."`
+  - A single frame (thumbnail) from the video is sent as part of the request as a base64-encoded string (see API contract below).
 - **Response parsing**:
-  - Search the LLM response for `## Caption` heading.
-  - If found, extract everything after `## Caption` (trimmed) as the new caption.
-  - If `## Caption` is **not** found, fallback to using the entire LLM response (trimmed).
+  - Search the LLM response for `Caption:` prefix.
+  - If found, extract everything after the first `Caption:` (trimmed) as the new caption.
+  - If `Caption:` is **not** found, fallback to using the entire LLM response (trimmed).
   - Write the parsed caption to the `.txt` file, overwriting any existing content.
 - **Bulk processing UI state** (persistent Sonner toast):
   - During processing, a **persistent toast** appears (using `toast.custom()` with `duration: Infinity` and a fixed toast ID) showing:
