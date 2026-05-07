@@ -1,6 +1,6 @@
 import { Button } from '@renderer/components/ui/button';
 import { Card, CardHeader, CardTitle, CardAction, CardContent } from '@renderer/components/ui/card';
-import { ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
+import { ChevronDown, ChevronUp, ScanText } from 'lucide-react';
 import { cn } from '@renderer/lib/utils';
 import { Textarea } from '@renderer/components/ui/textarea';
 import { useState, useCallback } from 'react';
@@ -39,7 +39,7 @@ export function CaptionEditor({
             onClick={() => onAutoCaption()}
             disabled={isAutoCaptioning}
           >
-            <MessageSquare className="h-4 w-4" />
+            <ScanText className="h-4 w-4" />
             <span>Auto-caption</span>
           </Button>
         </CardTitle>

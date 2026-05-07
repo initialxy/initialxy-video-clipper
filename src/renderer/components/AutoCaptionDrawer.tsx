@@ -71,7 +71,7 @@ export function AutoCaptionDrawer({ onClose }: AutoCaptionDrawerProps) {
     >
       <SheetContent side="right" className="flex flex-col sm:max-w-[340px]">
         <SheetHeader>
-          <SheetTitle>LLM API Settings</SheetTitle>
+          <SheetTitle>Vision Model API Settings</SheetTitle>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-4">

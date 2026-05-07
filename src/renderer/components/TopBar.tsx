@@ -1,15 +1,15 @@
 import { useState, useCallback, useEffect, useRef, type ChangeEvent } from 'react';
 import {
-  FolderOpen,
-  RefreshCw,
-  Square,
   CheckSquare,
   Download,
-  Scissors,
-  RulerDimensionLine,
-  Trash2,
-  MessageSquare,
+  FolderOpen,
   MoreVertical,
+  RefreshCw,
+  RulerDimensionLine,
+  ScanText,
+  Scissors,
+  Square,
+  Trash2,
 } from 'lucide-react';
 import { Video, Images } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@renderer/components/ui/tabs';
@@ -146,7 +146,7 @@ export function TopBar({
                 title="Auto-caption Selected"
                 className="shrink-0"
               >
-                <MessageSquare className="h-4 w-4" />
+                <ScanText className="h-4 w-4" />
                 <span className="hidden sm:inline">Auto-caption</span>
               </Button>
               <ButtonGroupSeparator />
