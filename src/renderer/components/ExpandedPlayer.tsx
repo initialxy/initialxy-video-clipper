@@ -1,7 +1,8 @@
-import { useCaption } from '@renderer/hooks/useCaption';
 import { CaptionEditor } from './CaptionEditor';
 import { VideoPlayer } from './VideoPlayer';
 import { useAppState } from '@renderer/store/app-state';
+import { useCaptionStore } from '@renderer/store/caption-store';
+import { useEffect } from 'react';
 
 interface ExpandedPlayerProps {
   filePath: string;
@@ -10,8 +11,17 @@ interface ExpandedPlayerProps {
 }
 
 export function ExpandedPlayer({ filePath, onClose, onAutoCaption }: ExpandedPlayerProps) {
-  const { caption, updateCaption } = useCaption(filePath);
+  const store = useCaptionStore();
   const { isAutoCaptioning } = useAppState();
+
+  // Load caption from disk on mount
+  useEffect(() => {
+    store.ensureLoaded(filePath);
+  }, [filePath, store]);
+
+  const handleCaptionSave = (newCaption: string) => {
+    store.setCaption(filePath, newCaption);
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col p-4">
@@ -22,8 +32,8 @@ export function ExpandedPlayer({ filePath, onClose, onAutoCaption }: ExpandedPla
       <div className="mt-4 shrink-0">
         <div className="min-h-0 flex-1">
           <CaptionEditor
-            caption={caption}
-            onChange={updateCaption}
+            caption={store.getCaption(filePath)}
+            onChange={handleCaptionSave}
             isAutoCaptioning={isAutoCaptioning}
             onAutoCaption={() => onAutoCaption(filePath)}
           />

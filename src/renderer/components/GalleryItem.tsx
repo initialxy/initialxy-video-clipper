@@ -4,7 +4,6 @@ import { cn } from '@renderer/lib/utils';
 import { CaptionOverlay } from './CaptionOverlay';
 import { useAppState } from '@renderer/store/app-state';
 import { useCaptionStore } from '@renderer/store/caption-store';
-import { useDebouncedCaptionSave } from '@renderer/hooks/useDebouncedCaptionSave';
 import { Button } from '@renderer/components/ui/button';
 
 interface GalleryItemProps {
@@ -18,32 +17,24 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
   const { selectedFiles } = useAppState();
   const isSelected = selectedFiles.has(file.path);
   const [thumbnail, setThumbnail] = useState<string | null>(null);
-  const [caption, setCaption] = useState(file.caption ?? '');
   const [isHovered, setIsHovered] = useState(false);
   const thumbRef = useRef<HTMLImageElement>(null);
-  const captionRef = useRef(file.caption);
   const store = useCaptionStore();
-  const { saveCaption, resetDirty } = useDebouncedCaptionSave(file.path);
 
-  // Sync when file.caption prop changes (gallery refresh)
+  // Load caption from disk on mount
   useEffect(() => {
-    if (captionRef.current !== file.caption) {
-      captionRef.current = file.caption;
-      setCaption(file.caption ?? '');
-      resetDirty(file.caption ?? '');
-    }
-  }, [file.caption, resetDirty]);
+    store.ensureLoaded(file.path);
+  }, [file.path, store]);
 
   // Listen for caption changes from other sources (auto-caption, other tabs)
   useEffect(() => {
     const cleanup = window.electronAPI.onCaptionChanged((data) => {
       if (data.filePath === file.path) {
-        setCaption(data.content);
-        resetDirty(data.content);
+        // Store is updated automatically via the event listener
       }
     });
     return cleanup;
-  }, [file.path, resetDirty]);
+  }, [file.path]);
 
   useEffect(() => {
     const checkThumb = async () => {
@@ -67,11 +58,9 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
 
   const handleCaptionSave = useCallback(
     (newCaption: string) => {
-      setCaption(newCaption);
       store.setCaption(file.path, newCaption);
-      saveCaption(newCaption);
     },
-    [file.path, store, saveCaption],
+    [file.path, store],
   );
 
   return (
@@ -143,7 +132,7 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
       {/* Caption overlay on bottom half */}
       <div className="absolute inset-x-0 bottom-0 h-1/2">
         <CaptionOverlay
-          caption={caption}
+          caption={store.getCaption(file.path)}
           onSave={handleCaptionSave}
           onClick={(e) => e.stopPropagation()}
         />

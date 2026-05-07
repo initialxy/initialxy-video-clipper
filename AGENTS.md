@@ -74,15 +74,15 @@ src/
 │   │       ├── dialog.tsx, label.tsx, card.tsx, progress.tsx
 │   │       ├── field.tsx, button-group.tsx, separator.tsx
 │   ├── hooks/
-│   │   ├── useVideoPlayer.ts             # Playback state (play/pause/seek/mute/volume)
-│   │   ├── useVideoKeyboardShortcuts.ts  # Global keyboard shortcuts (Space, M, arrows, Escape)
-│   │   ├── useGallery.ts                 # Gallery file scanning & state
-│   │   ├── useCaption.ts                 # Caption CRUD with debounced save
-│   │   ├── useConvertSettings.ts         # Bulk conversion settings (load/save/reset)
-│   │   ├── useLoadVideo.ts               # Shared video loading (getVideoInfo → SET_VIDEO → SET_TAB)
-│   │   └── useDebouncedCallback.ts       # Shared debounced callback wrapper
-│   ├── lib/utils.ts           # cn function
-│   ├── store/app-state.tsx    # Central state (context + useReducer)
+ │   │   ├── useVideoPlayer.ts             # Playback state (play/pause/seek/mute/volume)
+ │   │   ├── useVideoKeyboardShortcuts.ts  # Global keyboard shortcuts (Space, M, arrows, Escape)
+ │   │   ├── useGallery.ts                 # Gallery file scanning & state
+ │   │   ├── useConvertSettings.ts         # Bulk conversion settings (load/save/reset)
+ │   │   ├── useLoadVideo.ts               # Shared video loading (getVideoInfo → SET_VIDEO → SET_TAB)
+ │   │   └── useDebouncedCallback.ts       # Shared debounced callback wrapper
+ │   ├── lib/utils.ts           # cn function
+ │   ├── store/app-state.tsx    # Central state (context + useReducer)
+ │   │   └── caption-store.tsx  # Reactive caption cache with debounced persistence (0.5s)
 │   └── styles/globals.css     # Tailwind + ZFlow theme (dark-first)
 └── env.d.ts                   # ElectronAPI interface (derived from @shared/ipc)
 ```
@@ -340,3 +340,28 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 - `isInputFocused()` guard prevents shortcuts when text input/textarea is focused
 - Volume tracking uses `useRef` in the hook + `volume` prop in VolumeControl for UI sync
 - Seeking uses percentage of duration (2%) instead of fixed seconds for consistent experience across videos of any length
+
+### Caption Store (Complete)
+
+**Milestone: Implementation complete — single source of truth with reactive updates**
+
+#### Implementation
+| Component | File | Description |
+|-----------|------|-------------|
+| Store | `src/renderer/store/caption-store.tsx` | Reactive cache (Map), debounced persistence (500ms), `ensureLoaded()` lazy reads, `caption:changed` IPC listener |
+| Provider | `src/renderer/App.tsx` | Wrapped with `CaptionStoreProvider` |
+| GalleryItem | `src/renderer/components/GalleryItem.tsx` | Uses `store.getCapon/setCaption` directly, `ensureLoaded()` on mount |
+| ExpandedPlayer | `src/renderer/components/ExpandedPlayer.tsx` | Uses `store.getCaption/setCaption` directly, `ensureLoaded()` on mount |
+| CaptionOverlay | `src/renderer/components/CaptionOverlay.tsx` | Calls `onSave` (→ `store.setCaption`) |
+
+#### Deleted
+| File | Reason |
+|------|--------|
+| `src/renderer/hooks/useCaption.ts` | Replaced by direct store usage |
+| `src/renderer/hooks/useDebouncedCaptionSave.ts` | Store handles debounce internally |
+
+**Design notes:**
+- Store is the single source of truth — components never maintain local caption state
+- Built-in debounced persistence (500ms) — no separate debounce hooks needed
+- Listens for `caption:changed` IPC events to stay in sync with main process (auto-caption, other tabs)
+- `ensureLoaded()` provides lazy disk reads on first access

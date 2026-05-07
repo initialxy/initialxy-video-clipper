@@ -2,6 +2,9 @@ import fs from 'fs';
 import { getThumbnailPath, getCaptionPath } from '@shared/utils';
 import { writeCaption } from './caption.service';
 import type { AutoCaptionResult } from '@shared/types';
+import { IPC_CHANNELS } from '@shared/ipc';
+import electron from 'electron';
+const { BrowserWindow } = electron;
 
 const SYSTEM_PROMPT =
   'You are a helpful assistant that describes and captions images for AI training data.\n' +
@@ -127,6 +130,14 @@ async function captionFile(
 
     const caption = parseCaption(content);
     const result = writeCaption(filePath, caption);
+
+    // Emit caption:changed event so renderer stores update reactively
+    const windows = BrowserWindow.getAllWindows();
+    const win = windows[0];
+    win?.webContents.send(IPC_CHANNELS.CAPTION_CHANGED, {
+      filePath,
+      content: caption,
+    });
 
     if (!result.success) {
       return { success: false, error: 'Failed to write caption file' };

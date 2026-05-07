@@ -1,88 +1,92 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 
-interface CaptionCacheValue {
-  content: string;
-  lastModified: number;
-}
-
 interface CaptionStoreContextValue {
-  getCaption: (filePath: string) => string | undefined;
+  getCaption: (filePath: string) => string;
   setCaption: (filePath: string, content: string) => void;
-  invalidateCaption: (filePath: string) => void;
-  refreshCaption: (filePath: string) => Promise<string>;
+  ensureLoaded: (filePath: string) => Promise<void>;
   getCachedCount: () => number;
 }
 
 const CaptionStoreContext = createContext<CaptionStoreContextValue | null>(null);
 
 export function CaptionStoreProvider({ children }: { children: React.ReactNode }) {
-  const [cache, setCache] = useState<Map<string, CaptionCacheValue>>(new Map());
-  const cleanupRef = useRef<(() => void) | null>(null);
+  const [captions, setCaptions] = useState<Map<string, string>>(new Map());
+  const saveTimerRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const getCaption = useCallback(
-    (filePath: string): string | undefined => {
-      return cache.get(filePath)?.content;
+    (filePath: string): string => {
+      return captions.get(filePath) ?? '';
     },
-    [cache],
+    [captions],
   );
 
   const setCaption = useCallback((filePath: string, content: string) => {
-    setCache((prev) => {
+    // Update store immediately for reactive UI
+    setCaptions((prev) => {
       const next = new Map(prev);
-      next.set(filePath, { content, lastModified: Date.now() });
+      next.set(filePath, content);
       return next;
     });
-  }, []);
 
-  const invalidateCaption = useCallback((filePath: string) => {
-    setCache((prev) => {
-      const next = new Map(prev);
-      next.delete(filePath);
-      return next;
-    });
-  }, []);
-
-  const refreshCaption = useCallback(async (filePath: string): Promise<string> => {
-    try {
-      const result = await window.electronAPI.readCaption(filePath);
-      const content = result.content ?? '';
-      setCache((prev) => {
-        const next = new Map(prev);
-        next.set(filePath, { content, lastModified: Date.now() });
-        return next;
-      });
-      return content;
-    } catch {
-      return '';
+    // Debounced write to disk (2s)
+    const existingTimer = saveTimerRef.current.get(filePath);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
     }
+    const timer = setTimeout(async () => {
+      try {
+        await window.electronAPI.writeCaption({ filePath, content });
+      } catch {
+        // Silently fail — user can retry
+      }
+    }, 500);
+    saveTimerRef.current.set(filePath, timer);
   }, []);
 
-  const getCachedCount = useCallback(() => cache.size, [cache]);
+  const ensureLoaded = useCallback(
+    async (filePath: string) => {
+      if (captions.has(filePath)) return;
+      try {
+        const result = await window.electronAPI.readCaption(filePath);
+        const content = result.content ?? '';
+        setCaptions((prev) => {
+          const next = new Map(prev);
+          next.set(filePath, content);
+          return next;
+        });
+      } catch {
+        // Silently fail — caption file may not exist yet
+      }
+    },
+    [captions],
+  );
 
-  // Listen for caption:changed events from main process
+  const getCachedCount = useCallback(() => captions.size, [captions]);
+
+  // Listen for caption:changed events from main process (auto-caption, other tabs)
   useEffect(() => {
     const cleanup = window.electronAPI.onCaptionChanged((data) => {
-      setCache((prev) => {
+      setCaptions((prev) => {
         const next = new Map(prev);
-        next.set(data.filePath, { content: data.content, lastModified: Date.now() });
+        next.set(data.filePath, data.content);
         return next;
       });
     });
-    cleanupRef.current = cleanup;
     return cleanup;
   }, []);
 
-  // Cleanup on unmount
+  // Cleanup timers on unmount
   useEffect(() => {
+    const timers = saveTimerRef.current;
     return () => {
-      cleanupRef.current?.();
+      for (const timer of timers.values()) {
+        clearTimeout(timer);
+      }
     };
   }, []);
 
   return (
-    <CaptionStoreContext.Provider
-      value={{ getCaption, setCaption, invalidateCaption, refreshCaption, getCachedCount }}
-    >
+    <CaptionStoreContext.Provider value={{ getCaption, setCaption, ensureLoaded, getCachedCount }}>
       {children}
     </CaptionStoreContext.Provider>
   );
