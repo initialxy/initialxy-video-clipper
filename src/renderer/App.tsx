@@ -12,7 +12,6 @@ import { ExpandedPlayer } from '@renderer/components/ExpandedPlayer';
 import { BulkConvertDrawer } from '@renderer/components/BulkConvertDrawer';
 import { DeleteConfirmModal } from '@renderer/components/DeleteConfirmModal';
 import { AutoCaptionDrawer } from '@renderer/components/AutoCaptionDrawer';
-import { AutoCaptionProgressToast } from '@renderer/components/AutoCaptionProgressToast';
 import { Toaster } from '@renderer/components/ui/sonner';
 import {
   Dialog,
@@ -26,6 +25,7 @@ import { Button } from '@renderer/components/ui/button';
 import { cn } from '@renderer/lib/utils';
 import { SETTINGS_KEYS } from '@shared/constants';
 import type { AutoCaptionResult } from '@shared/types';
+import { CircleStop } from 'lucide-react';
 
 const AUTO_CAPTION_TOAST_ID = 'auto-caption-progress';
 
@@ -171,9 +171,13 @@ function AppContent() {
   useEffect(() => {
     return window.electronAPI.onAutoCaptionProgress((data) => {
       if (data.status === 'processing') {
-        toast(<AutoCaptionProgressToast current={data.current} total={data.total} />, {
+        toast(`Auto-captioning... ${data.current}/${data.total}`, {
           duration: Infinity,
           id: AUTO_CAPTION_TOAST_ID,
+          action: {
+            label: <CircleStop className="h-4 w-4" />,
+            onClick: () => console.log('Action!'),
+          },
         });
       } else if (data.status === 'done' || data.status === 'error') {
         if (data.current === data.total) {
