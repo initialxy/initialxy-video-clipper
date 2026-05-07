@@ -304,16 +304,15 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 #### Implementation
 | Component | File | Description |
 |-----------|------|-------------|
-| Progress toast component | `src/renderer/components/AutoCaptionProgressToast.tsx` | Reusable toast with "Auto-captioning...", progress bar, "n / total" |
-| Progress toast rendering | `src/renderer/App.tsx` | Uses `toast.custom()` with component, `duration: Infinity`, fixed ID |
+| Progress toast rendering | `src/renderer/App.tsx` | Uses `toast.loading()` with component, `duration: Infinity`, fixed ID |
 | Toast dismissal | `src/renderer/App.tsx` | Only dismisses when `current === total` (all files done), not per-file |
 | Completion toasts | `src/renderer/App.tsx` | Success: "Auto-captioned n clips" (info); Failure: "Auto-caption failed for n clips" (error) |
 
 **Design notes:**
-- Progress toast uses `toast.custom()` (not `toast()`) to support `duration: Infinity` — `toast()` with JSX ignores the duration option
+- Progress toast uses `toast.loading()` (not `toast()`) to support `duration: Infinity` — `toast()` with JSX ignores the duration option
 - Toast dismissal only triggers when `data.current === data.total` to avoid premature dismissal when per-file `done` events fire rapidly
 - Uses fixed toast ID (`AUTO_CAPTION_TOAST_ID` const) — no ref tracking needed since `toast.dismiss()` is idempotent
-- Progress toast component is a standalone exported component, reused via `toast.custom()`
+- Progress toast component is a standalone exported component, reused via `toast.loading()`
 
 #### Tested
 | Feature | Status |

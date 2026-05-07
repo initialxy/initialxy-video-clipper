@@ -171,11 +171,11 @@ function AppContent() {
   useEffect(() => {
     return window.electronAPI.onAutoCaptionProgress((data) => {
       if (data.status === 'processing') {
-        toast.loading(`Auto-captioning... ${data.current}/${data.total}`, {
+        toast.loading(`Auto-captioning ${data.current}/${data.total} completed`, {
           duration: Infinity,
           id: AUTO_CAPTION_TOAST_ID,
           action: {
-            label: <CircleStop className="h-4 w-4" />,
+            label: <CircleStop className="text-destructive h-4 w-4" />,
             onClick: () => {
               window.electronAPI.autoCaptionInterrupt();
               dispatch({ type: 'SET_AUTO_CAPTIONING', payload: false });
