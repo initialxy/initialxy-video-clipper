@@ -54,7 +54,7 @@ export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps
           onChange={handleChange}
           onBlur={handleBlur}
           autoFocus
-          className="h-full w-full resize-none bg-transparent p-3 text-justify text-sm leading-relaxed outline-none"
+          className="h-full w-full resize-none bg-transparent p-2 text-justify text-sm leading-relaxed outline-none"
           placeholder="Enter caption..."
         />
       </div>
@@ -62,11 +62,11 @@ export function CaptionOverlay({ caption, onSave, onClick }: CaptionOverlayProps
   }
 
   return (
-    <div className="bg-background/60 h-full w-full cursor-text p-3" onClick={handleClick}>
-      <p className="text-foreground/80 relative h-full overflow-hidden text-justify text-sm leading-relaxed">
+    <div className="bg-background/60 h-full w-full cursor-text" onClick={handleClick}>
+      <p className="text-foreground/80 relative h-full overflow-hidden p-2 text-justify text-sm leading-relaxed">
         {caption || <span className="text-muted-foreground/80 italic">Click to add caption</span>}
-        <div className="from-background/70 absolute bottom-0 h-8 w-full bg-gradient-to-t to-transparent" />
       </p>
+      <div className="from-background/80 absolute bottom-0 h-8 w-full bg-gradient-to-t to-transparent" />
     </div>
   );
 }

@@ -171,7 +171,7 @@ function AppContent() {
   useEffect(() => {
     return window.electronAPI.onAutoCaptionProgress((data) => {
       if (data.status === 'processing') {
-        toast.loading(`Auto-captioning ${data.current}/${data.total} completed`, {
+        toast.loading(`Auto-captioned ${data.current}/${data.total}`, {
           duration: Infinity,
           id: AUTO_CAPTION_TOAST_ID,
           action: {
