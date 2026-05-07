@@ -37,5 +37,13 @@ export function useCaption(videoPath: string | null) {
     [debouncedSave],
   );
 
-  return { caption, updateCaption };
+  const refreshCaption = useCallback(async () => {
+    if (!videoPath) return;
+    const result = await window.electronAPI.readCaption(videoPath);
+    const content = result.content ?? '';
+    setCaption(content);
+    lastSavedRef.current = content;
+  }, [videoPath]);
+
+  return { caption, updateCaption, refreshCaption };
 }
