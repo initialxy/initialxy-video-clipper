@@ -171,12 +171,15 @@ function AppContent() {
   useEffect(() => {
     return window.electronAPI.onAutoCaptionProgress((data) => {
       if (data.status === 'processing') {
-        toast(`Auto-captioning... ${data.current}/${data.total}`, {
+        toast.loading(`Auto-captioning... ${data.current}/${data.total}`, {
           duration: Infinity,
           id: AUTO_CAPTION_TOAST_ID,
           action: {
             label: <CircleStop className="h-4 w-4" />,
-            onClick: () => console.log('Action!'),
+            onClick: () => {
+              window.electronAPI.autoCaptionInterrupt();
+              dispatch({ type: 'SET_AUTO_CAPTIONING', payload: false });
+            },
           },
         });
       } else if (data.status === 'done' || data.status === 'error') {
@@ -185,7 +188,7 @@ function AppContent() {
         }
       }
     });
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     return window.electronAPI.onConvertWarnNoChanges(() => {

@@ -52,6 +52,7 @@ function extractResponseFromReasoning(reasoningContent: string): string | null {
 async function captionFile(
   filePath: string,
   config: AutoCaptionConfig,
+  shouldCancel: () => boolean,
 ): Promise<{ success: boolean; error?: string }> {
   const thumbnailPath = getThumbnailPath(filePath);
 
@@ -75,7 +76,18 @@ async function captionFile(
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
+  let cancelCheckId: ReturnType<typeof setInterval> | null = null;
+  let cancelled = false;
+
   try {
+    cancelCheckId = setInterval(() => {
+      if (shouldCancel()) {
+        cancelled = true;
+        controller.abort();
+        clearInterval(cancelCheckId!);
+      }
+    }, 100);
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -106,6 +118,11 @@ async function captionFile(
     });
 
     clearTimeout(timeoutId);
+    clearInterval(cancelCheckId!);
+
+    if (cancelled) {
+      return { success: false, error: 'Cancelled' };
+    }
 
     if (!response.ok) {
       const errorBody = await response.text();
@@ -146,6 +163,7 @@ async function captionFile(
     return { success: true };
   } catch (err) {
     clearTimeout(timeoutId);
+    clearInterval(cancelCheckId!);
     if (err instanceof Error && err.name === 'AbortError') {
       throw err;
     }
@@ -174,7 +192,10 @@ export async function runAutoCaption(
     onProgress({ file, current: i, total, status: 'processing' });
 
     try {
-      const result = await captionFile(file, config);
+      const result = await captionFile(file, config, shouldCancel);
+      if (result.error === 'Cancelled') {
+        break;
+      }
       results.push({ file, ...result });
       onProgress({ file, current: i + 1, total, status: result.success ? 'done' : 'error' });
     } catch (err) {

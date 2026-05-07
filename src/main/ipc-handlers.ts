@@ -16,6 +16,8 @@ import { getSetting, setSetting } from './db';
 import { getVideoInfo } from './services/ffprobe.service';
 import { runAutoCaption } from './services/auto-caption.service';
 
+let autoCaptionCancelled = false;
+
 function getMainWindow(): BrowserWindowType | null {
   const windows = BrowserWindow.getAllWindows();
   return windows[0] ?? null;
@@ -137,6 +139,12 @@ export function registerIpcHandlers(): void {
     }
   });
 
+  // auto-caption:interrupt
+  ipcMain.handle(IPC_CHANNELS.AUTO_CAPTION_INTERRUPT, async () => {
+    autoCaptionCancelled = true;
+    return { cancelled: true };
+  });
+
   // auto-caption:run
   ipcMain.handle(
     IPC_CHANNELS.AUTO_CAPTION_RUN,
@@ -145,14 +153,9 @@ export function registerIpcHandlers(): void {
       payload: { files: string[]; config: { baseUrl: string; model: string; apiKey: string } },
     ) => {
       const { files, config } = payload;
-      let cancelled = false;
+      autoCaptionCancelled = false;
 
-      const onceListener = (_evt: unknown, _data: unknown) => {
-        cancelled = true;
-      };
-      ipcMain.once(IPC_CHANNELS.AUTO_CAPTION_INTERRUPT, onceListener);
-
-      const checkCancelled = () => cancelled;
+      const checkCancelled = () => autoCaptionCancelled;
 
       const { results } = await runAutoCaption(
         files,
@@ -167,9 +170,4 @@ export function registerIpcHandlers(): void {
       return { success: true, results };
     },
   );
-
-  // auto-caption:interrupt
-  ipcMain.handle(IPC_CHANNELS.AUTO_CAPTION_INTERRUPT, async () => {
-    return { cancelled: true };
-  });
 }
