@@ -6,7 +6,7 @@ import { useAppState } from '@renderer/store/app-state';
 import { Button } from '@renderer/components/ui/button';
 
 interface GalleryItemProps {
-  file: { path: string; name: string; size: number; modified: string };
+  file: { path: string; name: string; size: number; modified: string; caption?: string };
   onOpenExpanded: () => void;
   onDelete: () => void;
   onToggleSelect: () => void;
@@ -16,9 +16,17 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
   const { selectedFiles } = useAppState();
   const isSelected = selectedFiles.has(file.path);
   const [thumbnail, setThumbnail] = useState<string | null>(null);
-  const [caption, setCaption] = useState('');
+  const [caption, setCaption] = useState(file.caption ?? '');
   const [isHovered, setIsHovered] = useState(false);
   const thumbRef = useRef<HTMLImageElement>(null);
+  const captionRef = useRef(file.caption);
+
+  useEffect(() => {
+    if (captionRef.current !== file.caption) {
+      captionRef.current = file.caption;
+      setCaption(file.caption ?? '');
+    }
+  }, [file.caption]);
 
   useEffect(() => {
     window.electronAPI.readCaption(file.path).then((result) => {

@@ -185,6 +185,11 @@ function AppContent() {
             duration: Infinity,
           });
         }
+      } else if (data.status === 'done' || data.status === 'error') {
+        if (toastIdRef.current != null) {
+          toast.dismiss('auto-caption-progress');
+          toastIdRef.current = null;
+        }
       }
     });
   }, []);

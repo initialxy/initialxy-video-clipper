@@ -5,6 +5,7 @@ import { runFfmpeg } from './ffmpeg-executor';
 import type { GalleryFile } from '@shared/types';
 import { deleteFileWithMetadata } from '@main/utils';
 import { VIDEO_EXTENSIONS } from '@main/constants';
+import { getCaptionPath } from '@shared/utils';
 
 const PROJECT_ROOT = process.cwd();
 const OUTPUTS_DIR = path.join(PROJECT_ROOT, 'outputs');
@@ -25,11 +26,18 @@ export function scanOutputs(): GalleryFile[] {
     const filePath = path.join(OUTPUTS_DIR, entry.name);
     const stats = fs.statSync(filePath);
 
+    const captionPath = getCaptionPath(filePath);
+    let caption: string | undefined;
+    if (fs.existsSync(captionPath)) {
+      caption = fs.readFileSync(captionPath, 'utf-8').trim() || undefined;
+    }
+
     files.push({
       path: filePath,
       name: entry.name,
       size: stats.size,
       modified: stats.mtime.toISOString(),
+      caption,
     });
   }
 

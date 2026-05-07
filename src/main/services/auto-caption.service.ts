@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { getThumbnailPath } from '@shared/utils';
+import { getThumbnailPath, getCaptionPath } from '@shared/utils';
 import { writeCaption } from './caption.service';
 import type { AutoCaptionResult } from '@shared/types';
 
@@ -32,6 +32,20 @@ function parseCaption(response: string): string {
   return response.trim();
 }
 
+function extractResponseFromReasoning(reasoningContent: string): string | null {
+  const tagRegex = /<\/?(?:thin(?:kin)?g|reason(?:ing)?)>/gi;
+  const matches = [...reasoningContent.matchAll(tagRegex)];
+  if (matches.length < 2) {
+    return null;
+  }
+  const lastCloseIdx = matches[matches.length - 1].index! + matches[matches.length - 1][0].length;
+  const after = reasoningContent.substring(lastCloseIdx).trim();
+  if (after.length > 10) {
+    return after;
+  }
+  return null;
+}
+
 async function captionFile(
   filePath: string,
   config: AutoCaptionConfig,
@@ -42,8 +56,9 @@ async function captionFile(
     return { success: false, error: 'Thumbnail not found' };
   }
 
-  const existingCaption = fs.existsSync(thumbnailPath.replace('.thumb.jpg', '.txt'))
-    ? fs.readFileSync(thumbnailPath.replace('.thumb.jpg', '.txt'), 'utf-8').trim()
+  const captionPath = getCaptionPath(filePath);
+  const existingCaption = fs.existsSync(captionPath)
+    ? fs.readFileSync(captionPath, 'utf-8').trim()
     : '';
 
   const userPrompt = existingCaption
@@ -81,7 +96,7 @@ async function captionFile(
             ],
           },
         ],
-        max_tokens: 512,
+        max_tokens: 2024,
         stream: false,
       }),
       signal: controller.signal,
@@ -94,11 +109,18 @@ async function captionFile(
       throw new Error(`HTTP ${response.status}: ${errorBody}`);
     }
 
-    const data = (await response.json()) as {
-      choices?: [{ message?: { content?: string } }];
+    const responseText = await response.text();
+    const data = JSON.parse(responseText) as {
+      choices?: Array<{ message?: { content?: string; reasoning_content?: string } }>;
     };
 
-    const content = data.choices?.[0]?.message?.content;
+    let content = data.choices?.[0]?.message?.content;
+    const reasoningContent = data.choices?.[0]?.message?.reasoning_content;
+
+    if (!content && reasoningContent) {
+      content = extractResponseFromReasoning(reasoningContent) ?? reasoningContent;
+    }
+
     if (!content) {
       return { success: false, error: 'Empty response from LLM' };
     }

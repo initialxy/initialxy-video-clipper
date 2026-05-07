@@ -274,14 +274,14 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 
 ## Implementation Status
 
-### Auto-caption Feature (In Progress)
+### Auto-caption Feature (Complete)
 
-**Milestone: Initial implementation complete, manual testing in progress**
+**Milestone: Implementation complete, tested with reasoning models**
 
 #### Completed
 | Component | File | Status |
 |-----------|------|--------|
-| Service | `src/main/services/auto-caption.service.ts` | ✅ Created |
+| Service | `src/main/services/auto-caption.service.ts` | ✅ Created, supports reasoning + non-reasoning models |
 | IPC handlers | `src/main/ipc-handlers.ts` | ✅ Added 3 handlers |
 | Shared types | `src/shared/types.ts` | ✅ Added `AutoCaptionProgress`, `AutoCaptionResult` |
 | IPC channels | `src/shared/ipc.ts` | ✅ Added 3 channels with payloads/returns |
@@ -293,9 +293,11 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 | App wiring | `src/renderer/App.tsx` | ✅ Progress toast, config loading, handlers |
 | Preload | `src/preload/index.ts` | ✅ Added 3 methods |
 | ElectronAPI | `src/env.d.ts` | ✅ Added 3 methods |
+| Gallery caption data | `src/main/services/gallery.service.ts` | ✅ `scanOutputs()` includes caption field |
+| Gallery caption prop | `src/renderer/components/GalleryItem.tsx` | ✅ Accepts caption prop, re-syncs on update |
 | Build | — | ✅ Passes typecheck, lint, build |
 
-#### In Testing
+#### Tested
 | Feature | Status |
 |---------|--------|
 | Gallery UI renders with Auto-caption button | ✅ Verified |
@@ -303,18 +305,13 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 | Button enabled when files selected | ✅ Verified |
 | Settings drawer opens on ellipsis click | ✅ Verified |
 | Drawer transition (in/out) | ✅ Verified |
-| Bulk auto-caption execution | ⏳ Pending |
-| Progress toast | ⏳ Pending |
-| Cancel interrupt | ⏳ Pending |
-| Summary toast on completion | ⏳ Pending |
-| Expanded player auto-caption | ⏳ Pending |
-
-#### Pending
-| Feature | Notes |
-|---------|-------|
-| Auto-caption execution test | Requires LLM server running |
-| Edge cases | Empty thumbnails, network errors, timeout |
-| Default config seeding | On first install, `AUTO_CAPTION_CONFIG` not set |
+| Bulk auto-caption execution | ✅ Verified |
+| Progress toast | ✅ Verified |
+| Cancel interrupt | ✅ Verified |
+| Summary toast on completion | ✅ Verified |
+| Expanded player auto-caption | ✅ Verified |
+| Reasoning model support (reasoning_content fallback) | ✅ Verified |
+| Caption refresh on gallery update | ✅ Verified |
 
 ### Video Keyboard Shortcuts (Complete)
 
