@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { isInputFocused } from '@renderer/lib/utils';
 
-const SEEK_PERCENT = 0.02;
+const SEEK_STEP = 1;
 const VOLUME_STEP = 0.1;
 
 interface UseVideoKeyboardShortcutsOptions {
@@ -32,16 +32,12 @@ export function useVideoKeyboardShortcuts(options: UseVideoKeyboardShortcutsOpti
         }
         case 'ArrowLeft': {
           e.preventDefault();
-          const current = getCurrentTime();
-          const duration = getDuration();
-          seek(Math.max(0, current - duration * SEEK_PERCENT));
+          seek(Math.max(0, getCurrentTime() - SEEK_STEP));
           break;
         }
         case 'ArrowRight': {
           e.preventDefault();
-          const current = getCurrentTime();
-          const duration = getDuration();
-          seek(Math.min(duration, current + duration * SEEK_PERCENT));
+          seek(Math.min(getDuration(), getCurrentTime() + SEEK_STEP));
           break;
         }
         case 'ArrowUp': {

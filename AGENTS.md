@@ -348,7 +348,7 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 |-----|--------|-------|
 | `Space` | Toggle play/pause | Video tab + ExpandedPlayer |
 | `M` | Toggle mute | Video tab + ExpandedPlayer |
-| `←` / `→` | Seek ±2% of duration | Video tab + ExpandedPlayer |
+| `←` / `→` | Seek ±1 second | Video tab + ExpandedPlayer |
 | `↑` / `↓` | Volume ±0.1 | Video tab + ExpandedPlayer |
 | `Escape` | Close expanded player | ExpandedPlayer only |
 
