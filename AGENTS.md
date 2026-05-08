@@ -217,9 +217,9 @@ ffmpeg -i <INPUT> -ss <START> -t <DURATION> <OUTPUT>
 
 **Bulk conversion** (omit params for "Same as source"):
 ```
-ffmpeg -i <INPUT> [-vf "scale=W:H:force_original_aspect_ratio=decrease,crop=W:H"] [-c:v <CODEC>] [-r <FPS>] [-b:v <BITRATE>] -c:a copy <OUTPUT>
+ffmpeg -i <INPUT> [-vf "scale=W:H:force_original_aspect_ratio=increase,crop=W:H,minterpolate=fps=X:mi_mode=mci"] [-c:v <CODEC>] [-b:v <BITRATE>] -c:a copy <OUTPUT>
 ```
-If all params are "Same as source", copy file directly.
+Resolution: scales up to cover target, crops excess. Framerate: uses motion-compensated frame interpolation (`minterpolate`). Both combine into a single `-vf` argument. If all params are "Same as source", copy file directly.
 
 **Thumbnail:**
 ```

@@ -39,22 +39,27 @@ export function buildConvertCommand(
 ): string[] {
   const args = ['ffmpeg', '-i', input];
 
-  // Resolution: scale + crop to fill target without stretching
+  // Build video filter chain (resolution + framerate combined into single -vf)
+  const vfParts: string[] = [];
+
+  // Resolution: scale up to cover target, then crop to fill without stretching
   if (options.width && options.height) {
-    args.push(
-      '-vf',
-      `scale=${options.width}:${options.height}:force_original_aspect_ratio=decrease,crop=${options.width}:${options.height}`,
-    );
+    vfParts.push(`scale=${options.width}:${options.height}:force_original_aspect_ratio=increase`);
+    vfParts.push(`crop=${options.width}:${options.height}`);
+  }
+
+  // Frame rate: use minterpolate for motion-compensated frame interpolation
+  if (options.fps) {
+    vfParts.push(`minterpolate=fps=${options.fps}:mi_mode=mci`);
+  }
+
+  if (vfParts.length > 0) {
+    args.push('-vf', vfParts.join(','));
   }
 
   // Codec
   if (options.codec) {
     args.push('-c:v', options.codec);
-  }
-
-  // Frame rate
-  if (options.fps) {
-    args.push('-r', String(options.fps));
   }
 
   // Bitrate

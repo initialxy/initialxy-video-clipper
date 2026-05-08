@@ -138,8 +138,8 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
 - **Conversion settings panel** (inside the drawer):
   - Each parameter is **optional** — the user may change only what they need while keeping everything else from the source.
   - **Codec**: Dropdown with a `"Same as source"` option (default). Other options: `libx264`, `libx265`, `libsvtav1`, `mpeg4`. A "clear" button resets to source.
-  - **Resolution**: Width and height inputs with a `"Same as source"` toggle. When set, the app crops to fill the target resolution without stretching (no letterboxing/pillarbox). A "clear" button resets to source.
-  - **Frame rate**: Numeric input for target fps (e.g., 24, 30, 60) with a `"Same as source"` toggle. A "clear" button resets to source.
+  - **Resolution**: Width and height inputs with a `"Same as source"` toggle. When set, the app scales up to cover the target resolution and crops the excess to fill the frame without stretching (no letterboxing/pillarbox). A "clear" button resets to source.
+   - **Frame rate**: Numeric input for target fps (e.g., 24, 30, 60) with a `"Same as source"` toggle. When set, uses motion-compensated frame interpolation (`minterpolate`) to generate intermediate frames rather than dropping/duplicating frames. A "clear" button resets to source.
   - **Bitrate**: Numeric input for target bitrate (e.g., `5000k`, `10M`) with a `"Same as source"` toggle. A "clear" button resets to source.
   - **No changes warning**: If **all** parameters are left at `"Same as source"`, show an inline toast notification warning the user that files will simply be copied to `converted/` without any actual transcoding. The toast auto-dismisses after 3 seconds.
   - **Settings persistence**: The drawer remembers the last-used settings via JSON config file. When the user reopens the drawer, the previous settings are restored.
@@ -149,7 +149,7 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
   - Files in `converted/` can be overwritten without warning.
   - Accompanying `.txt` caption files are copied alongside converted videos.
   - Show progress indicators (per-file and overall).
-  - When a param is "Same as source", simply omit that ffmpeg flag (don't pass `-c:v`, `-r`, `-b:v`, or `-vf` for that param).
+  - When a param is "Same as source", simply omit that ffmpeg flag (don't pass `-c:v`, `-b:v`, or `-vf` for that param).
 
 ---
 
