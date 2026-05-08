@@ -45,6 +45,7 @@ function AppContent() {
   const loadVideo = useLoadVideo();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [expandedDeleteTarget, setExpandedDeleteTarget] = useState<string | null>(null);
   const [bulkDeleteCount, setBulkDeleteCount] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const videoTimeRef = useRef(0);
@@ -271,6 +272,14 @@ function AppContent() {
     dispatch({ type: 'SET_VIDEO', payload: null });
   }, [dispatch]);
 
+  const handleDeleteExpandedFile = useCallback(async () => {
+    if (!expandedDeleteTarget) return;
+    await deleteFile(expandedDeleteTarget);
+    setExpandedDeleteTarget(null);
+    dispatch({ type: 'SET_EXPANDED_FILE', payload: null });
+    refreshGallery();
+  }, [expandedDeleteTarget, deleteFile, dispatch, refreshGallery]);
+
   const loadAutoCaptionConfig = useCallback(async (): Promise<{
     baseUrl: string;
     model: string;
@@ -357,6 +366,7 @@ function AppContent() {
               filePath={expandedFile}
               onClose={handleCloseExpanded}
               onAutoCaption={handleAutoCaption}
+              onDelete={() => setExpandedDeleteTarget(expandedFile)}
             />
           ) : activeTab === 'video' ? (
             <div className="flex min-h-0 flex-1 flex-col p-4">
@@ -400,6 +410,15 @@ function AppContent() {
             fileName={galleryFiles.find((f) => f.path === deleteTarget)?.name ?? 'Unknown'}
             onConfirm={handleDeleteConfirm}
             onCancel={() => setDeleteTarget(null)}
+          />
+        )}
+
+        {/* Expanded Player Delete Confirmation Modal */}
+        {expandedDeleteTarget && (
+          <DeleteConfirmModal
+            fileName={galleryFiles.find((f) => f.path === expandedDeleteTarget)?.name ?? 'Unknown'}
+            onConfirm={handleDeleteExpandedFile}
+            onCancel={() => setExpandedDeleteTarget(null)}
           />
         )}
 

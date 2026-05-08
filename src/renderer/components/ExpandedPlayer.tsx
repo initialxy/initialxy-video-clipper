@@ -8,9 +8,15 @@ interface ExpandedPlayerProps {
   filePath: string;
   onClose: () => void;
   onAutoCaption: (filePath: string) => void;
+  onDelete: () => void;
 }
 
-export function ExpandedPlayer({ filePath, onClose, onAutoCaption }: ExpandedPlayerProps) {
+export function ExpandedPlayer({
+  filePath,
+  onClose,
+  onAutoCaption,
+  onDelete,
+}: ExpandedPlayerProps) {
   const store = useCaptionStore();
   const { isAutoCaptioning } = useAppState();
 
@@ -36,6 +42,7 @@ export function ExpandedPlayer({ filePath, onClose, onAutoCaption }: ExpandedPla
             onChange={handleCaptionSave}
             isAutoCaptioning={isAutoCaptioning}
             onAutoCaption={() => onAutoCaption(filePath)}
+            onDelete={onDelete}
           />
         </div>
       </div>

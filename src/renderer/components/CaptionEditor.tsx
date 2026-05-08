@@ -1,6 +1,6 @@
 import { Button } from '@renderer/components/ui/button';
 import { Card, CardHeader, CardTitle, CardAction, CardContent } from '@renderer/components/ui/card';
-import { ChevronDown, ChevronUp, ScanText } from 'lucide-react';
+import { ChevronDown, ChevronUp, ScanText, Trash2 } from 'lucide-react';
 import { cn } from '@renderer/lib/utils';
 import { Textarea } from '@renderer/components/ui/textarea';
 import { useState, useCallback } from 'react';
@@ -10,6 +10,7 @@ interface CaptionEditorProps {
   onChange: (caption: string) => void;
   isAutoCaptioning: boolean;
   onAutoCaption: () => void;
+  onDelete: () => void;
 }
 
 export function CaptionEditor({
@@ -17,6 +18,7 @@ export function CaptionEditor({
   onChange,
   isAutoCaptioning,
   onAutoCaption,
+  onDelete,
 }: CaptionEditorProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -31,7 +33,7 @@ export function CaptionEditor({
   return (
     <Card className="overflow-hidden">
       <CardHeader>
-        <CardTitle>
+        <CardTitle className="flex items-center gap-2">
           <Button
             variant="secondary"
             title="Auto-caption this video"
@@ -41,6 +43,15 @@ export function CaptionEditor({
           >
             <ScanText className="h-4 w-4" />
             <span>Auto-caption</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onDelete}
+            title="Delete clip"
+            className="mt-0.5 text-red-400 hover:text-red-300"
+          >
+            <Trash2 className="h-4 w-4" />
           </Button>
         </CardTitle>
         <CardAction>
