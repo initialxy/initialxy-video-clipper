@@ -155,9 +155,10 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
                     <Input
                       id="fps"
                       type="number"
+                      step="any"
                       placeholder="Same as source"
                       value={fps > 0 ? fps : ''}
-                      onChange={(e) => setFps(parseInt(e.target.value) || 0)}
+                      onChange={(e) => setFps(parseFloat(e.target.value) || 0)}
                     />
                     {fps > 0 && (
                       <Button

@@ -21,7 +21,7 @@ export function useConvertSettings() {
     setWidth(isNaN(w) || w <= 0 ? 0 : w);
     const h = parseInt(heightRes.value ?? '', 10);
     setHeight(isNaN(h) || h <= 0 ? 0 : h);
-    setFps(parseInt(fpsRes.value ?? '0', 10) || 0);
+    setFps(parseFloat(fpsRes.value ?? '0') || 0);
     setBitrate(bitrateRes.value ?? '');
   }, []);
 
