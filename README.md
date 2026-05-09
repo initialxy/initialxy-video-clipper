@@ -1,4 +1,4 @@
-# Video Clipper
+# initialxy-video-clipper
 
 Desktop app for clipping video files to create training data for video diffusion models.
 
@@ -78,7 +78,7 @@ Shortcuts are ignored when a text input or textarea has focus.
 ## Project Structure
 
 ```
-video-clipper/
+initialxy-video-clipper/
 ├── src/
 │   ├── shared/         # Shared types & utilities (main + preload + renderer)
 │   ├── main/           # Electron main process (IPC, ffmpeg, services)
@@ -113,3 +113,7 @@ Packaged binaries are produced in the `dist/` directory.
 - Node.js built-ins must be in `rollupOptions.external` (Rolldown ESM shim fails on them).
 - Preload is compiled as CommonJS (`lib.formats: ['cjs']`).
 - All shadcn/ui components use **Base UI** (`@base-ui/react`) via `base-nova` style. Never `@radix-ui/react-*`.
+
+## License
+
+[MIT License](LICENSE) © 2026 Xingchen Yu

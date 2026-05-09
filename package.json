@@ -1,5 +1,5 @@
 {
-  "name": "video-clipper",
+  "name": "initialxy-video-clipper",
   "version": "1.0.0",
   "description": "Desktop app for clipping video files to create training data for video diffusion models.",
   "license": "ISC",
