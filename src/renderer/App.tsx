@@ -10,6 +10,7 @@ import { VideoPlayer } from '@renderer/components/VideoPlayer';
 import { GalleryView } from '@renderer/components/GalleryView';
 import { ExpandedPlayer } from '@renderer/components/ExpandedPlayer';
 import { BulkConvertDrawer } from '@renderer/components/BulkConvertDrawer';
+import { BulkEditDrawer } from '@renderer/components/BulkEditDrawer';
 import { DeleteConfirmModal } from '@renderer/components/DeleteConfirmModal';
 import { AutoCaptionDrawer } from '@renderer/components/AutoCaptionDrawer';
 import { Toaster } from '@renderer/components/ui/sonner';
@@ -341,6 +342,7 @@ function AppContent() {
             dispatch({ type: 'SET_CONVERT_DRAWER_OPEN', payload: true });
             convertSettings.open();
           }}
+          onOpenBulkEdit={() => dispatch({ type: 'SET_BULK_EDIT_DRAWER_OPEN', payload: true })}
           onToggleSelectAll={handleToggleSelectAll}
           onBulkDelete={handleBulkDelete}
           onAutoCaption={() => handleAutoCaption()}
@@ -403,6 +405,9 @@ function AppContent() {
 
         {/* Bulk Convert Drawer */}
         <BulkConvertDrawer onClose={convertSettings.close} />
+
+        {/* Bulk Edit Drawer */}
+        <BulkEditDrawer onClose={() => {}} />
 
         {/* Delete Confirmation Modal */}
         {deleteTarget && (

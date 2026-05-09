@@ -113,6 +113,12 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
   - Select All: A checkbox or button to select all files in the gallery.
   - Bulk Delete: A "Delete" button in the Gallery top bar (destructive color) that deletes all selected files. Disabled when no files are selected. On confirm, deletes both the video file and its `.txt` caption file.
 - **Auto-caption**: A button in the Gallery top bar (secondary variant) labeled "Auto-caption" that opens a dialog to configure the LLM endpoint and initiate bulk auto-captioning for all selected files. See Section 8.
+- **Bulk Edit**: A button in the Gallery top bar (secondary variant) labeled "Edit" with a `FilePenLine` icon. Opens a slide-out drawer from the right side with two sections:
+  1. **Text prepend/append**: A text area for entering text, a checkbox labeled "Insert only if not found" (if checked and the text already exists in a caption, that file is skipped), and two action buttons "Prepend" and "Append" — each applies the action immediately to all selected files.
+  2. **Search and replace**: A search text field, a replace text field, and a "Replace All" button that replaces all occurrences of the search text with the replace text in selected captions.
+  - No toast notifications for bulk edit operations.
+  - The button is disabled when no files are selected.
+  - Captions update reactively via the caption store (same mechanism as auto-caption).
 
 ### 6. Expanded Player (Gallery Mode)
 

@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef, type ChangeEvent } from 'reac
 import {
   CheckSquare,
   Download,
+  FilePenLine,
   FolderOpen,
   MoreVertical,
   RefreshCw,
@@ -24,6 +25,7 @@ interface TopBarProps {
   onRefreshGallery: () => void;
   onTabChange: (tab: 'video' | 'gallery') => void;
   onOpenBulkConvert: () => void;
+  onOpenBulkEdit: () => void;
   onToggleSelectAll: () => void;
   onBulkDelete: () => void;
   onAutoCaption: () => void;
@@ -37,6 +39,7 @@ export function TopBar({
   onRefreshGallery,
   onTabChange,
   onOpenBulkConvert,
+  onOpenBulkEdit,
   onToggleSelectAll,
   onBulkDelete,
   onAutoCaption,
@@ -161,6 +164,15 @@ export function TopBar({
                 <MoreVertical className="h-3.5 w-3.5" />
               </Button>
             </ButtonGroup>
+
+            <Button
+              onClick={onOpenBulkEdit}
+              variant="secondary"
+              disabled={selectedFilesCount === 0}
+            >
+              <FilePenLine className="h-4 w-4" />
+              <span className="hidden sm:inline">Edit</span>
+            </Button>
 
             <Button
               onClick={onBulkDelete}
