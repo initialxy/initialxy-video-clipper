@@ -59,14 +59,15 @@ npm run dev
 Count exact frames in converted videos using ffprobe. Critical for verifying frame-level accuracy when preparing training data for video diffusion models.
 
 ```bash
-./converted/count_frames converted/my-clip.mp4
-# Output: converted/my-clip.mp4 121
+cd converted
+./count_frames my-clip.mp4
+# Output: my-clip.mp4 121
 ```
 
 Supports multiple files:
 
 ```bash
-./converted/count_frames converted/*.mp4
+./count_frames *.mp4
 ```
 
 ## Scripts
