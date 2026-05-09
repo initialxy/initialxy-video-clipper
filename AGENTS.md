@@ -217,19 +217,19 @@ Pre-commit: lint-staged → typecheck → lint → build (all must pass).
 
 **Clipping** (re-encode for accurate frame-level clipping):
 ```
-ffmpeg -i <INPUT> -ss <START> -t <DURATION> <OUTPUT>
+ffmpeg -y -i <INPUT> -ss <START> -t <DURATION> <OUTPUT>
 ```
 `-ss` AFTER `-i` for frame-accurate seeking. Re-encoding is used instead of stream copy because stream copy cannot decode frames between keyframes, causing missing content at the clip start.
 
 **Bulk conversion** (omit params for "Same as source"):
 ```
-ffmpeg -i <INPUT> [-vf "scale=W:H:force_original_aspect_ratio=increase,crop=W:H,minterpolate=fps=X:mi_mode=mci"] [-c:v <CODEC>] [-b:v <BITRATE>] -c:a copy <OUTPUT>
+ffmpeg -y -i <INPUT> [-vf "scale=W:H:force_original_aspect_ratio=increase,crop=W:H,minterpolate=fps=X:mi_mode=mci"] [-c:v <CODEC>] [-b:v <BITRATE>] -c:a copy <OUTPUT>
 ```
 Resolution: scales up to cover target, crops excess. Framerate: uses motion-compensated frame interpolation (`minterpolate`). Both combine into a single `-vf` argument. If all params are "Same as source", copy file directly.
 
 **Thumbnail:**
 ```
-ffmpeg -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
+ffmpeg -y -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
 ```
 
 ---

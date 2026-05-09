@@ -357,16 +357,16 @@ video-clipper/
 - **ffmpeg check on launch**: On app startup, verify ffmpeg is available in PATH. If not found, show an error dialog and prevent the app from functioning until resolved.
 - **Clip command template** (re-encode for accurate frame-level clipping):
   ```
-  ffmpeg -i <input> -ss <start> -t <duration> <output>
+  ffmpeg -y -i <input> -ss <start> -t <duration> <output>
   ```
 - **Bulk convert command template** (params omitted if "Same as source"):
   ```
-  ffmpeg -i <input> [-vf "scale=w:h:force_original_aspect_ratio=decrease,crop=w:h"] [-c:v <codec>] [-r <fps>] [-b:v <bitrate>] -c:a copy <output>
+  ffmpeg -y -i <input> [-vf "scale=w:h:force_original_aspect_ratio=decrease,crop=w:h"] [-c:v <codec>] [-r <fps>] [-b:v <bitrate>] -c:a copy <output>
   ```
   - If all params are "Same as source", skip ffmpeg entirely and copy the file directly.
 - **Thumbnail extraction**:
   ```
-  ffmpeg -i <input> -frames:v 1 -q:v 2 <output>.jpg
+  ffmpeg -y -i <input> -frames:v 1 -q:v 2 <output>.jpg
   ```
 
 ### IPC Architecture

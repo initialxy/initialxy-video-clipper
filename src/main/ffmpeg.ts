@@ -19,7 +19,7 @@ export function buildClipCommand(
   start: number,
   duration: number,
 ): string[] {
-  return ['ffmpeg', '-i', input, '-ss', String(start), '-t', String(duration), output];
+  return ['ffmpeg', '-y', '-i', input, '-ss', String(start), '-t', String(duration), output];
 }
 
 /**
@@ -37,7 +37,7 @@ export function buildConvertCommand(
     bitrate?: string;
   },
 ): string[] {
-  const args = ['ffmpeg', '-i', input];
+  const args = ['ffmpeg', '-y', '-i', input];
 
   // Build video filter chain (resolution + framerate combined into single -vf)
   const vfParts: string[] = [];
@@ -80,5 +80,5 @@ export function buildConvertCommand(
  * ffmpeg -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
  */
 export function buildThumbnailCommand(input: string, output: string): string[] {
-  return ['ffmpeg', '-i', input, '-frames:v', '1', '-q:v', '2', output];
+  return ['ffmpeg', '-y', '-i', input, '-frames:v', '1', '-q:v', '2', output];
 }
