@@ -51,9 +51,9 @@ export function BulkEditDrawer({ onClose }: BulkEditDrawerProps) {
         }
 
         if (mode === 'prepend') {
-          current = trimmedText + '\n' + current;
+          current = trimmedText + current;
         } else {
-          current = current + '\n' + trimmedText;
+          current = current + trimmedText;
         }
 
         await window.electronAPI.writeCaption({ filePath, content: current });
