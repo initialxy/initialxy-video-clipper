@@ -2,6 +2,8 @@
 
 Desktop app for clipping video files to create training data for video diffusion models.
 
+![demo](demo.gif 'Video Clipper')
+
 ## Features
 
 - **Clip mode**: Load videos via drag-and-drop or file picker, set clip length, and extract clips with frame-accurate ffmpeg re-encoding.
