@@ -3,7 +3,6 @@ import { toast } from 'sonner';
 import { useAppState, useAppDispatch } from '@renderer/store/app-state';
 import { CaptionStoreProvider } from '@renderer/store/caption-store';
 import { useGallery } from '@renderer/hooks/useGallery';
-import { useConvertSettings } from '@renderer/hooks/useConvertSettings';
 import { useLoadVideo } from '@renderer/hooks/useLoadVideo';
 import { TopBar } from '@renderer/components/TopBar';
 import { VideoPlayer } from '@renderer/components/VideoPlayer';
@@ -42,7 +41,6 @@ function AppContent() {
   } = useAppState();
   const dispatch = useAppDispatch();
   const { galleryFiles, refreshGallery, selectAll, isAllSelected, deleteFile } = useGallery();
-  const convertSettings = useConvertSettings();
   const loadVideo = useLoadVideo();
 
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -340,7 +338,6 @@ function AppContent() {
           onTabChange={handleTabChange}
           onOpenBulkConvert={() => {
             dispatch({ type: 'SET_CONVERT_DRAWER_OPEN', payload: true });
-            convertSettings.open();
           }}
           onOpenBulkEdit={() => dispatch({ type: 'SET_BULK_EDIT_DRAWER_OPEN', payload: true })}
           onToggleSelectAll={handleToggleSelectAll}
@@ -404,7 +401,7 @@ function AppContent() {
         />
 
         {/* Bulk Convert Drawer */}
-        <BulkConvertDrawer onClose={convertSettings.close} />
+        <BulkConvertDrawer onClose={() => {}} />
 
         {/* Bulk Edit Drawer */}
         <BulkEditDrawer onClose={() => {}} />

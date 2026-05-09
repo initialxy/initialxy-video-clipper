@@ -75,15 +75,14 @@ src/
 │   │       ├── dialog.tsx, label.tsx, card.tsx, progress.tsx
 │   │       ├── field.tsx, button-group.tsx, separator.tsx
 │   ├── hooks/
- │   │   ├── useVideoPlayer.ts             # Playback state (play/pause/seek/mute/volume)
- │   │   ├── useVideoKeyboardShortcuts.ts  # Global keyboard shortcuts (Space, M, arrows, Escape)
- │   │   ├── useGallery.ts                 # Gallery file scanning & state
- │   │   ├── useConvertSettings.ts         # Bulk conversion settings (load/save/reset)
- │   │   ├── useLoadVideo.ts               # Shared video loading (getVideoInfo → SET_VIDEO → SET_TAB)
- │   │   └── useDebouncedCallback.ts       # Shared debounced callback wrapper
- │   ├── lib/utils.ts           # cn function
- │   ├── store/app-state.tsx    # Central state (context + useReducer)
- │   │   └── caption-store.tsx  # Reactive caption cache with debounced persistence (0.5s)
+│   │   ├── useVideoPlayer.ts             # Playback state (play/pause/seek/mute/volume)
+│   │   ├── useVideoKeyboardShortcuts.ts  # Global keyboard shortcuts (Space, M, arrows, Escape)
+│   │   ├── useGallery.ts                 # Gallery file scanning & state
+│   │   ├── useLoadVideo.ts               # Shared video loading (getVideoInfo → SET_VIDEO → SET_TAB)
+│   │   └── useDebouncedCallback.ts       # Shared debounced callback wrapper
+│   ├── lib/utils.ts           # cn function
+│   ├── store/app-state.tsx    # Central state (context + useReducer)
+│   │   └── caption-store.tsx  # Reactive caption cache with debounced persistence (0.5s)
 │   └── styles/globals.css     # Tailwind + ZFlow theme (dark-first)
 └── env.d.ts                   # ElectronAPI interface (derived from @shared/ipc)
 ```
@@ -107,6 +106,11 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 | `activeTab` | `'video' \| 'gallery'` | Current tab |
 | `currentVideo` | `VideoState \| null` | Video loaded in Video tab (preserved across tab switches) |
 | `clipLength` | `number` | Default clip duration in seconds (persisted via settings) |
+| `convertCodec` | `string` | Video codec for bulk convert (persisted via settings) |
+| `convertWidth` | `number` | Target width for bulk convert (persisted via settings) |
+| `convertHeight` | `number` | Target height for bulk convert (persisted via settings) |
+| `convertFps` | `number` | Target frame rate for bulk convert (persisted via settings) |
+| `convertBitrate` | `string` | Target bitrate for bulk convert (persisted via settings) |
 | `galleryFiles` | `GalleryFile[]` | Scanned output files |
 | `selectedFiles` | `Set<string>` | Files selected for bulk ops |
 | `expandedFile` | `string \| null` | Gallery file in expanded player (reset on tab switch) |

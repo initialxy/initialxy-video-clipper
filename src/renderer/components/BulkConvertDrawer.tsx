@@ -1,7 +1,6 @@
 import { X } from 'lucide-react';
 import { useAppState } from '@renderer/store/app-state';
 import { useAppDispatch } from '@renderer/store/app-state';
-import { useConvertSettings } from '@renderer/hooks/useConvertSettings';
 import {
   Sheet,
   SheetContent,
@@ -33,34 +32,34 @@ interface BulkConvertDrawerProps {
 }
 
 export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
-  const { selectedFiles, isConverting, convertProgress, isConvertDrawerOpen } = useAppState();
-  const dispatch = useAppDispatch();
   const {
-    codec,
-    setCodec,
-    width,
-    setWidth,
-    height,
-    setHeight,
-    fps,
-    setFps,
-    bitrate,
-    setBitrate,
-    saveSettings,
-    reset,
-  } = useConvertSettings();
+    selectedFiles,
+    isConverting,
+    convertProgress,
+    isConvertDrawerOpen,
+    convertCodec,
+    convertWidth,
+    convertHeight,
+    convertFps,
+    convertBitrate,
+  } = useAppState();
+  const dispatch = useAppDispatch();
 
   const handleConvert = async () => {
     if (selectedFiles.size === 0) return;
-
-    await saveSettings();
 
     const files = Array.from(selectedFiles);
     dispatch({ type: 'SET_CONVERTING', payload: true });
 
     const result = await window.electronAPI.bulkConvert({
       files,
-      settings: { codec, width, height, fps, bitrate },
+      settings: {
+        codec: convertCodec,
+        width: convertWidth,
+        height: convertHeight,
+        fps: convertFps,
+        bitrate: convertBitrate,
+      },
       outputDir: '',
     });
 
@@ -92,7 +91,10 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
             <FieldSet>
               <Field>
                 <FieldLabel>Codec</FieldLabel>
-                <Select value={codec} onValueChange={(v) => setCodec(v || '')}>
+                <Select
+                  value={convertCodec}
+                  onValueChange={(v) => dispatch({ type: 'SET_CONVERT_CODEC', payload: v || '' })}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Same as source" />
                   </SelectTrigger>
@@ -114,10 +116,10 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
                       id="width"
                       type="number"
                       placeholder="W"
-                      value={width ? width : ''}
+                      value={convertWidth ? convertWidth : ''}
                       onChange={(e) => {
                         const v = parseInt(e.target.value, 10);
-                        setWidth(isNaN(v) ? 0 : v);
+                        dispatch({ type: 'SET_CONVERT_WIDTH', payload: isNaN(v) ? 0 : v });
                       }}
                     />
                     <span className="text-muted-foreground/40 text-xs">×</span>
@@ -125,19 +127,19 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
                       id="height"
                       type="number"
                       placeholder="H"
-                      value={height ? height : ''}
+                      value={convertHeight ? convertHeight : ''}
                       onChange={(e) => {
                         const v = parseInt(e.target.value, 10);
-                        setHeight(isNaN(v) ? 0 : v);
+                        dispatch({ type: 'SET_CONVERT_HEIGHT', payload: isNaN(v) ? 0 : v });
                       }}
                     />
-                    {(width || height) && (
+                    {(convertWidth || convertHeight) && (
                       <Button
                         variant="ghost"
                         size="icon-xs"
                         onClick={() => {
-                          setWidth(0);
-                          setHeight(0);
+                          dispatch({ type: 'SET_CONVERT_WIDTH', payload: 0 });
+                          dispatch({ type: 'SET_CONVERT_HEIGHT', payload: 0 });
                         }}
                         title="Reset to same as source"
                       >
@@ -157,14 +159,19 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
                       type="number"
                       step="any"
                       placeholder="Same as source"
-                      value={fps > 0 ? fps : ''}
-                      onChange={(e) => setFps(parseFloat(e.target.value) || 0)}
+                      value={convertFps > 0 ? convertFps : ''}
+                      onChange={(e) =>
+                        dispatch({
+                          type: 'SET_CONVERT_FPS',
+                          payload: parseFloat(e.target.value) || 0,
+                        })
+                      }
                     />
-                    {fps > 0 && (
+                    {convertFps > 0 && (
                       <Button
                         variant="ghost"
                         size="icon-xs"
-                        onClick={() => setFps(0)}
+                        onClick={() => dispatch({ type: 'SET_CONVERT_FPS', payload: 0 })}
                         title="Reset to same as source"
                       >
                         <X className="h-3.5 w-3.5" />
@@ -184,14 +191,16 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
                       id="bitrate"
                       type="text"
                       placeholder="e.g. 5000k, 10M"
-                      value={bitrate}
-                      onChange={(e) => setBitrate(e.target.value)}
+                      value={convertBitrate}
+                      onChange={(e) =>
+                        dispatch({ type: 'SET_CONVERT_BITRATE', payload: e.target.value })
+                      }
                     />
-                    {bitrate && (
+                    {convertBitrate && (
                       <Button
                         variant="ghost"
                         size="icon-xs"
-                        onClick={() => setBitrate('')}
+                        onClick={() => dispatch({ type: 'SET_CONVERT_BITRATE', payload: '' })}
                         title="Reset to same as source"
                       >
                         <X className="h-3.5 w-3.5" />
@@ -214,7 +223,17 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
         </div>
 
         <SheetFooter className="gap-2">
-          <Button onClick={() => reset()} variant="secondary" className="w-full">
+          <Button
+            onClick={() => {
+              dispatch({ type: 'SET_CONVERT_CODEC', payload: '' });
+              dispatch({ type: 'SET_CONVERT_WIDTH', payload: 0 });
+              dispatch({ type: 'SET_CONVERT_HEIGHT', payload: 0 });
+              dispatch({ type: 'SET_CONVERT_FPS', payload: 0 });
+              dispatch({ type: 'SET_CONVERT_BITRATE', payload: '' });
+            }}
+            variant="secondary"
+            className="w-full"
+          >
             Reset
           </Button>
           <Button
