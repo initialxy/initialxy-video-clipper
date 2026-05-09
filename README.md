@@ -7,8 +7,9 @@ Desktop app for clipping video files to create training data for video diffusion
 - **Clip mode**: Load videos via drag-and-drop or file picker, set clip length, and extract clips with frame-accurate ffmpeg re-encoding.
 - **Gallery mode**: Browse all clipped videos in a responsive grid, edit captions inline, and bulk-convert clips.
 - **Precision seeking**: 0.01s granularity seek slider with `MM:SS.xx` time display.
-- **Caption editing**: Debounced autosave (2s) to `.txt` sidecar files alongside videos.
+- **Caption editing**: Debounced autosave (0.5s) to `.txt` sidecar files alongside videos.
 - **Bulk conversion**: Optional resolution, codec, FPS, and bitrate controls with progress tracking.
+- **Bulk caption edit**: Prepend, append, or search/replace text across multiple selected clips' captions.
 - **Auto-caption**: LLM-powered caption generation for selected clips (OpenAI-compatible API).
 - **Keyboard shortcuts**: `Space` (play/pause), `M` (mute), `←/→` (seek ±2%), `↑/↓` (volume ±10%), `Escape` (close expanded player).
 
