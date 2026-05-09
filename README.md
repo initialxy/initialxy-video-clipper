@@ -13,7 +13,7 @@ Desktop app for clipping video files to create training data for video diffusion
 - **Bulk conversion**: Optional resolution, codec, FPS, and bitrate controls with progress tracking.
 - **Bulk caption edit**: Prepend, append, or search/replace text across multiple selected clips' captions.
 - **Auto-caption**: LLM-powered caption generation for selected clips (OpenAI-compatible API).
-- **Keyboard shortcuts**: `Space` (play/pause), `M` (mute), `←/→` (seek ±2%), `↑/↓` (volume ±10%), `Escape` (close expanded player).
+- **Keyboard shortcuts**: `Space` (play/pause), `M` (mute), `←/→` (seek ±0.5s), `↑/↓` (volume ±10%), `Escape` (close expanded player).
 
 ## Tech Stack
 
@@ -52,6 +52,23 @@ For development only (Vite dev server with HMR, no Electron):
 npm run dev
 ```
 
+## Utility Scripts
+
+### `converted/count_frames`
+
+Count exact frames in converted videos using ffprobe. Critical for verifying frame-level accuracy when preparing training data for video diffusion models.
+
+```bash
+./converted/count_frames converted/my-clip.mp4
+# Output: converted/my-clip.mp4 121
+```
+
+Supports multiple files:
+
+```bash
+./converted/count_frames converted/*.mp4
+```
+
 ## Scripts
 
 | Command | Description |
@@ -72,7 +89,7 @@ npm run dev
 | `Space` | Toggle play / pause |
 | `M` | Toggle mute / unmute |
 | `C` | Clip current video (Video tab only) |
-| `←` / `→` | Seek backward / forward by 2% of duration |
+| `←` / `→` | Seek backward / forward by 0.5 seconds |
 | `↑` / `↓` | Increase / decrease volume by 10% |
 | `Escape` | Close expanded player (Gallery mode only) |
 
