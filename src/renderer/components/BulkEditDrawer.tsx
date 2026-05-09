@@ -121,7 +121,7 @@ export function BulkEditDrawer({ onClose }: BulkEditDrawerProps) {
           <FieldGroup>
             <FieldSet>
               <Textarea
-                placeholder="Enter text to add or search for..."
+                placeholder="Enter text to add..."
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
                 className="min-h-24"

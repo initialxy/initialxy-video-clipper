@@ -68,6 +68,7 @@ src/
 │   │   ├── BulkConvertDrawer.tsx # Slide-out drawer for bulk conversion
 │   │   ├── DeleteConfirmModal.tsx # Confirmation modal for deletion
 │   │   ├── AutoCaptionDrawer.tsx # Slide-out drawer for LLM API settings
+│   │   ├── BulkEditDrawer.tsx    # Slide-out drawer for bulk caption editing
 │   │   └── ui/                # shadcn/ui components (all Base UI primitives)
 │   │       ├── button.tsx, select.tsx, sheet.tsx, tabs.tsx, sonner.tsx
 │   │       ├── input.tsx, input-group.tsx, textarea.tsx, slider.tsx
@@ -114,6 +115,7 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 | `isConvertDrawerOpen` | `boolean` | Bulk convert drawer visibility |
 | `isAutoCaptionDrawerOpen` | `boolean` | Auto-caption settings drawer visibility |
 | `isAutoCaptioning` | `boolean` | Auto-caption in progress |
+| `isBulkEditDrawerOpen` | `boolean` | Bulk edit drawer visibility |
 | `currentTime` | `number` | Current playback position |
 
 **Key behaviors:**
@@ -382,3 +384,24 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 - Built-in debounced persistence (500ms) — no separate debounce hooks needed
 - Listens for `caption:changed` IPC events to stay in sync with main process (auto-caption, other tabs)
 - `ensureLoaded()` provides lazy disk reads on first access
+
+### Bulk Edit (Complete)
+
+**Milestone: Implementation complete**
+
+#### Implementation
+| Component | File | Description |
+|-----------|------|-------------|
+| Drawer | `src/renderer/components/BulkEditDrawer.tsx` | Slide-out drawer with two sections (prepend/append + search/replace) |
+| State | `src/renderer/store/app-state.tsx` | Added `isBulkEditDrawerOpen` state + action |
+| Button | `src/renderer/components/TopBar.tsx` | Added Bulk Edit button with FilePenLine icon |
+| App wiring | `src/renderer/App.tsx` | Mounted BulkEditDrawer component |
+
+**Design notes:**
+- Two sections: (1) text prepend/append with "Insert only if not found" checkbox, (2) search/replace
+- Prepend/Append are immediate action buttons (each applies to all selected files), no radio toggle
+- Search/Replace uses exact string replacement via `String.split().join()`
+- No toast notifications for bulk edit operations
+- Uses direct IPC `readCaption`/`writeCaption` calls per file
+- Caption updates propagate reactively via `caption:changed` IPC events → caption store
+- Button disabled when no files selected
