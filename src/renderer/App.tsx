@@ -119,11 +119,7 @@ function AppContent() {
     const actualTime = videoTimeRef.current;
     const remaining = currentVideo.duration - actualTime;
 
-    if (remaining <= 0) {
-      toast.error('Already at end of video');
-      return;
-    }
-
+    // remaining <= 0 falls through here — clips last n seconds with warning
     if (remaining < clipLength) {
       if (currentVideo.duration < clipLength) {
         toast.error(`Cannot save clip — video is only ${currentVideo.duration.toFixed(2)}s long`);
