@@ -12,7 +12,7 @@ import {
   bulkDeleteFiles,
 } from './services/gallery.service';
 import { readCaption, writeCaption } from './services/caption.service';
-import { getSetting, setSetting } from './db';
+import { getSetting, setSetting } from './settings';
 import { getVideoInfo } from './services/ffprobe.service';
 import { runAutoCaption } from './services/auto-caption.service';
 
