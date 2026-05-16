@@ -287,168 +287,26 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 
 ## Implementation Status
 
-### Auto-caption Feature (Complete)
+**All v1 features complete.** The app is fully functional with clipping, gallery management, bulk conversion, caption editing, auto-captioning, and bulk edit.
 
-**Milestone: Implementation complete, tested with reasoning models**
+### Completed Features
 
-#### Completed
-| Component | File | Status |
-|-----------|------|--------|
-| Service | `src/main/services/auto-caption.service.ts` | ✅ Created, supports reasoning + non-reasoning models |
-| IPC handlers | `src/main/ipc-handlers.ts` | ✅ Added 3 handlers |
-| Shared types | `src/shared/types.ts` | ✅ Added `AutoCaptionProgress`, `AutoCaptionResult` |
-| IPC channels | `src/shared/ipc.ts` | ✅ Added 3 channels with payloads/returns |
-| Settings key | `src/shared/constants.ts` | ✅ Added `AUTO_CAPTION_CONFIG` |
-| State | `src/renderer/store/app-state.tsx` | ✅ Added `isAutoCaptioning` state + action |
-| Settings drawer | `src/renderer/components/AutoCaptionDrawer.tsx` | ✅ Created (Sheet, always mounted) |
-| Gallery button group | `src/renderer/components/TopBar.tsx` | ✅ Added Auto-caption + LLM API Settings buttons (refresh first) |
-| Expanded player button | `src/renderer/components/ExpandedPlayer.tsx` | ✅ Added Auto-caption button |
-| App wiring | `src/renderer/App.tsx` | ✅ Progress toast, config loading, handlers |
-| Preload | `src/preload/index.ts` | ✅ Added 3 methods |
-| ElectronAPI | `src/env.d.ts` | ✅ Added 3 methods |
-| Gallery caption data | `src/main/services/gallery.service.ts` | ✅ `scanOutputs()` includes caption field |
-| Gallery caption prop | `src/renderer/components/GalleryItem.tsx` | ✅ Accepts caption prop, re-syncs on update |
-| Build | — | ✅ Passes typecheck, lint, build |
+| Feature | Description |
+|---------|-------------|
+| **Video clipping** | Frame-accurate re-encode clipping with per-video counter persistence |
+| **Gallery** | Responsive grid with thumbnails, caption overlays, inline editing, bulk delete |
+| **Expanded player** | Full-size playback with caption editor (autosave, debounced) |
+| **Bulk conversion** | Optional codec/resolution/FPS/bitrate with motion-compensated interpolation, flipped copy support |
+| **Caption store** | Reactive cache with debounced persistence (500ms), IPC sync |
+| **Auto-caption** | Sequential LLM-powered captioning (OpenAI-compatible API), progress toast, interrupt support |
+| **Bulk edit** | Prepend/append/search-replace across selected captions |
+| **Keyboard shortcuts** | Space, M, arrows, Escape — global capture, input-aware |
+| **Settings persistence** | JSON config for clip length, convert params, auto-caption config |
 
-### Auto-caption Toast (Complete)
+### Key Design Decisions
 
-**Milestone: Implementation complete — progress toast with Sonner default styling**
-
-#### Implementation
-| Component | File | Description |
-|-----------|------|-------------|
-| Progress toast rendering | `src/renderer/App.tsx` | Uses `toast.loading()` with component, `duration: Infinity`, fixed ID |
-| Toast dismissal | `src/renderer/App.tsx` | Only dismisses when `current === total` (all files done), not per-file |
-| Completion toasts | `src/renderer/App.tsx` | Success: "Auto-captioned n clips" (info); Failure: "Auto-caption failed for n clips" (error) |
-
-**Design notes:**
-- Progress toast uses `toast.loading()` (not `toast()`) to support `duration: Infinity` — `toast()` with JSX ignores the duration option
-- Toast dismissal only triggers when `data.current === data.total` to avoid premature dismissal when per-file `done` events fire rapidly
-- Uses fixed toast ID (`AUTO_CAPTION_TOAST_ID` const) — no ref tracking needed since `toast.dismiss()` is idempotent
-- Progress toast component is a standalone exported component, reused via `toast.loading()`
-
-#### Tested
-| Feature | Status |
-|---------|--------|
-| Gallery UI renders with Auto-caption button | ✅ Verified |
-| Button disabled when no files selected | ✅ Verified |
-| Button enabled when files selected | ✅ Verified |
-| Settings drawer opens on ellipsis click | ✅ Verified |
-| Drawer transition (in/out) | ✅ Verified |
-| Bulk auto-caption execution | ✅ Verified |
-| Progress toast visible and updating | ✅ Verified |
-| Toast only dismissed when all files done | ✅ Verified |
-| Completion toasts (success/failure) | ✅ Verified |
-| Expanded player auto-caption | ✅ Verified |
-| Reasoning model support (reasoning_content fallback) | ✅ Verified |
-| Caption refresh on gallery update | ✅ Verified |
-
-### Video Keyboard Shortcuts (Complete)
-
-**Milestone: Implementation complete**
-
-#### Implementation
-| Component | File | Description |
-|-----------|------|-------------|
-| Hook | `src/renderer/hooks/useVideoKeyboardShortcuts.ts` | Shared keyboard shortcut handler |
-| VideoPlayer | `src/renderer/components/VideoPlayer.tsx` | Calls hook, passes playback callbacks |
-| ExpandedPlayer | `src/renderer/components/ExpandedPlayer.tsx` | Inherits shortcuts via VideoPlayer |
-| VolumeControl | `src/renderer/components/VolumeControl.tsx` | Receives `volume` prop for UI sync |
-| useVideoPlayer | `src/renderer/hooks/useVideoPlayer.ts` | Added `getVolume`, `getCurrentTime` |
-
-#### Keyboard Shortcuts
-| Key | Action | Scope |
-|-----|--------|-------|
-| `Space` | Toggle play/pause | Video tab + ExpandedPlayer |
-| `M` | Toggle mute | Video tab + ExpandedPlayer |
-| `←` / `→` | Seek ±1 second | Video tab + ExpandedPlayer |
-| `↑` / `↓` | Volume ±0.1 | Video tab + ExpandedPlayer |
-| `Escape` | Close expanded player | ExpandedPlayer only |
-
-**Design notes:**
-- All shortcuts registered via `window.addEventListener('keydown', ..., { capture: true })` — fires before native video element behavior
-- `isInputFocused()` guard prevents shortcuts when text input/textarea is focused
-- Volume tracking uses `useRef` in the hook + `volume` prop in VolumeControl for UI sync
-- Seeking uses percentage of duration (2%) instead of fixed seconds for consistent experience across videos of any length
-
-### Caption Store (Complete)
-
-**Milestone: Implementation complete — single source of truth with reactive updates**
-
-#### Implementation
-| Component | File | Description |
-|-----------|------|-------------|
-| Store | `src/renderer/store/caption-store.tsx` | Reactive cache (Map), debounced persistence (500ms), `ensureLoaded()` lazy reads, `caption:changed` IPC listener |
-| Provider | `src/renderer/App.tsx` | Wrapped with `CaptionStoreProvider` |
-| GalleryItem | `src/renderer/components/GalleryItem.tsx` | Uses `store.getCapon/setCaption` directly, `ensureLoaded()` on mount |
-| ExpandedPlayer | `src/renderer/components/ExpandedPlayer.tsx` | Uses `store.getCaption/setCaption` directly, `ensureLoaded()` on mount |
-| CaptionOverlay | `src/renderer/components/CaptionOverlay.tsx` | Calls `onSave` (→ `store.setCaption`) |
-
-#### Deleted
-| File | Reason |
-|------|--------|
-| `src/renderer/hooks/useCaption.ts` | Replaced by direct store usage |
-| `src/renderer/hooks/useDebouncedCaptionSave.ts` | Store handles debounce internally |
-
-**Design notes:**
-- Store is the single source of truth — components never maintain local caption state
-- Built-in debounced persistence (500ms) — no separate debounce hooks needed
-- Listens for `caption:changed` IPC events to stay in sync with main process (auto-caption, other tabs)
-- `ensureLoaded()` provides lazy disk reads on first access
-
-### Bulk Edit (Complete)
-
-**Milestone: Implementation complete**
-
-#### Implementation
-| Component | File | Description |
-|-----------|------|-------------|
-| Drawer | `src/renderer/components/BulkEditDrawer.tsx` | Slide-out drawer with two sections (prepend/append + search/replace) |
-| State | `src/renderer/store/app-state.tsx` | Added `isBulkEditDrawerOpen` state + action |
-| Button | `src/renderer/components/TopBar.tsx` | Added Bulk Edit button with FilePenLine icon |
-| App wiring | `src/renderer/App.tsx` | Mounted BulkEditDrawer component |
-
-**Design notes:**
-- Two sections: (1) text prepend/append with "Insert only if not found" checkbox, (2) search/replace
-- Prepend/Append are immediate action buttons (each applies to all selected files), no radio toggle
-- Search/Replace uses exact string replacement via `String.split().join()`
-- No toast notifications for bulk edit operations
-- Uses direct IPC `readCaption`/`writeCaption` calls per file
-- Caption updates propagate reactively via `caption:changed` IPC events → caption store
-- Button disabled when no files selected
-
-### Bulk Convert — Flipped Copy (Complete)
-
-**Milestone: Implementation complete, tested end-to-end**
-
-#### Implementation
-| Component | File | Description |
-|-----------|------|-------------|
-| Checkbox UI | `src/renderer/components/BulkConvertDrawer.tsx` | "Create flipped copy" checkbox under Bitrate field |
-| State | `src/renderer/store/app-state.tsx` | Added `convertFlipped` state, `SET_CONVERT_FLIPPED` action, load/save persistence |
-| Settings key | `src/shared/constants.ts` | Added `CONVERT_FLIPPED: 'convert_flipped'` |
-| Shared types | `src/shared/types.ts` | Added `flipped: boolean` to `ConvertSettings` |
-| IPC payload | `src/shared/ipc.ts` | Added `flipped: boolean` to `CONVERT_BULK` payload |
-| FFmpeg builder | `src/main/ffmpeg.ts` | Added `buildFlipCommand()` — `ffmpeg -y -i <INPUT> -vf "hflip" -c:a copy <OUTPUT>` |
-| Convert service | `src/main/services/convert.service.ts` | `flipFile()` runs ffmpeg hflip after conversion, copies captions with left↔right word swap |
-
-**Design notes:**
-- Checkbox is a simple inline option (no "Options" label, no icon in the checkbox row)
-- When checked, after the encoding step (or file copy for no-op), a second ffmpeg step runs `-vf "hflip"`
-- Output naming: `test.mp4` → `converted/test.mp4` + `converted/test_flipped.mp4`
-- Caption files are copied with left↔right word swap using a null-byte placeholder to avoid collision
-- Caption swap uses 3-step replace: `left` → placeholder → `right`, then `right` → `left`
-- If flip fails, the converted file is cleaned up and the result is reported as failed
-- Settings persist via JSON config file, restored on app start
-- Reset button in drawer also resets the flipped checkbox
-
-#### Tested
-| Feature | Status |
-|---------|--------|
-| Checkbox visible in Bulk Convert drawer | ✅ Verified |
-| Checkbox toggles correctly | ✅ Verified |
-| Settings persist across sessions | ✅ Verified |
-| Flipped video file created (`_flipped.mp4`) | ✅ Verified |
-| Original caption copied unchanged | ✅ Verified |
-| Flipped caption has left↔right swapped | ✅ Verified |
-| Reset button clears flipped checkbox | ✅ Verified |
+- **Caption store** is the single source of truth — no local caption state in components. Uses `ensureLoaded()` for lazy disk reads.
+- **Auto-caption toast** uses `toast.loading()` with `duration: Infinity` and a fixed ID — dismissal only when `current === total`.
+- **Keyboard shortcuts** registered via `window.addEventListener(..., { capture: true })` with `isInputFocused()` guard.
+- **Flipped copy** runs a second ffmpeg `hflip` step after encoding; captions copied with `left` ↔ `right` word swap via null-byte placeholder.
+- **Re-encode clipping** uses `-ss` after `-i` for frame accuracy (not stream copy).
