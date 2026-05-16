@@ -38,6 +38,7 @@ export interface IPCPayloads {
       height: number;
       fps: number;
       bitrate: string;
+      flipped: boolean;
     };
     outputDir: string;
   };

@@ -111,6 +111,7 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 | `convertHeight` | `number` | Target height for bulk convert (persisted via settings) |
 | `convertFps` | `number` | Target frame rate for bulk convert (persisted via settings) |
 | `convertBitrate` | `string` | Target bitrate for bulk convert (persisted via settings) |
+| `convertFlipped` | `boolean` | Create flipped copy in bulk convert (persisted via settings) |
 | `galleryFiles` | `GalleryFile[]` | Scanned output files |
 | `selectedFiles` | `Set<string>` | Files selected for bulk ops |
 | `expandedFile` | `string \| null` | Gallery file in expanded player (reset on tab switch) |
@@ -226,6 +227,12 @@ ffmpeg -y -i <INPUT> -ss <START> -t <DURATION> <OUTPUT>
 ffmpeg -y -i <INPUT> [-vf "scale=W:H:force_original_aspect_ratio=increase,crop=W:H,minterpolate=fps=X:mi_mode=mci"] [-c:v <CODEC>] [-b:v <BITRATE>] -c:a copy <OUTPUT>
 ```
 Resolution: scales up to cover target, crops excess. Framerate: uses motion-compensated frame interpolation (`minterpolate`). Both combine into a single `-vf` argument. If all params are "Same as source", copy file directly.
+
+**Horizontal flip** (create a flipped copy):
+```
+ffmpeg -y -i <INPUT> -vf "hflip" -c:a copy <OUTPUT>
+```
+Output file is named `<base>_flipped.<ext>`. Caption file is also copied with "left" ↔ "right" word swap.
 
 **Thumbnail:**
 ```
@@ -409,3 +416,39 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 - Uses direct IPC `readCaption`/`writeCaption` calls per file
 - Caption updates propagate reactively via `caption:changed` IPC events → caption store
 - Button disabled when no files selected
+
+### Bulk Convert — Flipped Copy (Complete)
+
+**Milestone: Implementation complete, tested end-to-end**
+
+#### Implementation
+| Component | File | Description |
+|-----------|------|-------------|
+| Checkbox UI | `src/renderer/components/BulkConvertDrawer.tsx` | "Create flipped copy" checkbox under Bitrate field |
+| State | `src/renderer/store/app-state.tsx` | Added `convertFlipped` state, `SET_CONVERT_FLIPPED` action, load/save persistence |
+| Settings key | `src/shared/constants.ts` | Added `CONVERT_FLIPPED: 'convert_flipped'` |
+| Shared types | `src/shared/types.ts` | Added `flipped: boolean` to `ConvertSettings` |
+| IPC payload | `src/shared/ipc.ts` | Added `flipped: boolean` to `CONVERT_BULK` payload |
+| FFmpeg builder | `src/main/ffmpeg.ts` | Added `buildFlipCommand()` — `ffmpeg -y -i <INPUT> -vf "hflip" -c:a copy <OUTPUT>` |
+| Convert service | `src/main/services/convert.service.ts` | `flipFile()` runs ffmpeg hflip after conversion, copies captions with left↔right word swap |
+
+**Design notes:**
+- Checkbox is a simple inline option (no "Options" label, no icon in the checkbox row)
+- When checked, after the encoding step (or file copy for no-op), a second ffmpeg step runs `-vf "hflip"`
+- Output naming: `test.mp4` → `converted/test.mp4` + `converted/test_flipped.mp4`
+- Caption files are copied with left↔right word swap using a null-byte placeholder to avoid collision
+- Caption swap uses 3-step replace: `left` → placeholder → `right`, then `right` → `left`
+- If flip fails, the converted file is cleaned up and the result is reported as failed
+- Settings persist via JSON config file, restored on app start
+- Reset button in drawer also resets the flipped checkbox
+
+#### Tested
+| Feature | Status |
+|---------|--------|
+| Checkbox visible in Bulk Convert drawer | ✅ Verified |
+| Checkbox toggles correctly | ✅ Verified |
+| Settings persist across sessions | ✅ Verified |
+| Flipped video file created (`_flipped.mp4`) | ✅ Verified |
+| Original caption copied unchanged | ✅ Verified |
+| Flipped caption has left↔right swapped | ✅ Verified |
+| Reset button clears flipped checkbox | ✅ Verified |

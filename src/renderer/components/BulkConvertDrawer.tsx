@@ -42,6 +42,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
     convertHeight,
     convertFps,
     convertBitrate,
+    convertFlipped,
   } = useAppState();
   const dispatch = useAppDispatch();
 
@@ -59,6 +60,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
         height: convertHeight,
         fps: convertFps,
         bitrate: convertBitrate,
+        flipped: convertFlipped,
       },
       outputDir: '',
     });
@@ -210,6 +212,20 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
                 </FieldContent>
               </Field>
 
+              <FieldSeparator />
+
+              <label className="flex cursor-pointer items-center gap-2 select-none">
+                <input
+                  type="checkbox"
+                  checked={convertFlipped}
+                  onChange={(e) =>
+                    dispatch({ type: 'SET_CONVERT_FLIPPED', payload: e.target.checked })
+                  }
+                  className="border-border h-4 w-4 rounded"
+                />
+                <span className="text-sm">Create flipped copy</span>
+              </label>
+
               {isConverting && (
                 <Field>
                   <Progress value={convertProgress} className="h-2" />
@@ -230,6 +246,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
               dispatch({ type: 'SET_CONVERT_HEIGHT', payload: 0 });
               dispatch({ type: 'SET_CONVERT_FPS', payload: 0 });
               dispatch({ type: 'SET_CONVERT_BITRATE', payload: '' });
+              dispatch({ type: 'SET_CONVERT_FLIPPED', payload: false });
             }}
             variant="secondary"
             className="w-full"

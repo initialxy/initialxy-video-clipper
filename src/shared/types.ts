@@ -21,6 +21,7 @@ export interface ConvertSettings {
   height: number; // 0 means "same as source"
   fps: number; // 0 means "same as source"
   bitrate: string; // "" means "same as source"
+  flipped: boolean; // create a horizontally flipped copy
 }
 
 /** Per-file conversion result */

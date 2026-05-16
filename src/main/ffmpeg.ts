@@ -82,3 +82,11 @@ export function buildConvertCommand(
 export function buildThumbnailCommand(input: string, output: string): string[] {
   return ['ffmpeg', '-y', '-i', input, '-frames:v', '1', '-q:v', '2', output];
 }
+
+/**
+ * Build a horizontal flip command.
+ * ffmpeg -i <INPUT> -vf "hflip" -c:a copy <OUTPUT>
+ */
+export function buildFlipCommand(input: string, output: string): string[] {
+  return ['ffmpeg', '-y', '-i', input, '-vf', 'hflip', '-c:a', 'copy', output];
+}

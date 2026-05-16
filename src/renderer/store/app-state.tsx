@@ -24,6 +24,7 @@ export interface AppState {
   convertHeight: number;
   convertFps: number;
   convertBitrate: string;
+  convertFlipped: boolean;
   galleryFiles: GalleryFile[];
   selectedFiles: Set<string>;
   expandedFile: string | null;
@@ -45,6 +46,7 @@ type AppAction =
   | { type: 'SET_CONVERT_HEIGHT'; payload: number }
   | { type: 'SET_CONVERT_FPS'; payload: number }
   | { type: 'SET_CONVERT_BITRATE'; payload: string }
+  | { type: 'SET_CONVERT_FLIPPED'; payload: boolean }
   | { type: 'SET_GALLERY_FILES'; payload: AppState['galleryFiles'] }
   | { type: 'TOGGLE_FILE_SELECTION'; payload: string }
   | { type: 'SELECT_ALL_FILES'; payload: boolean }
@@ -77,6 +79,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, convertFps: action.payload };
     case 'SET_CONVERT_BITRATE':
       return { ...state, convertBitrate: action.payload };
+    case 'SET_CONVERT_FLIPPED':
+      return { ...state, convertFlipped: action.payload };
     case 'SET_GALLERY_FILES':
       return { ...state, galleryFiles: action.payload };
     case 'TOGGLE_FILE_SELECTION': {
@@ -123,6 +127,7 @@ const initialState: AppState = {
   convertHeight: 0,
   convertFps: 0,
   convertBitrate: '',
+  convertFlipped: false,
   galleryFiles: [],
   selectedFiles: new Set(),
   expandedFile: null,
@@ -168,17 +173,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       window.electronAPI.getSetting('convert_height'),
       window.electronAPI.getSetting('convert_fps'),
       window.electronAPI.getSetting('convert_bitrate'),
-    ]).then(([codecRes, widthRes, heightRes, fpsRes, bitrateRes]) => {
+      window.electronAPI.getSetting('convert_flipped'),
+    ]).then(([codecRes, widthRes, heightRes, fpsRes, bitrateRes, flippedRes]) => {
       const codec = codecRes.value ?? '';
       const w = parseInt(widthRes.value ?? '', 10);
       const h = parseInt(heightRes.value ?? '', 10);
       const fps = parseFloat(fpsRes.value ?? '0') || 0;
       const bitrate = bitrateRes.value ?? '';
+      const flipped = flippedRes.value === 'true';
       dispatch({ type: 'SET_CONVERT_CODEC', payload: codec });
       dispatch({ type: 'SET_CONVERT_WIDTH', payload: isNaN(w) || w <= 0 ? 0 : w });
       dispatch({ type: 'SET_CONVERT_HEIGHT', payload: isNaN(h) || h <= 0 ? 0 : h });
       dispatch({ type: 'SET_CONVERT_FPS', payload: fps });
       dispatch({ type: 'SET_CONVERT_BITRATE', payload: bitrate });
+      dispatch({ type: 'SET_CONVERT_FLIPPED', payload: flipped });
     });
   }, []);
 
@@ -188,19 +196,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const prevConvertHeight = useRef(state.convertHeight);
   const prevConvertFps = useRef(state.convertFps);
   const prevConvertBitrate = useRef(state.convertBitrate);
+  const prevConvertFlipped = useRef(state.convertFlipped);
   useEffect(() => {
     const changed =
       prevConvertCodec.current !== state.convertCodec ||
       prevConvertWidth.current !== state.convertWidth ||
       prevConvertHeight.current !== state.convertHeight ||
       prevConvertFps.current !== state.convertFps ||
-      prevConvertBitrate.current !== state.convertBitrate;
+      prevConvertBitrate.current !== state.convertBitrate ||
+      prevConvertFlipped.current !== state.convertFlipped;
     if (changed) {
       prevConvertCodec.current = state.convertCodec;
       prevConvertWidth.current = state.convertWidth;
       prevConvertHeight.current = state.convertHeight;
       prevConvertFps.current = state.convertFps;
       prevConvertBitrate.current = state.convertBitrate;
+      prevConvertFlipped.current = state.convertFlipped;
       window.electronAPI.setSetting('convert_codec', state.convertCodec);
       window.electronAPI.setSetting(
         'convert_width',
@@ -212,6 +223,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       );
       window.electronAPI.setSetting('convert_fps', String(state.convertFps));
       window.electronAPI.setSetting('convert_bitrate', state.convertBitrate);
+      window.electronAPI.setSetting('convert_flipped', String(state.convertFlipped));
     }
   }, [
     state.convertCodec,
@@ -219,6 +231,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     state.convertHeight,
     state.convertFps,
     state.convertBitrate,
+    state.convertFlipped,
   ]);
 
   return (

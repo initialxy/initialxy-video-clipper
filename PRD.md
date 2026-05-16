@@ -147,13 +147,13 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
   - **Resolution**: Width and height inputs with a `"Same as source"` toggle. When set, the app scales up to cover the target resolution and crops the excess to fill the frame without stretching (no letterboxing/pillarbox). A "clear" button resets to source.
    - **Frame rate**: Numeric input for target fps (e.g., 24, 30, 60) with a `"Same as source"` toggle. When set, uses motion-compensated frame interpolation (`minterpolate`) to generate intermediate frames rather than dropping/duplicating frames. A "clear" button resets to source.
   - **Bitrate**: Numeric input for target bitrate (e.g., `5000k`, `10M`) with a `"Same as source"` toggle. A "clear" button resets to source.
-  - **No changes warning**: If **all** parameters are left at `"Same as source"`, show an inline toast notification warning the user that files will simply be copied to `converted/` without any actual transcoding. The toast auto-dismisses after 3 seconds.
+  - **Create flipped copy**: A checkbox option. When checked, after the encoding step (or file copy for no-op), a second ffmpeg step runs `-vf "hflip"` to create a horizontally flipped copy. Output file is named `<base>_flipped.<ext>`. The accompanying caption file is also copied with all occurrences of "left" ↔ "right" swapped (using a placeholder-based 3-step replace to avoid collision). A "clear" button resets to source.
   - **Settings persistence**: The drawer remembers the last-used settings via JSON config file. When the user reopens the drawer, the previous settings are restored.
 - **Execution**:
   - Converts all selected files using the specified settings.
   - Outputs to `converted/` directory.
   - Files in `converted/` can be overwritten without warning.
-  - Accompanying `.txt` caption files are copied alongside converted videos.
+  - Accompanying `.txt` caption files are copied alongside converted videos. If flipped copy is enabled, the flipped caption file has "left" ↔ "right" word swap applied.
   - Show progress indicators (per-file and overall).
   - When a param is "Same as source", simply omit that ffmpeg flag (don't pass `-c:v`, `-b:v`, or `-vf` for that param).
 
@@ -337,6 +337,8 @@ video-clipper/
 ├── converted/                  # Bulk-converted output
 │   ├── v001_c001.mp4
 │   ├── v001_c001.txt           # Copied caption
+│   ├── v001_c001_flipped.mp4   # Flipped copy (if enabled)
+│   ├── v001_c001_flipped.txt   # Flipped caption (left↔right swapped)
 │   └── ...
 ├── src/
 │   ├── main/                   # Electron main process
