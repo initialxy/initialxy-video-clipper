@@ -13,7 +13,7 @@ Desktop app for clipping video files to create training data for video diffusion
 - **Bulk conversion**: Optional resolution, codec, FPS, and bitrate controls with progress tracking.
 - **Bulk caption edit**: Prepend, append, or search/replace text across multiple selected clips' captions.
 - **Auto-caption**: LLM-powered caption generation for selected clips (OpenAI-compatible API).
-- **Keyboard shortcuts**: `Space` (play/pause), `M` (mute), `←/→` (seek ±0.5s), `↑/↓` (volume ±10%), `Escape` (close expanded player).
+- **Keyboard shortcuts**: `Space` (play/pause), `M` (mute), `←/→` (seek ±1s), `↑/↓` (volume ±10%), `Escape` (close expanded player).
 
 ## Tech Stack
 
@@ -90,7 +90,7 @@ Supports multiple files:
 | `Space` | Toggle play / pause |
 | `M` | Toggle mute / unmute |
 | `C` | Clip current video (Video tab only) |
-| `←` / `→` | Seek backward / forward by 0.5 seconds |
+| `←` / `→` | Seek backward / forward by 1 second |
 | `↑` / `↓` | Increase / decrease volume by 10% |
 | `Escape` | Close expanded player (Gallery mode only) |
 

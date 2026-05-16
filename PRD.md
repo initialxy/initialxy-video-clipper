@@ -49,15 +49,14 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
 |-----|--------|
 | `Space` | Toggle play / pause |
 | `M` | Toggle mute / unmute |
-| `←` (Left Arrow) | Seek backward by 2% of total video duration |
-| `→` (Right Arrow) | Seek forward by 2% of total video duration |
+| `←` (Left Arrow) | Seek backward by 1 second |
+| `→` (Right Arrow) | Seek forward by 1 second |
 | `↑` (Up Arrow) | Increase volume by 0.1 (10%) |
 | `↓` (Down Arrow) | Decrease volume by 0.1 (10%) |
 | `Escape` | Close the Expanded Player (Gallery mode only) |
 
 **Notes:**
 - `isInputFocused()` guard: shortcuts are ignored when a `<textarea>` or `<input>` (except range inputs like sliders) has focus.
-- Seeking uses a percentage of the video duration (2%) rather than a fixed number of seconds, so the experience is consistent across videos of any length.
 - Volume changes are reflected in the VolumeControl UI slider and icon.
 - The `Escape` key only applies in Expanded Player mode (closes the player and returns to the gallery grid).
 
@@ -71,33 +70,24 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
   - The counter is per-source-video and persists across sessions (tracks the last used number).
   - **After a successful clip**: Seek position does NOT change. Show a toast notification informing the user that the clip was saved, including the file name. The toast auto-dismisses after 3 seconds.
 - **Insufficient remaining duration**: If `clip_length` extends beyond the video's end, show an inline toast notification offering to clip the remaining duration instead (from current seek position to end of video). The toast auto-dismisses after 3 seconds.
-- **Encoding preservation**: The clipped video must preserve the original video's:
-  - Container format (extension)
-  - Video codec
-  - Audio codec (if present)
-  - Frame rate
-  - Resolution
-  - Bitrate
-  - All other stream properties
-  - Implementation: Use ffmpeg stream copy (`-c copy`) with precise start/duration via `-ss` and `-t`.
-  - **No re-encode fallback**: Video mode must NEVER re-encode. It cuts at the nearest available frame keyframe boundary. Preserving the original encoding is critically important — video mode only extracts a portion, nothing more.
+- **Re-encoding**: The clipped video is re-encoded using ffmpeg with `-ss` placed **after** `-i` for frame-accurate seeking (decodes from the beginning but lands on the exact position).
+  - Re-encoding is used instead of stream copy because stream copy cannot decode frames between keyframes, causing missing content at the clip start.
+  - The output preserves the original container format, resolution, and audio codec (audio is copied with `-c:a copy`).
 
 ### 5. Gallery Mode
 
 - **Gallery grid**: Displays all clipped videos from the `outputs/` directory as a grid of thumbnails.
 - **Grid layout rules**:
   - Each grid cell is **square** (1:1 aspect ratio).
-  - Minimum cell size: **500x500px** when viewport allows.
+  - Minimum cell size: **250x250px** when viewport allows.
   - Cell size adjusts dynamically based on viewport width. Calculate max columns that fit, then distribute evenly.
-  - Example: viewport 1200px → 2 columns → each cell is 600x600px.
-  - Example: viewport 1800px → 3 columns → each cell is 600x600px.
-  - If viewport is smaller than 500px, cell size adapts to fit (minimum practical size).
+  - If viewport is smaller than 250px, cell size adapts to fit (minimum practical size).
 - **Thumbnail**: Each cell shows the first frame of the video as a static thumbnail, rendered as **object-fit: cover** (cropped to fill the entire square cell). The thumbnail fills the entire cell as a background image.
 - **Caption overlay**: The **lower half** of each grid cell has a dark overlay (semi-transparent dark background) with the caption text displayed on top.
   - If text is too long, truncate with ellipsis (`...`) to prevent overflow.
   - Clicking the lower half (caption area) converts it into an inline text editor for editing.
   - The editor supports scrolling for longer text.
-  - On blur or 2-second debounce, save the caption.
+  - On blur or 0.5-second debounce, save the caption.
   - The inline caption editor has no visible focus ring (outline only).
   - Collapse/expand icons are vertical chevrons: `ChevronsDownUp` for collapse, `ChevronUp` for expand.
 - **Gallery refresh**:
@@ -144,8 +134,8 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
 - **Conversion settings panel** (inside the drawer):
   - Each parameter is **optional** — the user may change only what they need while keeping everything else from the source.
   - **Codec**: Dropdown with a `"Same as source"` option (default). Other options: `libx264`, `libx265`, `libsvtav1`, `mpeg4`. A "clear" button resets to source.
-  - **Resolution**: Width and height inputs with a `"Same as source"` toggle. When set, the app scales up to cover the target resolution and crops the excess to fill the frame without stretching (no letterboxing/pillarbox). A "clear" button resets to source.
-   - **Frame rate**: Numeric input for target fps (e.g., 24, 30, 60) with a `"Same as source"` toggle. When set, uses motion-compensated frame interpolation (`minterpolate`) to generate intermediate frames rather than dropping/duplicating frames. A "clear" button resets to source.
+  - **Resolution**: Width and height inputs with a `"Same as source"` toggle. When set, the app scales up to cover the target resolution (`force_original_aspect_ratio=increase`) and crops the excess to fill the frame without stretching (no letterboxing/pillarbox). A "clear" button resets to source.
+   - **Frame rate**: Numeric input for target fps (e.g., 24, 30, 60) with a `"Same as source"` toggle. When set, uses motion-compensated frame interpolation (`minterpolate=fps=X:mi_mode=mci`) in the video filter chain to generate intermediate frames rather than dropping/duplicating frames. A "clear" button resets to source.
   - **Bitrate**: Numeric input for target bitrate (e.g., `5000k`, `10M`) with a `"Same as source"` toggle. A "clear" button resets to source.
   - **Create flipped copy**: A checkbox option. When checked, after the encoding step (or file copy for no-op), a second ffmpeg step runs `-vf "hflip"` to create a horizontally flipped copy. Output file is named `<base>_flipped.<ext>`. The accompanying caption file is also copied with all occurrences of "left" ↔ "right" swapped (using a placeholder-based 3-step replace to avoid collision). A "clear" button resets to source.
   - **Settings persistence**: The drawer remembers the last-used settings via JSON config file. When the user reopens the drawer, the previous settings are restored.
@@ -188,7 +178,7 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
     ```
   - **User prompt** (per frame):
     - If **no existing caption**: `"Describe what is happening in this video clip."`
-    - If **existing caption exists**: `"This video has an existing description: <existing caption>. Please improve and rephrase it. Describe what is happening in this video clip."`
+    - If **existing caption exists**: `"Existing caption: \"<existing caption>\". Add visual description of what you see in the image that complements the existing caption. Preserve the existing caption's dialogue and spoken content — do not rewrite or remove it. Combine the existing caption with your visual description into a single cohesive caption."`
   - A single frame (thumbnail) from the video is sent as part of the request as a base64-encoded string (see API contract below).
 - **Response parsing**:
   - Search the LLM response for `Caption:` prefix.
@@ -196,7 +186,7 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
   - If `Caption:` is **not** found, fallback to using the entire LLM response (trimmed).
   - Write the parsed caption to the `.txt` file, overwriting any existing content.
 - **Bulk processing UI state** (persistent Sonner toast):
-  - During processing, a **persistent toast** appears (using `toast.custom()` with `duration: Infinity` and a fixed toast ID) showing:
+  - During processing, a **persistent toast** appears (using `toast.loading()` with `duration: Infinity` and a fixed toast ID) showing:
     - Description: "Auto-captioning..."
     - A thin progress bar (full width)
     - Counter at the right: `n / total`
@@ -227,12 +217,13 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
             ]
           }
         ],
-        "max_tokens": 512,
+        "max_tokens": 2024,
         "stream": false
       }
       ```
     - The image is the existing gallery thumbnail JPEG file (already extracted for the gallery grid). Read from disk, base64-encoded, and embedded inline as a data URI.
   - **Response**: Standard OpenAI-compatible chat completion JSON. Extract `choices[0].message.content`.
+  - **Reasoning models**: For models that return `reasoning_content` (e.g., o-series, DeepSeek-R1) instead of `content`, the code extracts the response by finding the last closing tag (`</reasoning>`, `</thinthinking>`, etc.) and using the text after it. If no closing tag is found, the full `reasoning_content` is used.
   - **Error handling**: If the LLM returns an error or times out, skip the file, log the error, and continue with the next file. Show a final toast summarizing successes and failures.
   - **Timeout**: 60 seconds per request.
 - **Concurrency**: Process files **sequentially** (one at a time) to avoid overwhelming the local LLM server. No parallel requests.
@@ -357,14 +348,16 @@ video-clipper/
 
 - All video operations use ffmpeg via child process execution.
 - **ffmpeg check on launch**: On app startup, verify ffmpeg is available in PATH. If not found, show an error dialog and prevent the app from functioning until resolved.
-- **Clip command template** (re-encode for accurate frame-level clipping):
+- **Clip command template** (re-encode for frame-accurate seeking, `-ss` **after** `-i`):
   ```
   ffmpeg -y -i <input> -ss <start> -t <duration> <output>
   ```
 - **Bulk convert command template** (params omitted if "Same as source"):
   ```
-  ffmpeg -y -i <input> [-vf "scale=w:h:force_original_aspect_ratio=decrease,crop=w:h"] [-c:v <codec>] [-r <fps>] [-b:v <bitrate>] -c:a copy <output>
+  ffmpeg -y -i <input> [-vf "scale=W:H:force_original_aspect_ratio=increase,crop=W:H,minterpolate=fps=X:mi_mode=mci"] [-c:v <codec>] [-b:v <bitrate>] -c:a copy <output>
   ```
+  - Resolution: scales up to cover target (`force_original_aspect_ratio=increase`), then crops excess.
+  - Frame rate: uses motion-compensated interpolation (`minterpolate`) combined into the `-vf` chain.
   - If all params are "Same as source", skip ffmpeg entirely and copy the file directly.
 - **Thumbnail extraction**:
   ```
