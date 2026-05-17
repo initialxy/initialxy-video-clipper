@@ -68,8 +68,8 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
   - Clips from the current seek position to `seek_position + clip_length`.
   - Saves to `outputs/` directory with naming convention: `<original_name>_c<NNN>.<ext>` where `<NNN>` is a zero-padded 3-digit incremental counter (e.g., `v001_c001.mp4`, `v001_c002.mp4`).
   - The counter is per-source-video and persists across sessions (tracks the last used number).
-  - **After a successful clip**: Seek position does NOT change. Show a toast notification informing the user that the clip was saved, including the file name. The toast auto-dismisses after 3 seconds.
-- **Insufficient remaining duration**: If `clip_length` extends beyond the video's end, show an inline toast notification offering to clip the remaining duration instead (from current seek position to end of video). The toast auto-dismisses after 3 seconds.
+  - **After a successful clip**: Seek position does NOT change. Show a toast notification informing the user that the clip was saved, including the file name. The toast uses Sonner's default auto-dismiss (~4 seconds).
+- **Insufficient remaining duration**: If `clip_length` extends beyond the video's end, show a warning toast offering to clip the remaining duration instead (from current seek position to end of video). The toast uses Sonner's default auto-dismiss (~4 seconds).
 - **Re-encoding**: The clipped video is re-encoded using ffmpeg with `-ss` placed **after** `-i` for frame-accurate seeking (decodes from the beginning but lands on the exact position).
   - Re-encoding is used instead of stream copy because stream copy cannot decode frames between keyframes, causing missing content at the clip start.
   - The output preserves the original container format, resolution, and audio codec (audio is copied with `-c:a copy`).
@@ -84,14 +84,14 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
   - If viewport is smaller than 250px, cell size adapts to fit (minimum practical size).
 - **Thumbnail**: Each cell shows the first frame of the video as a static thumbnail, rendered as **object-fit: cover** (cropped to fill the entire square cell). The thumbnail fills the entire cell as a background image.
 - **Caption overlay**: The **lower half** of each grid cell has a dark overlay (semi-transparent dark background) with the caption text displayed on top.
-  - If text is too long, truncate with ellipsis (`...`) to prevent overflow.
+  - If text is too long, it overflows within the overlay area (uses `overflow-hidden` without explicit ellipsis truncation).
   - Clicking the lower half (caption area) converts it into an inline text editor for editing.
   - The editor supports scrolling for longer text.
   - On blur or 0.5-second debounce, save the caption.
   - The inline caption editor has no visible focus ring (outline only).
-  - Collapse/expand icons are vertical chevrons: `ChevronsDownUp` for collapse, `ChevronUp` for expand.
+  - Collapse/expand icons are vertical chevrons: `ChevronDown` for collapse, `ChevronUp` for expand.
 - **Gallery refresh**:
-  - Automatically refreshes when switching to Gallery tab.
+  - Scans the `outputs/` directory when the Gallery tab is first mounted.
   - Manual refresh button available in the Gallery top bar.
 - **Delete clip**:
   - On mouse hover over a gallery cell, a red trash can icon appears in the top-right corner of the cell.
@@ -118,7 +118,7 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
 - Audio plays with sound.
 - **Caption editor**: A text area is displayed **below** the video (not overlaying it) for entering/editing caption text.
 - Caption is saved as a `.txt` file with the same base name as the video (e.g., `v001_c003.mp4` → `v001_c003.txt`).
-- **Autosave with debounce**: Caption text is automatically saved on input with a 2-second debounce.
+- **Autosave with debounce**: Caption text is automatically saved on input with a 0.5-second debounce (shared with the caption store's global debounce).
 - The `.txt` file is created on first save (does not exist initially).
 - **Auto-caption button**: A button labeled "Auto-caption" appears next to the caption text area. Clicking it sends the current video's thumbnail to the LLM for captioning. During processing, the button is disabled with a tooltip indicating progress.
 - Close button or Escape key returns to gallery grid.
@@ -347,7 +347,7 @@ video-clipper/
 ### ffmpeg Integration
 
 - All video operations use ffmpeg via child process execution.
-- **ffmpeg check on launch**: On app startup, verify ffmpeg is available in PATH. If not found, show an error dialog and prevent the app from functioning until resolved.
+- **ffmpeg check on launch**: On app activation (e.g., macOS dock click when app was previously terminated), verify ffmpeg is available in PATH. If not found, show an error dialog via `dialog.showErrorBox`. The check runs inside `app.on('activate')` when `BrowserWindow.getAllWindows().length === 0`.
 - **Clip command template** (re-encode for frame-accurate seeking, `-ss` **after** `-i`):
   ```
   ffmpeg -y -i <input> -ss <start> -t <duration> <output>
