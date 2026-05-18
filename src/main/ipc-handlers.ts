@@ -11,6 +11,7 @@ import {
   extractThumbnail,
   bulkDeleteFiles,
 } from './services/gallery.service';
+import { scanConverted } from './services/converted.service';
 import { readCaption, writeCaption } from './services/caption.service';
 import { getSetting, setSetting } from './settings';
 import { getVideoInfo } from './services/ffprobe.service';
@@ -103,6 +104,12 @@ export function registerIpcHandlers(): void {
   // fs:bulk-delete
   ipcMain.handle(IPC_CHANNELS.FS_BULK_DELETE, async (_event, payload) => {
     return bulkDeleteFiles(payload.paths);
+  });
+
+  // fs:scan-converted
+  ipcMain.handle(IPC_CHANNELS.FS_SCAN_CONVERTED, async () => {
+    const files = await scanConverted();
+    return { files };
   });
 
   // app:open-file

@@ -1,6 +1,9 @@
 import { X } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import { useAppState } from '@renderer/store/app-state';
 import { useAppDispatch } from '@renderer/store/app-state';
+import type { ConvertedFileInfo } from '@shared/types';
 import {
   Sheet,
   SheetContent,
@@ -45,6 +48,9 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
     convertFlipped,
   } = useAppState();
   const dispatch = useAppDispatch();
+
+  const [frameCountFiles, setFrameCountFiles] = useState<ConvertedFileInfo[]>([]);
+  const [isCheckingFrames, setIsCheckingFrames] = useState(false);
 
   const handleConvert = async () => {
     if (selectedFiles.size === 0) return;
@@ -226,6 +232,31 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
                 <span className="text-sm">Create flipped copy</span>
               </label>
 
+              <FieldSeparator />
+
+              {frameCountFiles.length > 0 && (
+                <div className="mt-2 max-h-64 overflow-y-auto rounded-md border p-2">
+                  {frameCountFiles.map((file) => (
+                    <div key={file.fileName} className="flex items-center gap-3 py-1.5">
+                      <div className="bg-muted h-12 w-12 shrink-0 overflow-hidden rounded">
+                        <img
+                          src={`file://${file.thumbnailPath}`}
+                          alt={file.fileName}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{file.fileName}</p>
+                        <p className="text-muted-foreground text-xs">{file.frameCount} frames</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {isConverting && (
                 <Field>
                   <Progress value={convertProgress} className="h-2" />
@@ -238,7 +269,32 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
           </FieldGroup>
         </div>
 
-        <SheetFooter className="gap-2">
+        <SheetFooter className="flex-col gap-2">
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              setIsCheckingFrames(true);
+              try {
+                const result = await window.electronAPI.scanConverted();
+                if (result.files.length === 0) {
+                  toast('No converted clips found', {
+                    description: 'The converted directory is empty or does not exist.',
+                  });
+                }
+                setFrameCountFiles(result.files);
+              } catch {
+                toast('Failed to scan converted clips', {
+                  description: 'An error occurred while checking frame counts.',
+                });
+              } finally {
+                setIsCheckingFrames(false);
+              }
+            }}
+            disabled={isCheckingFrames}
+            className="w-full"
+          >
+            {isCheckingFrames ? 'Checking...' : 'Check Frame Counts of Converted Clips'}
+          </Button>
           <Button
             onClick={() => {
               dispatch({ type: 'SET_CONVERT_CODEC', payload: '' });
@@ -247,6 +303,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
               dispatch({ type: 'SET_CONVERT_FPS', payload: 0 });
               dispatch({ type: 'SET_CONVERT_BITRATE', payload: '' });
               dispatch({ type: 'SET_CONVERT_FLIPPED', payload: false });
+              setFrameCountFiles([]);
             }}
             variant="secondary"
             className="w-full"

@@ -1,4 +1,4 @@
-import type { GalleryFile } from '@shared/types';
+import type { GalleryFile, ConvertedFileInfo } from '@shared/types';
 
 /** IPC channel names */
 export const IPC_CHANNELS = {
@@ -17,6 +17,7 @@ export const IPC_CHANNELS = {
   FS_SCAN_OUTPUTS: 'fs:scan-outputs',
   FS_DELETE_CLIP: 'fs:delete-clip',
   FS_BULK_DELETE: 'fs:bulk-delete',
+  FS_SCAN_CONVERTED: 'fs:scan-converted',
   APP_OPEN_FILE: 'app:open-file',
   SETTINGS_GET: 'settings:get',
   SETTINGS_SET: 'settings:set',
@@ -66,6 +67,7 @@ export interface IPCPayloads {
   [IPC_CHANNELS.FS_SCAN_OUTPUTS]: {};
   [IPC_CHANNELS.FS_DELETE_CLIP]: { filePath: string };
   [IPC_CHANNELS.FS_BULK_DELETE]: { paths: string[] };
+  [IPC_CHANNELS.FS_SCAN_CONVERTED]: {};
   [IPC_CHANNELS.APP_OPEN_FILE]: {};
   [IPC_CHANNELS.SETTINGS_GET]: { key: string };
   [IPC_CHANNELS.SETTINGS_SET]: { key: string; value: string };
@@ -98,6 +100,7 @@ export interface IPCReturns {
   };
   [IPC_CHANNELS.FS_DELETE_CLIP]: { success: boolean; error?: string };
   [IPC_CHANNELS.FS_BULK_DELETE]: { success: boolean; errors: string[] };
+  [IPC_CHANNELS.FS_SCAN_CONVERTED]: { files: ConvertedFileInfo[] };
   [IPC_CHANNELS.APP_OPEN_FILE]: { filePath?: string; cancelled: boolean };
   [IPC_CHANNELS.SETTINGS_GET]: { value?: string };
   [IPC_CHANNELS.SETTINGS_SET]: { success: boolean };

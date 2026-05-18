@@ -62,3 +62,10 @@ export interface GalleryFile {
   caption?: string;
   thumbnail?: string;
 }
+
+/** Info about a converted video file (for frame count display) */
+export interface ConvertedFileInfo {
+  thumbnailPath: string;
+  fileName: string;
+  frameCount: number;
+}

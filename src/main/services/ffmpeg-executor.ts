@@ -38,3 +38,38 @@ export function runFfmpeg(args: string[]): Promise<FfmpegResult> {
     });
   });
 }
+
+/**
+ * Execute an ffprobe command and capture stdout output.
+ * Used for extracting metadata (frame counts, etc.).
+ */
+export function runFfprobe(args: string[]): Promise<{ success: boolean; output: string }> {
+  return new Promise((resolve) => {
+    const [cmd, ...cmdArgs] = args;
+    const proc = spawn(cmd, cmdArgs, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    });
+
+    let stdout = '';
+    proc.stdout.on('data', (chunk: Buffer) => {
+      stdout += chunk.toString();
+    });
+    proc.stderr.on('data', () => {});
+
+    proc.on('close', (code) => {
+      if (code === 0) {
+        resolve({ success: true, output: stdout });
+      } else {
+        resolve({
+          success: false,
+          output: stdout,
+        });
+      }
+    });
+
+    proc.on('error', () => {
+      resolve({ success: false, output: stdout });
+    });
+  });
+}

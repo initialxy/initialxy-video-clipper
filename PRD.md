@@ -128,6 +128,7 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
 ### 7. Bulk Conversion Mode (Gallery)
 
 - **Activation**: A "Convert" button in the Gallery top bar (primary color) opens a **slide-out drawer** from the right side.
+- **Frame count check**: A "Check Frame Counts of Converted Clips" button (secondary variant) in the Bulk Convert drawer footer, positioned between the Reset and Convert buttons. Clicking it scans the `converted/` directory and displays a scrollable list of converted files with their exact frame counts (via ffprobe `-count_frames`). Toast notifications for empty directory or errors. Results are displayed in a scrollable list below the button within the drawer.
 - **Selection**:
   - Multi-select: Click individual items to select/deselect.
   - Select All: A checkbox or button to select all files in the gallery.
@@ -393,6 +394,7 @@ video-clipper/
 - **IPC channel**: `auto-caption:run` (R→M), returns `{ success, results?: Array<{ file: string; success: boolean; error?: string }> }`.
 - **IPC channel**: `auto-caption:progress` (M→R), payload: `{ file: string; current: number; total: number; status: 'processing' | 'done' | 'error' }`.
 - **IPC channel**: `auto-caption:interrupt` (R→M), triggers cancellation of ongoing bulk operation.
+- **IPC channel**: `fs:scan-converted` (R→M), returns `{ files: ConvertedFileInfo[] }` — scans `converted/` directory for frame counts via ffprobe.
 - **Service**: `src/main/services/auto-caption.service.ts` — handles sequential file processing, LLM HTTP requests, response parsing, and caption file writing.
 - **HTTP client**: Use Node.js `fetch` (native, Node 18+) to send requests to the configured endpoint URL. Set a 60-second timeout per request.
 - **Authorization**: Send `Authorization: Bearer <apiKey>` header if an API key is configured (skip header if key is `"DUMMY"`).

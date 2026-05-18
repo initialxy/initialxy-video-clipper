@@ -30,6 +30,8 @@ const electronAPI = {
   bulkDelete: (payload: IPCPayloads['fs:bulk-delete']) =>
     ipcRenderer.invoke('fs:bulk-delete', payload),
 
+  scanConverted: () => ipcRenderer.invoke('fs:scan-converted', {}),
+
   // App
   openFile: () => ipcRenderer.invoke('app:open-file', {}),
 

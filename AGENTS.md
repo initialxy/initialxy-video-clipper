@@ -50,6 +50,7 @@ src/
 │       ├── convert.service.ts # Bulk conversion orchestration
 │       ├── gallery.service.ts # File scanning, thumbnail caching
 │       ├── caption.service.ts # Caption file CRUD
+│       ├── converted.service.ts # scanConverted (frame count scanning for converted/ directory)
 │       └── auto-caption.service.ts # Sequential LLM auto-captioning
 ├── preload/
 │   └── index.ts               # ContextBridge (types from @shared/ipc)
@@ -61,7 +62,7 @@ src/
 │   │   ├── VideoPlayer.tsx    # Main video player with inline controls
 │   │   ├── VolumeControl.tsx  # Mute button + volume slider
 │   │   ├── GalleryView.tsx    # Grid of clipped videos
-│   │   ├── GalleryItem.tsx    # Single gallery card (thumb + caption overlay)
+│   │   ├── GalleryItem.tsx    # Single gallery card (top container with checkbox/filename/close, thumb + caption overlay)
 │   │   ├── ExpandedPlayer.tsx # Full player for gallery items
 │   │   ├── CaptionEditor.tsx  # Text area with debounced autosave
 │   │   ├── CaptionOverlay.tsx # Inline caption overlay for gallery cells
@@ -149,6 +150,7 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 | `fs:scan-outputs` | R→M | `{}` | `{ files: GalleryFile[] }` |
 | `fs:delete-clip` | R→M | `{ filePath }` | `{ success, error? }` |
 | `fs:bulk-delete` | R→M | `{ paths: string[] }` | `{ success, errors: string[] }` |
+| `fs:scan-converted` | R→M | `{}` | `{ files: ConvertedFileInfo[] }` |
 | `app:open-file` | R→M | `{}` | `{ filePath?, cancelled }` |
 | `settings:get` | R→M | `{ key }` | `{ value? }` |
 | `settings:set` | R→M | `{ key, value }` | `{ success }` |
@@ -297,6 +299,7 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 | **Gallery** | Responsive grid with thumbnails, caption overlays, inline editing, bulk delete |
 | **Expanded player** | Full-size playback with caption editor (autosave, debounced) |
 | **Bulk conversion** | Optional codec/resolution/FPS/bitrate with motion-compensated interpolation, flipped copy support |
+| **Frame count check** | ffprobe-based frame count scanning for converted/ directory, displayed in Bulk Convert drawer |
 | **Caption store** | Reactive cache with debounced persistence (500ms), IPC sync |
 | **Auto-caption** | Sequential LLM-powered captioning (OpenAI-compatible API), progress toast, interrupt support |
 | **Bulk edit** | Prepend/append/search-replace across selected captions |
