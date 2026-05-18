@@ -18,7 +18,6 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
   const isSelected = selectedFiles.has(file.path);
   const [thumbnail, setThumbnail] = useState<string | null>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const showSelection = isSelected || isHovered;
   const thumbRef = useRef<HTMLImageElement>(null);
   const store = useCaptionStore();
 
@@ -70,47 +69,6 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Top container: checkbox + filename + delete */}
-      <div className="absolute inset-x-0 top-0 z-10 flex items-center gap-2 bg-black/70 px-3 py-3 backdrop-blur-sm">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleSelect();
-          }}
-          className={cn(
-            'h-6 w-6 shrink-0 transition-opacity duration-100 ease-in',
-            showSelection ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
-          )}
-          title={isSelected ? 'Deselect' : 'Select'}
-        >
-          {isSelected ? (
-            <CheckSquare className="text-primary h-3.5 w-3.5" />
-          ) : (
-            <Square className="h-3.5 w-3.5" />
-          )}
-        </Button>
-
-        <p className="flex-1 truncate text-center text-xs font-medium text-white/90">{file.name}</p>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className={cn(
-            'h-6 w-6 shrink-0 text-red-400 transition-opacity duration-100 ease-in',
-            isHovered ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
-          )}
-          title="Delete clip"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </div>
-
       {/* Thumbnail covering whole cell */}
       <div
         className="absolute inset-0 cursor-pointer bg-black"
@@ -131,6 +89,45 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
             <div className="border-muted-foreground/30 border-t-muted-foreground h-8 w-8 animate-spin border-2" />
           </div>
         )}
+      </div>
+
+      {/* Top container: checkbox + filename + delete */}
+      <div className="from-background/80 absolute top-0 h-12 w-full bg-gradient-to-b to-transparent">
+        <div className="absolute top-0 flex w-full flex-row items-center px-2 pt-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSelect();
+            }}
+            className={cn(
+              'bg-background/60 hover:bg-background flex-none transition-opacity duration-100 ease-in',
+              isSelected || isHovered ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+            )}
+            title={isSelected ? 'Deselect' : 'Select'}
+          >
+            {isSelected ? <CheckSquare className="text-primary" /> : <Square />}
+          </Button>
+
+          <p className="block grow px-2 text-center text-sm text-ellipsis">{file.name}</p>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className={cn(
+              'bg-background/60 hover:bg-background flex-none text-red-400 transition-opacity duration-100 ease-in',
+              isHovered ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+            )}
+            title="Delete clip"
+          >
+            <Trash2 />
+          </Button>
+        </div>
       </div>
 
       {/* Caption overlay on bottom half */}

@@ -62,7 +62,7 @@ src/
 │   │   ├── VideoPlayer.tsx    # Main video player with inline controls
 │   │   ├── VolumeControl.tsx  # Mute button + volume slider
 │   │   ├── GalleryView.tsx    # Grid of clipped videos
-│   │   ├── GalleryItem.tsx    # Single gallery card (top container with checkbox/filename/close, thumb + caption overlay)
+│   │   ├── GalleryItem.tsx    # Single gallery card (top container with checkbox/filename/delete, thumb + caption overlay)
 │   │   ├── ExpandedPlayer.tsx # Full player for gallery items
 │   │   ├── CaptionEditor.tsx  # Text area with debounced autosave
 │   │   ├── CaptionOverlay.tsx # Inline caption overlay for gallery cells

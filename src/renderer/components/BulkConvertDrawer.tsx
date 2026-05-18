@@ -271,6 +271,21 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
 
         <SheetFooter className="flex-col gap-2">
           <Button
+            onClick={() => {
+              dispatch({ type: 'SET_CONVERT_CODEC', payload: '' });
+              dispatch({ type: 'SET_CONVERT_WIDTH', payload: 0 });
+              dispatch({ type: 'SET_CONVERT_HEIGHT', payload: 0 });
+              dispatch({ type: 'SET_CONVERT_FPS', payload: 0 });
+              dispatch({ type: 'SET_CONVERT_BITRATE', payload: '' });
+              dispatch({ type: 'SET_CONVERT_FLIPPED', payload: false });
+              setFrameCountFiles([]);
+            }}
+            variant="secondary"
+            className="w-full"
+          >
+            Reset
+          </Button>
+          <Button
             variant="secondary"
             onClick={async () => {
               setIsCheckingFrames(true);
@@ -293,22 +308,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
             disabled={isCheckingFrames}
             className="w-full"
           >
-            {isCheckingFrames ? 'Checking...' : 'Check Frame Counts of Converted Clips'}
-          </Button>
-          <Button
-            onClick={() => {
-              dispatch({ type: 'SET_CONVERT_CODEC', payload: '' });
-              dispatch({ type: 'SET_CONVERT_WIDTH', payload: 0 });
-              dispatch({ type: 'SET_CONVERT_HEIGHT', payload: 0 });
-              dispatch({ type: 'SET_CONVERT_FPS', payload: 0 });
-              dispatch({ type: 'SET_CONVERT_BITRATE', payload: '' });
-              dispatch({ type: 'SET_CONVERT_FLIPPED', payload: false });
-              setFrameCountFiles([]);
-            }}
-            variant="secondary"
-            className="w-full"
-          >
-            Reset
+            {isCheckingFrames ? 'Checking...' : 'Check Frame Count'}
           </Button>
           <Button
             onClick={handleConvert}

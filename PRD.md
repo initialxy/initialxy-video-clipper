@@ -128,7 +128,7 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
 ### 7. Bulk Conversion Mode (Gallery)
 
 - **Activation**: A "Convert" button in the Gallery top bar (primary color) opens a **slide-out drawer** from the right side.
-- **Frame count check**: A "Check Frame Counts of Converted Clips" button (secondary variant) in the Bulk Convert drawer footer, positioned between the Reset and Convert buttons. Clicking it scans the `converted/` directory and displays a scrollable list of converted files with their exact frame counts (via ffprobe `-count_frames`). Toast notifications for empty directory or errors. Results are displayed in a scrollable list below the button within the drawer.
+- **Frame count check**: A "Check Frame Count" button (secondary variant) in the Bulk Convert drawer footer, positioned between the Reset and Convert buttons. Clicking it scans the `converted/` directory and displays a scrollable list of converted files with their exact frame counts (via ffprobe `-count_frames`). Toast notifications for empty directory or errors. Results are displayed in a scrollable list below the button within the drawer.
 - **Selection**:
   - Multi-select: Click individual items to select/deselect.
   - Select All: A checkbox or button to select all files in the gallery.
