@@ -164,7 +164,7 @@ function AppContent() {
   useEffect(() => {
     return window.electronAPI.onConvertProgress((data) => {
       if (data.status === 'converting') {
-        toast.loading(`Converting ${data.file}… ${data.progress}%`, {
+        toast.loading(`Converting ${data.file}… ${data.current}/${data.total}`, {
           duration: Infinity,
           id: BULK_CONVERT_TOAST_ID,
         });

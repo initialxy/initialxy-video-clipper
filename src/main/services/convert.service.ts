@@ -113,16 +113,12 @@ async function runMainOperation(
 
 function emitProgress(
   fileName: string,
-  stepIndex: number,
-  totalSteps: number,
+  current: number,
+  total: number,
   status: ConvertProgress['status'],
   onProgress: (event: ConvertProgress) => void,
 ): void {
-  onProgress({
-    file: fileName,
-    progress: Math.round((stepIndex / totalSteps) * 100),
-    status,
-  });
+  onProgress({ file: fileName, current, total, status });
 }
 
 export async function bulkConvert(

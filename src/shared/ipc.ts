@@ -45,7 +45,8 @@ export interface IPCPayloads {
   };
   [IPC_CHANNELS.CONVERT_PROGRESS]: {
     file: string;
-    progress: number;
+    current: number;
+    total: number;
     status: string;
   };
   [IPC_CHANNELS.AUTO_CAPTION_RUN]: {

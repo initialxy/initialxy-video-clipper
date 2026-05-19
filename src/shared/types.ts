@@ -34,7 +34,8 @@ export interface ConvertResult {
 /** Conversion progress event */
 export interface ConvertProgress {
   file: string;
-  progress: number; // 0-100
+  current: number; // completed steps
+  total: number; // total steps (doubled when flipped)
   status: 'converting' | 'done' | 'error';
 }
 
