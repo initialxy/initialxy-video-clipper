@@ -145,7 +145,7 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
   - Outputs to `converted/` directory.
   - Files in `converted/` can be overwritten without warning.
   - Accompanying `.txt` caption files are copied alongside converted videos. If flipped copy is enabled, the flipped caption file has "left" ↔ "right" word swap applied.
-  - Show progress indicators (per-file and overall).
+  - Show progress indicators (per-file and overall). Progress uses `current/total` format (matching auto-caption UX): `current` = completed steps, `total` = total steps (doubled when flipped). The toast uses infinite duration and is dismissed only when all files are fully processed (including flipped copies).
   - When a param is "Same as source", simply omit that ffmpeg flag (don't pass `-c:v`, `-b:v`, or `-vf` for that param).
 
 ---

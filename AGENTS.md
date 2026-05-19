@@ -117,7 +117,6 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 | `selectedFiles` | `Set<string>` | Files selected for bulk ops |
 | `expandedFile` | `string \| null` | Gallery file in expanded player (reset on tab switch) |
 | `isConverting` | `boolean` | Bulk conversion in progress |
-| `convertProgress` | `number` | Conversion progress percentage |
 | `isConvertDrawerOpen` | `boolean` | Bulk convert drawer visibility |
 | `isAutoCaptionDrawerOpen` | `boolean` | Auto-caption settings drawer visibility |
 | `isAutoCaptioning` | `boolean` | Auto-caption in progress |
@@ -138,7 +137,8 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 |---------|-----------|---------|---------|
 | `clip:create` | R→M | `{ inputPath, outputPath, start, duration }` | `{ success, outputPath?, error? }` |
 | `convert:bulk` | R→M | `{ files[], settings, outputDir }` | `{ success, results? }` |
-| `convert:progress` | M→R | `{ file, progress, status }` | — |
+| `convert:progress` | M→R | `{ file, current, total, status }` | — |
+| | | Progress uses `current/total` format (same as auto-caption). `current` = completed steps, `total` = total steps (doubled when flipped). Status is `done` only after all steps for a file complete. |
 | `convert:warn-no-changes` | M→R | — | — |
 | `auto-caption:run` | R→M | `{ files[], config: { baseUrl, model, apiKey } }` | `{ success, results? }` |
 | `auto-caption:progress` | M→R | `{ file, current, total, status }` | — |
@@ -310,6 +310,7 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 
 - **Caption store** is the single source of truth — no local caption state in components. Uses `ensureLoaded()` for lazy disk reads.
 - **Auto-caption toast** uses `toast.loading()` with `duration: Infinity` and a fixed ID — dismissal only when `current === total`.
+- **Bulk convert toast** follows the same pattern: `toast.loading()` with `duration: Infinity` and a fixed ID, uses ref-based counting for completed steps, dismissal only when all files (including flipped copies) are fully processed.
 - **Keyboard shortcuts** registered via `window.addEventListener(..., { capture: true })` with `isInputFocused()` guard.
 - **Flipped copy** runs a second ffmpeg `hflip` step after encoding; captions copied with `left` ↔ `right` word swap via null-byte placeholder.
 - **Re-encode clipping** uses `-ss` after `-i` for frame accuracy (not stream copy).
