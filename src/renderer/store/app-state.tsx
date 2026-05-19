@@ -29,7 +29,6 @@ export interface AppState {
   selectedFiles: Set<string>;
   expandedFile: string | null;
   isConverting: boolean;
-  convertProgress: number;
   isConvertDrawerOpen: boolean;
   isBulkEditDrawerOpen: boolean;
   isAutoCaptionDrawerOpen: boolean;
@@ -52,7 +51,6 @@ type AppAction =
   | { type: 'SELECT_ALL_FILES'; payload: boolean }
   | { type: 'SET_EXPANDED_FILE'; payload: string | null }
   | { type: 'SET_CONVERTING'; payload: boolean }
-  | { type: 'SET_CONVERT_PROGRESS'; payload: number }
   | { type: 'SET_CONVERT_DRAWER_OPEN'; payload: boolean }
   | { type: 'SET_BULK_EDIT_DRAWER_OPEN'; payload: boolean }
   | { type: 'SET_AUTO_CAPTION_DRAWER_OPEN'; payload: boolean }
@@ -101,8 +99,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, expandedFile: action.payload };
     case 'SET_CONVERTING':
       return { ...state, isConverting: action.payload };
-    case 'SET_CONVERT_PROGRESS':
-      return { ...state, convertProgress: action.payload };
     case 'SET_CONVERT_DRAWER_OPEN':
       return { ...state, isConvertDrawerOpen: action.payload };
     case 'SET_BULK_EDIT_DRAWER_OPEN':
@@ -132,7 +128,6 @@ const initialState: AppState = {
   selectedFiles: new Set(),
   expandedFile: null,
   isConverting: false,
-  convertProgress: 0,
   isConvertDrawerOpen: false,
   isBulkEditDrawerOpen: false,
   isAutoCaptionDrawerOpen: false,

@@ -28,6 +28,7 @@ import type { AutoCaptionResult } from '@shared/types';
 import { CircleStop } from 'lucide-react';
 
 const AUTO_CAPTION_TOAST_ID = 'auto-caption-progress';
+const BULK_CONVERT_TOAST_ID = 'bulk-convert-progress';
 
 function AppContent() {
   const {
@@ -160,9 +161,16 @@ function AppContent() {
 
   useEffect(() => {
     return window.electronAPI.onConvertProgress((data) => {
-      dispatch({ type: 'SET_CONVERT_PROGRESS', payload: data.progress });
+      if (data.status === 'converting') {
+        toast.loading(`Converting ${data.file}… ${data.progress}%`, {
+          duration: Infinity,
+          id: BULK_CONVERT_TOAST_ID,
+        });
+      } else if (data.status === 'done') {
+        toast.dismiss(BULK_CONVERT_TOAST_ID);
+      }
     });
-  }, [dispatch]);
+  }, []);
 
   useEffect(() => {
     return window.electronAPI.onAutoCaptionProgress((data) => {

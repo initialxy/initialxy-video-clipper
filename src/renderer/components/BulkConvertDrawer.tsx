@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useAppState } from '@renderer/store/app-state';
 import { useAppDispatch } from '@renderer/store/app-state';
 import type { ConvertedFileInfo } from '@shared/types';
+import { cn } from '@renderer/lib/utils';
 import {
   Sheet,
   SheetContent,
@@ -28,7 +29,6 @@ import {
   FieldSet,
   FieldSeparator,
 } from '@renderer/components/ui/field';
-import { Progress } from '@renderer/components/ui/progress';
 
 interface BulkConvertDrawerProps {
   onClose: () => void;
@@ -38,7 +38,6 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
   const {
     selectedFiles,
     isConverting,
-    convertProgress,
     isConvertDrawerOpen,
     convertCodec,
     convertWidth,
@@ -72,7 +71,6 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
     });
 
     dispatch({ type: 'SET_CONVERTING', payload: false });
-    dispatch({ type: 'SET_CONVERT_PROGRESS', payload: 0 });
 
     if (result.success) {
       onClose();
@@ -232,38 +230,35 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
                 <span className="text-sm">Create flipped copy</span>
               </label>
 
-              <FieldSeparator />
-
               {frameCountFiles.length > 0 && (
-                <div className="mt-2 max-h-64 overflow-y-auto rounded-md border p-2">
-                  {frameCountFiles.map((file) => (
-                    <div key={file.fileName} className="flex items-center gap-3 py-1.5">
-                      <div className="bg-muted h-12 w-12 shrink-0 overflow-hidden rounded">
-                        <img
-                          src={`file://${file.thumbnailPath}`}
-                          alt={file.fileName}
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{file.fileName}</p>
-                        <p className="text-muted-foreground text-xs">{file.frameCount} frames</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {isConverting && (
-                <Field>
-                  <Progress value={convertProgress} className="h-2" />
-                  <p className="text-muted-foreground text-center text-xs">
-                    Converting... {convertProgress}%
-                  </p>
-                </Field>
+                <>
+                  <FieldSeparator />
+                  <div className="rounded-lg border">
+                    {frameCountFiles.map((file) => {
+                      const isFlipped = /_flipped\.[^.]+$/.test(file.fileName);
+                      const thumbPath = isFlipped
+                        ? `file://${file.thumbnailPath.replace(/_flipped(\.[^.]+)$/, '$1')}`
+                        : `file://${file.thumbnailPath}`;
+                      return (
+                        <div key={file.fileName} className="m-2.5 flex items-center gap-2.5">
+                          <div
+                            className={cn(
+                              'bg-muted h-12 w-12 shrink-0 overflow-hidden rounded bg-cover bg-center',
+                              isFlipped && '-scale-x-100',
+                            )}
+                            style={{ backgroundImage: `url(${thumbPath})` }}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">{file.fileName}</p>
+                            <p className="text-muted-foreground text-xs">
+                              {file.frameCount} frames
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
               )}
             </FieldSet>
           </FieldGroup>
