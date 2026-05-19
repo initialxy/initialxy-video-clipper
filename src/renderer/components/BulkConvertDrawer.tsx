@@ -237,7 +237,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
                     {frameCountFiles.map((file) => {
                       const isFlipped = /_flipped\.[^.]+$/.test(file.fileName);
                       const thumbPath = isFlipped
-                        ? `file://${file.thumbnailPath.replace(/_flipped(\.[^.]+)$/, '$1')}`
+                        ? `file://${file.thumbnailPath.replace(/_flipped(\.[^.]+\.)/, '$1')}`
                         : `file://${file.thumbnailPath}`;
                       return (
                         <div key={file.fileName} className="m-2.5 flex items-center gap-2.5">
