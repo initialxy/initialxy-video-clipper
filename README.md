@@ -11,6 +11,7 @@ Desktop app for clipping video files to create training data for video diffusion
 - **Precision seeking**: 0.01s granularity seek slider with `MM:SS.xx` time display.
 - **Caption editing**: Debounced autosave (0.5s) to `.txt` sidecar files alongside videos.
 - **Bulk conversion**: Optional resolution, codec, FPS, and bitrate controls with progress tracking.
+- **Frame count check**: Scan the `converted/` directory for exact frame counts via ffprobe, displayed in the Bulk Convert drawer.
 - **Bulk caption edit**: Prepend, append, or search/replace text across multiple selected clips' captions.
 - **Auto-caption**: LLM-powered caption generation for selected clips (OpenAI-compatible API).
 - **Keyboard shortcuts**: `Space` (play/pause), `M` (mute), `←/→` (seek ±1s), `↑/↓` (volume ±10%), `Escape` (close expanded player).
@@ -50,24 +51,6 @@ For development only (Vite dev server with HMR, no Electron):
 
 ```bash
 npm run dev
-```
-
-## Utility Scripts
-
-### `converted/count_frames`
-
-Count exact frames in converted videos using ffprobe. Critical for verifying frame-level accuracy when preparing training data for video diffusion models.
-
-```bash
-cd converted
-./count_frames my-clip.mp4
-# Output: my-clip.mp4 121
-```
-
-Supports multiple files:
-
-```bash
-./count_frames *.mp4
 ```
 
 ## Scripts
@@ -111,9 +94,9 @@ initialxy-video-clipper/
 
 ## Architecture
 
-- **Main process**: IPC handlers are thin delegates that forward to a service layer (`clip.service.ts`, `gallery.service.ts`, `convert.service.ts`, `caption.service.ts`, `auto-caption.service.ts`). ffmpeg commands are pure function builders (`ffmpeg.ts`) with separate execution logic (`ffmpeg-executor.ts`).
+- **Main process**: IPC handlers are thin delegates that forward to a service layer (`clip.service.ts`, `gallery.service.ts`, `convert.service.ts`, `caption.service.ts`, `converted.service.ts`, `auto-caption.service.ts`). ffmpeg commands are pure function builders (`ffmpeg.ts`) with separate execution logic (`ffmpeg-executor.ts`).
 - **Renderer**: React context + `useReducer` for global state. Components subscribe via custom hooks. Caption state uses a reactive store with debounced persistence.
-- **IPC**: 17 channels defined in `src/shared/ipc.ts`. `ElectronAPI` types derive from `IPCPayloads` / `IPCReturns` — no `any` types.
+- **IPC**: 18 channels defined in `src/shared/ipc.ts`. `ElectronAPI` types derive from `IPCPayloads` / `IPCReturns` — no `any` types.
 - **State management**: Central `useReducer` in `src/renderer/store/app-state.tsx`. Caption store in `src/renderer/store/caption-store.tsx` with reactive Map, debounced disk writes (500ms), and IPC sync.
 - **Settings**: JSON config file in main process, accessed via `settings:get` / `settings:set` IPC channels.
 
