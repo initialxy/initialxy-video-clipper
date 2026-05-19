@@ -32,9 +32,10 @@ import {
 
 interface BulkConvertDrawerProps {
   onClose: () => void;
+  onConvertStart?: (total: number) => void;
 }
 
-export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
+export function BulkConvertDrawer({ onClose, onConvertStart }: BulkConvertDrawerProps) {
   const {
     selectedFiles,
     isConverting,
@@ -55,6 +56,7 @@ export function BulkConvertDrawer({ onClose }: BulkConvertDrawerProps) {
     if (selectedFiles.size === 0) return;
 
     const files = Array.from(selectedFiles);
+    onConvertStart?.(files.length);
     dispatch({ type: 'SET_CONVERTING', payload: true });
 
     const result = await window.electronAPI.bulkConvert({

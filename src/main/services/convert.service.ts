@@ -77,12 +77,18 @@ export async function bulkConvert(
 
   const results: Array<{ file: string; success: boolean; error?: string }> = [];
 
+  const totalSteps = settings.flipped ? files.length * 2 : files.length;
+
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     const fileName = path.basename(file);
-    const progress = Math.round(((i + 1) / files.length) * 100);
+    let stepIndex = settings.flipped ? i * 2 : i;
 
-    onProgress({ file: fileName, progress, status: 'converting' });
+    onProgress({
+      file: fileName,
+      progress: Math.round((stepIndex / totalSteps) * 100),
+      status: 'converting',
+    });
 
     // If all settings are "same as source", just copy
     if (isNoOpConversion(settings)) {
@@ -93,22 +99,39 @@ export async function bulkConvert(
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Unknown error';
         results.push({ file: fileName, success: false, error: errorMsg });
-        onProgress({ file: fileName, progress, status: 'error' });
+        stepIndex++;
+        onProgress({
+          file: fileName,
+          progress: Math.round((stepIndex / totalSteps) * 100),
+          status: 'error',
+        });
         continue;
       }
+
+      stepIndex++;
 
       // Flip step after copy
       if (settings.flipped) {
         const flipResult = await flipFile(file, fileName);
         if (!flipResult.success) {
           results.push({ file: fileName, success: false, error: flipResult.error });
-          onProgress({ file: fileName, progress, status: 'error' });
+          stepIndex++;
+          onProgress({
+            file: fileName,
+            progress: Math.round((stepIndex / totalSteps) * 100),
+            status: 'error',
+          });
           continue;
         }
       }
 
+      stepIndex++;
       results.push({ file: fileName, success: true });
-      onProgress({ file: fileName, progress, status: 'done' });
+      onProgress({
+        file: fileName,
+        progress: Math.round((stepIndex / totalSteps) * 100),
+        status: 'done',
+      });
       continue;
     }
 
@@ -136,6 +159,8 @@ export async function bulkConvert(
       copyCaption(file, fileName);
     }
 
+    stepIndex++;
+
     // Flip step after conversion
     if (settings.flipped) {
       const flipResult = await flipFile(destPath, fileName);
@@ -143,19 +168,34 @@ export async function bulkConvert(
         // Clean up converted file if flip failed
         safeUnlink(destPath);
         results.push({ file: fileName, success: false, error: flipResult.error });
-        onProgress({ file: fileName, progress, status: 'error' });
+        stepIndex++;
+        onProgress({
+          file: fileName,
+          progress: Math.round((stepIndex / totalSteps) * 100),
+          status: 'error',
+        });
         continue;
       }
     }
 
+    stepIndex++;
+
     if (result.success) {
       results.push({ file: fileName, success: true });
-      onProgress({ file: fileName, progress, status: 'done' });
+      onProgress({
+        file: fileName,
+        progress: Math.round((stepIndex / totalSteps) * 100),
+        status: 'done',
+      });
     } else {
       // Clean up failed output
       safeUnlink(destPath);
       results.push({ file: fileName, success: false, error: result.error });
-      onProgress({ file: fileName, progress, status: 'error' });
+      onProgress({
+        file: fileName,
+        progress: Math.round((stepIndex / totalSteps) * 100),
+        status: 'error',
+      });
     }
   }
 

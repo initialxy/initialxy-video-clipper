@@ -48,6 +48,8 @@ function AppContent() {
   const [expandedDeleteTarget, setExpandedDeleteTarget] = useState<string | null>(null);
   const [bulkDeleteCount, setBulkDeleteCount] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const convertTotalRef = useRef(0);
+  const convertDoneRef = useRef(0);
   const videoTimeRef = useRef(0);
 
   const handleTabChange = useCallback(
@@ -166,8 +168,11 @@ function AppContent() {
           duration: Infinity,
           id: BULK_CONVERT_TOAST_ID,
         });
-      } else if (data.status === 'done') {
-        toast.dismiss(BULK_CONVERT_TOAST_ID);
+      } else if (data.status === 'done' || data.status === 'error') {
+        convertDoneRef.current++;
+        if (convertDoneRef.current === convertTotalRef.current) {
+          toast.dismiss(BULK_CONVERT_TOAST_ID);
+        }
       }
     });
   }, []);
@@ -405,7 +410,13 @@ function AppContent() {
         />
 
         {/* Bulk Convert Drawer */}
-        <BulkConvertDrawer onClose={() => {}} />
+        <BulkConvertDrawer
+          onClose={() => {}}
+          onConvertStart={(total) => {
+            convertTotalRef.current = total;
+            convertDoneRef.current = 0;
+          }}
+        />
 
         {/* Bulk Edit Drawer */}
         <BulkEditDrawer onClose={() => {}} />
