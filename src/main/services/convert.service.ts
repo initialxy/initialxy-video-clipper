@@ -65,6 +65,66 @@ async function flipFile(
   return { success: true };
 }
 
+function buildConvertOptions(settings: ConvertSettings): {
+  codec?: string;
+  width?: number;
+  height?: number;
+  fps?: number;
+  bitrate?: string;
+} {
+  const options: {
+    codec?: string;
+    width?: number;
+    height?: number;
+    fps?: number;
+    bitrate?: string;
+  } = {};
+  if (settings.codec) options.codec = settings.codec;
+  if (settings.width && settings.height) {
+    options.width = settings.width;
+    options.height = settings.height;
+  }
+  if (settings.fps) options.fps = settings.fps;
+  if (settings.bitrate) options.bitrate = settings.bitrate;
+  return options;
+}
+
+async function runMainOperation(
+  inputPath: string,
+  destPath: string,
+  settings: ConvertSettings,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (isNoOpConversion(settings)) {
+      fs.copyFileSync(inputPath, destPath);
+      return { success: true };
+    }
+    const options = buildConvertOptions(settings);
+    const args = buildConvertCommand(inputPath, destPath, options);
+    const result = await runFfmpeg(args);
+    return { success: result.success, error: result.error };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : 'Unknown error',
+    };
+  }
+}
+
+function emitProgress(
+  fileName: string,
+  stepIndex: number,
+  totalSteps: number,
+  status: ConvertProgress['status'],
+  onProgress: (event: ConvertProgress) => void,
+): void {
+  onProgress({
+    file: fileName,
+    progress: Math.round((stepIndex / totalSteps) * 100),
+    status,
+  });
+}
+
 export async function bulkConvert(
   files: string[],
   settings: ConvertSettings,
@@ -76,126 +136,44 @@ export async function bulkConvert(
   ensureConvertedDir();
 
   const results: Array<{ file: string; success: boolean; error?: string }> = [];
-
   const totalSteps = settings.flipped ? files.length * 2 : files.length;
 
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
     const fileName = path.basename(file);
+    const destPath = path.join(CONVERTED_DIR, fileName);
     let stepIndex = settings.flipped ? i * 2 : i;
 
-    onProgress({
-      file: fileName,
-      progress: Math.round((stepIndex / totalSteps) * 100),
-      status: 'converting',
-    });
+    emitProgress(fileName, stepIndex, totalSteps, 'converting', onProgress);
 
-    // If all settings are "same as source", just copy
-    if (isNoOpConversion(settings)) {
-      const destPath = path.join(CONVERTED_DIR, fileName);
-      try {
-        fs.copyFileSync(file, destPath);
-        copyCaption(file, fileName);
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'Unknown error';
-        results.push({ file: fileName, success: false, error: errorMsg });
-        stepIndex++;
-        onProgress({
-          file: fileName,
-          progress: Math.round((stepIndex / totalSteps) * 100),
-          status: 'error',
-        });
-        continue;
-      }
-
-      stepIndex++;
-
-      // Flip step after copy
-      if (settings.flipped) {
-        const flipResult = await flipFile(file, fileName);
-        if (!flipResult.success) {
-          results.push({ file: fileName, success: false, error: flipResult.error });
-          stepIndex++;
-          onProgress({
-            file: fileName,
-            progress: Math.round((stepIndex / totalSteps) * 100),
-            status: 'error',
-          });
-          continue;
-        }
-      }
-
-      stepIndex++;
-      results.push({ file: fileName, success: true });
-      onProgress({
-        file: fileName,
-        progress: Math.round((stepIndex / totalSteps) * 100),
-        status: 'done',
-      });
-      continue;
-    }
-
-    const destPath = path.join(CONVERTED_DIR, fileName);
-    const options: {
-      codec?: string;
-      width?: number;
-      height?: number;
-      fps?: number;
-      bitrate?: string;
-    } = {};
-
-    if (settings.codec) options.codec = settings.codec;
-    if (settings.width && settings.height) {
-      options.width = settings.width;
-      options.height = settings.height;
-    }
-    if (settings.fps) options.fps = settings.fps;
-    if (settings.bitrate) options.bitrate = settings.bitrate;
-
-    const args = buildConvertCommand(file, destPath, options);
-    const result = await runFfmpeg(args);
-
-    if (result.success) {
+    // Main operation (copy or convert)
+    const mainResult = await runMainOperation(file, destPath, settings);
+    if (mainResult.success) {
       copyCaption(file, fileName);
     }
-
     stepIndex++;
 
-    // Flip step after conversion
+    // Optional flip step
     if (settings.flipped) {
       const flipResult = await flipFile(destPath, fileName);
       if (!flipResult.success) {
-        // Clean up converted file if flip failed
         safeUnlink(destPath);
         results.push({ file: fileName, success: false, error: flipResult.error });
         stepIndex++;
-        onProgress({
-          file: fileName,
-          progress: Math.round((stepIndex / totalSteps) * 100),
-          status: 'error',
-        });
+        emitProgress(fileName, stepIndex, totalSteps, 'error', onProgress);
         continue;
       }
     }
 
     stepIndex++;
 
-    if (result.success) {
+    if (mainResult.success) {
       results.push({ file: fileName, success: true });
-      onProgress({
-        file: fileName,
-        progress: Math.round((stepIndex / totalSteps) * 100),
-        status: 'done',
-      });
+      emitProgress(fileName, stepIndex, totalSteps, 'done', onProgress);
     } else {
-      // Clean up failed output
       safeUnlink(destPath);
-      results.push({ file: fileName, success: false, error: result.error });
-      onProgress({
-        file: fileName,
-        progress: Math.round((stepIndex / totalSteps) * 100),
-        status: 'error',
-      });
+      results.push({ file: fileName, success: false, error: mainResult.error });
+      emitProgress(fileName, stepIndex, totalSteps, 'error', onProgress);
     }
   }
 
