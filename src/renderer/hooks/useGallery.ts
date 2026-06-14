@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { useAppState, useAppDispatch } from '@renderer/store/app-state';
 
 export function useGallery() {
-  const { galleryFiles, selectedFiles } = useAppState();
+  const { galleryFiles, selectedFiles, activeTab } = useAppState();
   const dispatch = useAppDispatch();
 
   const refreshGallery = useCallback(async () => {
@@ -10,10 +10,10 @@ export function useGallery() {
     dispatch({ type: 'SET_GALLERY_FILES', payload: result.files });
   }, [dispatch]);
 
-  // Auto-refresh when switching to gallery
+  // Auto-refresh on mount and when switching to gallery tab
   useEffect(() => {
     refreshGallery();
-  }, [refreshGallery]);
+  }, [refreshGallery, activeTab]);
 
   const toggleFileSelection = useCallback(
     (path: string) => {

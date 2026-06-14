@@ -2,9 +2,6 @@ import fs from 'fs';
 import { getThumbnailPath, getCaptionPath } from '@shared/utils';
 import { writeCaption } from './caption.service';
 import type { AutoCaptionResult } from '@shared/types';
-import { IPC_CHANNELS } from '@shared/ipc';
-import electron from 'electron';
-const { BrowserWindow } = electron;
 
 const SYSTEM_PROMPT =
   'You are a helpful assistant that writes short, descriptive captions for video clips used in AI training data.\n' +
@@ -28,6 +25,9 @@ export interface AutoCaptionProgressEvent {
 }
 
 export type ProgressCallback = (event: AutoCaptionProgressEvent) => void;
+
+/** Callback invoked when a caption is successfully written, for reactive UI updates. */
+export type CaptionChangedCallback = (filePath: string, content: string) => void;
 
 function parseCaption(response: string): string {
   const idx = response.indexOf('Caption:');
@@ -55,6 +55,7 @@ async function captionFile(
   filePath: string,
   config: AutoCaptionConfig,
   shouldCancel: () => boolean,
+  onCaptionChanged?: CaptionChangedCallback,
 ): Promise<{ success: boolean; error?: string }> {
   const thumbnailPath = getThumbnailPath(filePath);
 
@@ -149,14 +150,7 @@ async function captionFile(
 
     const caption = parseCaption(content);
     const result = writeCaption(filePath, caption);
-
-    // Emit caption:changed event so renderer stores update reactively
-    const windows = BrowserWindow.getAllWindows();
-    const win = windows[0];
-    win?.webContents.send(IPC_CHANNELS.CAPTION_CHANGED, {
-      filePath,
-      content: caption,
-    });
+    onCaptionChanged?.(filePath, caption);
 
     if (!result.success) {
       return { success: false, error: 'Failed to write caption file' };
@@ -181,6 +175,7 @@ export async function runAutoCaption(
   config: AutoCaptionConfig,
   onProgress: ProgressCallback,
   shouldCancel: () => boolean,
+  onCaptionChanged?: CaptionChangedCallback,
 ): Promise<{ results: AutoCaptionResult[] }> {
   const results: AutoCaptionResult[] = [];
   const total = files.length;
@@ -194,7 +189,7 @@ export async function runAutoCaption(
     onProgress({ file, current: i, total, status: 'processing' });
 
     try {
-      const result = await captionFile(file, config, shouldCancel);
+      const result = await captionFile(file, config, shouldCancel, onCaptionChanged);
       if (result.error === 'Cancelled') {
         break;
       }

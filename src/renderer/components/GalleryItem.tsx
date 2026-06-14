@@ -26,16 +26,6 @@ export function GalleryItem({ file, onOpenExpanded, onDelete, onToggleSelect }: 
     store.ensureLoaded(file.path);
   }, [file.path, store]);
 
-  // Listen for caption changes from other sources (auto-caption, other tabs)
-  useEffect(() => {
-    const cleanup = window.electronAPI.onCaptionChanged((data) => {
-      if (data.filePath === file.path) {
-        // Store is updated automatically via the event listener
-      }
-    });
-    return cleanup;
-  }, [file.path]);
-
   useEffect(() => {
     const checkThumb = async () => {
       const thumbPath = file.path + '.thumb.jpg';

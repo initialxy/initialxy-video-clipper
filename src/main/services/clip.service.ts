@@ -5,10 +5,7 @@ import { formatCounter, getBaseName, getExtension } from '@shared/utils';
 import { runFfmpeg } from './ffmpeg-executor';
 import { ensureDir, safeUnlink } from '@main/utils';
 import type { ClipResult } from '@shared/types';
-
-const PROJECT_ROOT = process.cwd();
-const OUTPUTS_DIR = path.join(PROJECT_ROOT, 'outputs');
-const COUNTERS_FILE = path.join(PROJECT_ROOT, 'clip-counters.json');
+import { OUTPUTS_DIR, COUNTERS_FILE } from '@main/paths';
 
 function ensureOutputsDir(): void {
   ensureDir(OUTPUTS_DIR);

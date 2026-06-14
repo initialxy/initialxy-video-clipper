@@ -1,5 +1,6 @@
 /** Settings key names for persistent storage */
 export const SETTINGS_KEYS = {
+  CLIP_LENGTH: 'clip_length',
   CONVERT_CODEC: 'convert_codec',
   CONVERT_WIDTH: 'convert_width',
   CONVERT_HEIGHT: 'convert_height',

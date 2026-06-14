@@ -172,6 +172,10 @@ export function registerIpcHandlers(): void {
           win?.webContents.send(IPC_CHANNELS.AUTO_CAPTION_PROGRESS, progressEvent);
         },
         checkCancelled,
+        (filePath, content) => {
+          const win = getMainWindow();
+          win?.webContents.send(IPC_CHANNELS.CAPTION_CHANGED, { filePath, content });
+        },
       );
 
       return { success: true, results };

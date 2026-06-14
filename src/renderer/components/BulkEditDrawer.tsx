@@ -18,6 +18,7 @@ import { Button } from '@renderer/components/ui/button';
 import { Textarea } from '@renderer/components/ui/textarea';
 import { Separator } from '@renderer/components/ui/separator';
 import { useAppState, useAppDispatch } from '@renderer/store/app-state';
+import { useCaptionStore } from '@renderer/store/caption-store';
 
 interface BulkEditDrawerProps {
   onClose: () => void;
@@ -26,6 +27,7 @@ interface BulkEditDrawerProps {
 export function BulkEditDrawer({ onClose }: BulkEditDrawerProps) {
   const { selectedFiles, isBulkEditDrawerOpen } = useAppState();
   const dispatch = useAppDispatch();
+  const store = useCaptionStore();
 
   const [editText, setEditText] = useState('');
   const [insertOnlyIfNotFound, setInsertOnlyIfNotFound] = useState(false);
@@ -33,69 +35,59 @@ export function BulkEditDrawer({ onClose }: BulkEditDrawerProps) {
   const [replaceText, setReplaceText] = useState('');
   const [isApplying, setIsApplying] = useState(false);
 
-  const applyToFiles = async (text: string, mode: 'prepend' | 'append', checkExists: boolean) => {
+  const applyToFiles = (text: string, mode: 'prepend' | 'append', checkExists: boolean) => {
     if (selectedFiles.size === 0 || !text.trim()) return;
-    setIsApplying(true);
 
     const files = Array.from(selectedFiles);
     const trimmedText = text.trim();
     const lowerText = trimmedText.toLowerCase();
 
     for (const filePath of files) {
-      try {
-        const result = await window.electronAPI.readCaption(filePath);
-        let current = result.content ?? '';
+      store.ensureLoaded(filePath);
+      let current = store.getCaption(filePath);
 
-        if (checkExists && current.toLowerCase().includes(lowerText)) {
-          continue;
-        }
-
-        if (mode === 'prepend') {
-          current = trimmedText + current;
-        } else {
-          current = current + trimmedText;
-        }
-
-        await window.electronAPI.writeCaption({ filePath, content: current });
-      } catch {
-        // Silently fail
+      if (checkExists && current.toLowerCase().includes(lowerText)) {
+        continue;
       }
+
+      if (mode === 'prepend') {
+        current = trimmedText + current;
+      } else {
+        current = current + trimmedText;
+      }
+
+      store.setCaption(filePath, current);
     }
-
-    setIsApplying(false);
   };
 
-  const handlePrepend = async () => {
-    await applyToFiles(editText, 'prepend', insertOnlyIfNotFound);
-  };
-
-  const handleAppend = async () => {
-    await applyToFiles(editText, 'append', insertOnlyIfNotFound);
-  };
-
-  const handleReplaceAll = async () => {
-    if (selectedFiles.size === 0 || !searchText.trim()) return;
+  const handlePrepend = () => {
+    applyToFiles(editText, 'prepend', insertOnlyIfNotFound);
     setIsApplying(true);
+  };
+
+  const handleAppend = () => {
+    applyToFiles(editText, 'append', insertOnlyIfNotFound);
+    setIsApplying(true);
+  };
+
+  const handleReplaceAll = () => {
+    if (selectedFiles.size === 0 || !searchText.trim()) return;
 
     const files = Array.from(selectedFiles);
     const search = searchText.trim();
     const lowerSearch = search.toLowerCase();
 
     for (const filePath of files) {
-      try {
-        const result = await window.electronAPI.readCaption(filePath);
-        let current = result.content ?? '';
+      store.ensureLoaded(filePath);
+      let current = store.getCaption(filePath);
 
-        if (current.toLowerCase().includes(lowerSearch)) {
-          current = current.split(search).join(replaceText);
-          await window.electronAPI.writeCaption({ filePath, content: current });
-        }
-      } catch {
-        // Silently fail
+      if (current.toLowerCase().includes(lowerSearch)) {
+        current = current.split(search).join(replaceText);
+        store.setCaption(filePath, current);
       }
     }
 
-    setIsApplying(false);
+    setIsApplying(true);
   };
 
   const handleClose = () => {
@@ -189,7 +181,7 @@ export function BulkEditDrawer({ onClose }: BulkEditDrawerProps) {
                 <FieldContent>
                   <Button
                     onClick={handleReplaceAll}
-                    disabled={isApplying || !searchText.trim() || selectedFiles.size === 0}
+                    disabled={!searchText.trim() || selectedFiles.size === 0}
                     className="w-full"
                   >
                     Replace All

@@ -1,13 +1,7 @@
-import {
-  createContext,
-  useContext,
-  useReducer,
-  type ReactNode,
-  type Dispatch,
-  useEffect,
-  useRef,
-} from 'react';
+import { createContext, useContext, useReducer, type ReactNode, type Dispatch } from 'react';
 import type { GalleryFile, VideoInfo } from '@shared/types';
+import { SETTINGS_KEYS } from '@shared/constants';
+import { useSettingsSync } from '@renderer/hooks/useSettingsSync';
 
 export type ActiveTab = 'video' | 'gallery';
 
@@ -56,8 +50,6 @@ type AppAction =
   | { type: 'SET_AUTO_CAPTION_DRAWER_OPEN'; payload: boolean }
   | { type: 'SET_AUTO_CAPTIONING'; payload: boolean }
   | { type: 'SET_CURRENT_TIME'; payload: number };
-
-const CLIP_LENGTH_KEY = 'clip_length';
 
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
@@ -138,96 +130,74 @@ const initialState: AppState = {
 const AppStateContext = createContext<AppState>(initialState);
 const AppDispatchContext = createContext<Dispatch<AppAction>>(() => {});
 
+// Stable setting definitions — defined outside component to avoid recreation
+const SETTINGS_DEFS = [
+  {
+    key: SETTINGS_KEYS.CLIP_LENGTH,
+    actionType: 'SET_CLIP_LENGTH' as const,
+    parse: (raw: string | undefined) => {
+      const val = parseFloat(raw ?? '10');
+      return isNaN(val) || val <= 0 ? 10 : val;
+    },
+    serialize: (v: unknown) => String(v),
+    getValue: (s: AppState) => s.clipLength,
+  },
+  {
+    key: SETTINGS_KEYS.CONVERT_CODEC,
+    actionType: 'SET_CONVERT_CODEC' as const,
+    parse: (raw: string | undefined) => raw ?? '',
+    serialize: (v: unknown) => v as string,
+    getValue: (s: AppState) => s.convertCodec,
+  },
+  {
+    key: SETTINGS_KEYS.CONVERT_WIDTH,
+    actionType: 'SET_CONVERT_WIDTH' as const,
+    parse: (raw: string | undefined) => {
+      const w = parseInt(raw ?? '', 10);
+      return isNaN(w) || w <= 0 ? 0 : w;
+    },
+    serialize: (v: unknown) => ((v as number) ? String(v) : ''),
+    getValue: (s: AppState) => s.convertWidth,
+  },
+  {
+    key: SETTINGS_KEYS.CONVERT_HEIGHT,
+    actionType: 'SET_CONVERT_HEIGHT' as const,
+    parse: (raw: string | undefined) => {
+      const h = parseInt(raw ?? '', 10);
+      return isNaN(h) || h <= 0 ? 0 : h;
+    },
+    serialize: (v: unknown) => ((v as number) ? String(v) : ''),
+    getValue: (s: AppState) => s.convertHeight,
+  },
+  {
+    key: SETTINGS_KEYS.CONVERT_FPS,
+    actionType: 'SET_CONVERT_FPS' as const,
+    parse: (raw: string | undefined) => parseFloat(raw ?? '0') || 0,
+    serialize: (v: unknown) => String(v),
+    getValue: (s: AppState) => s.convertFps,
+  },
+  {
+    key: SETTINGS_KEYS.CONVERT_BITRATE,
+    actionType: 'SET_CONVERT_BITRATE' as const,
+    parse: (raw: string | undefined) => raw ?? '',
+    serialize: (v: unknown) => v as string,
+    getValue: (s: AppState) => s.convertBitrate,
+  },
+  {
+    key: SETTINGS_KEYS.CONVERT_FLIPPED,
+    actionType: 'SET_CONVERT_FLIPPED' as const,
+    parse: (raw: string | undefined) => raw === 'true',
+    serialize: (v: unknown) => String(v),
+    getValue: (s: AppState) => s.convertFlipped,
+  },
+] as const;
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
-  // Load clip length from settings on mount
-  useEffect(() => {
-    window.electronAPI.getSetting(CLIP_LENGTH_KEY).then((res) => {
-      const val = parseFloat(res.value ?? '10');
-      if (!isNaN(val) && val > 0) {
-        dispatch({ type: 'SET_CLIP_LENGTH', payload: val });
-      }
-    });
-  }, []);
-
-  // Save clip length to settings when it changes
-  const prevClipLength = useRef(state.clipLength);
-  useEffect(() => {
-    if (prevClipLength.current !== state.clipLength) {
-      prevClipLength.current = state.clipLength;
-      window.electronAPI.setSetting(CLIP_LENGTH_KEY, String(state.clipLength));
-    }
-  }, [state.clipLength]);
-
-  // Load convert settings from settings on mount
-  useEffect(() => {
-    Promise.all([
-      window.electronAPI.getSetting('convert_codec'),
-      window.electronAPI.getSetting('convert_width'),
-      window.electronAPI.getSetting('convert_height'),
-      window.electronAPI.getSetting('convert_fps'),
-      window.electronAPI.getSetting('convert_bitrate'),
-      window.electronAPI.getSetting('convert_flipped'),
-    ]).then(([codecRes, widthRes, heightRes, fpsRes, bitrateRes, flippedRes]) => {
-      const codec = codecRes.value ?? '';
-      const w = parseInt(widthRes.value ?? '', 10);
-      const h = parseInt(heightRes.value ?? '', 10);
-      const fps = parseFloat(fpsRes.value ?? '0') || 0;
-      const bitrate = bitrateRes.value ?? '';
-      const flipped = flippedRes.value === 'true';
-      dispatch({ type: 'SET_CONVERT_CODEC', payload: codec });
-      dispatch({ type: 'SET_CONVERT_WIDTH', payload: isNaN(w) || w <= 0 ? 0 : w });
-      dispatch({ type: 'SET_CONVERT_HEIGHT', payload: isNaN(h) || h <= 0 ? 0 : h });
-      dispatch({ type: 'SET_CONVERT_FPS', payload: fps });
-      dispatch({ type: 'SET_CONVERT_BITRATE', payload: bitrate });
-      dispatch({ type: 'SET_CONVERT_FLIPPED', payload: flipped });
-    });
-  }, []);
-
-  // Save convert settings to settings when they change
-  const prevConvertCodec = useRef(state.convertCodec);
-  const prevConvertWidth = useRef(state.convertWidth);
-  const prevConvertHeight = useRef(state.convertHeight);
-  const prevConvertFps = useRef(state.convertFps);
-  const prevConvertBitrate = useRef(state.convertBitrate);
-  const prevConvertFlipped = useRef(state.convertFlipped);
-  useEffect(() => {
-    const changed =
-      prevConvertCodec.current !== state.convertCodec ||
-      prevConvertWidth.current !== state.convertWidth ||
-      prevConvertHeight.current !== state.convertHeight ||
-      prevConvertFps.current !== state.convertFps ||
-      prevConvertBitrate.current !== state.convertBitrate ||
-      prevConvertFlipped.current !== state.convertFlipped;
-    if (changed) {
-      prevConvertCodec.current = state.convertCodec;
-      prevConvertWidth.current = state.convertWidth;
-      prevConvertHeight.current = state.convertHeight;
-      prevConvertFps.current = state.convertFps;
-      prevConvertBitrate.current = state.convertBitrate;
-      prevConvertFlipped.current = state.convertFlipped;
-      window.electronAPI.setSetting('convert_codec', state.convertCodec);
-      window.electronAPI.setSetting(
-        'convert_width',
-        state.convertWidth ? String(state.convertWidth) : '',
-      );
-      window.electronAPI.setSetting(
-        'convert_height',
-        state.convertHeight ? String(state.convertHeight) : '',
-      );
-      window.electronAPI.setSetting('convert_fps', String(state.convertFps));
-      window.electronAPI.setSetting('convert_bitrate', state.convertBitrate);
-      window.electronAPI.setSetting('convert_flipped', String(state.convertFlipped));
-    }
-  }, [
-    state.convertCodec,
-    state.convertWidth,
-    state.convertHeight,
-    state.convertFps,
-    state.convertBitrate,
-    state.convertFlipped,
-  ]);
+  // Synchronize settings: load on mount, save on change
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useSettingsSync(state, dispatch as any, SETTINGS_DEFS);
 
   return (
     <AppStateContext.Provider value={state}>

@@ -3,10 +3,7 @@ import path from 'path';
 import { spawn } from 'child_process';
 import { VIDEO_EXTENSIONS } from '@main/constants';
 import type { ConvertedFileInfo } from '@shared/types';
-
-const PROJECT_ROOT = process.cwd();
-const CONVERTED_DIR = path.join(PROJECT_ROOT, 'converted');
-const OUTPUTS_DIR = path.join(PROJECT_ROOT, 'outputs');
+import { CONVERTED_DIR, OUTPUTS_DIR } from '@main/paths';
 
 function countFrames(filePath: string): Promise<number> {
   return new Promise((resolve) => {

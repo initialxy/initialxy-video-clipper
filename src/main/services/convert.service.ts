@@ -6,8 +6,7 @@ import { getCaptionPath } from '@shared/utils';
 import { ensureDir, safeUnlink } from '@main/utils';
 import { readCaption, writeCaption } from './caption.service';
 import type { ConvertSettings, ConvertProgress } from '@shared/types';
-
-const CONVERTED_DIR = path.join(process.cwd(), 'converted');
+import { CONVERTED_DIR } from '@main/paths';
 
 export function isNoOpConversion(settings: ConvertSettings): boolean {
   return (

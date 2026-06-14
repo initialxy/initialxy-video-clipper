@@ -4,6 +4,8 @@ import { useAppState, useAppDispatch } from '@renderer/store/app-state';
 import { CaptionStoreProvider } from '@renderer/store/caption-store';
 import { useGallery } from '@renderer/hooks/useGallery';
 import { useLoadVideo } from '@renderer/hooks/useLoadVideo';
+import { useClipAction } from '@renderer/hooks/useClipAction';
+import { useAutoCaption } from '@renderer/hooks/useAutoCaption';
 import { TopBar } from '@renderer/components/TopBar';
 import { VideoPlayer } from '@renderer/components/VideoPlayer';
 import { GalleryView } from '@renderer/components/GalleryView';
@@ -23,34 +25,32 @@ import {
 } from '@renderer/components/ui/dialog';
 import { Button } from '@renderer/components/ui/button';
 import { cn } from '@renderer/lib/utils';
-import { SETTINGS_KEYS } from '@shared/constants';
-import type { AutoCaptionResult } from '@shared/types';
 import { CircleStop } from 'lucide-react';
 
-const AUTO_CAPTION_TOAST_ID = 'auto-caption-progress';
 const BULK_CONVERT_TOAST_ID = 'bulk-convert-progress';
 
 function AppContent() {
-  const {
-    activeTab,
-    currentVideo,
-    expandedFile,
-    selectedFiles,
-    currentTime,
-    clipLength,
-    isAutoCaptioning,
-  } = useAppState();
+  const { activeTab, currentVideo, expandedFile, selectedFiles, currentTime, isAutoCaptioning } =
+    useAppState();
   const dispatch = useAppDispatch();
   const { galleryFiles, refreshGallery, selectAll, isAllSelected, deleteFile } = useGallery();
   const loadVideo = useLoadVideo();
 
+  // Extracted hooks
+  const { handleClip, videoTimeRef } = useClipAction();
+  const { runAutoCaption } = useAutoCaption(selectedFiles);
+
+  // Delete confirmation state
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [expandedDeleteTarget, setExpandedDeleteTarget] = useState<string | null>(null);
   const [bulkDeleteCount, setBulkDeleteCount] = useState<number | null>(null);
+
+  // Drag & drop state
   const [isDragOver, setIsDragOver] = useState(false);
+
+  // Bulk convert progress tracking
   const convertTotalRef = useRef(0);
   const convertDoneRef = useRef(0);
-  const videoTimeRef = useRef(0);
 
   const handleTabChange = useCallback(
     (tab: 'video' | 'gallery') => {
@@ -58,6 +58,8 @@ function AppContent() {
     },
     [dispatch],
   );
+
+  // --- Drag & Drop ---
 
   const handleDrop = useCallback(
     async (filePath: string) => {
@@ -117,49 +119,7 @@ function AppContent() {
     [activeTab, handleDrop],
   );
 
-  const handleClipAction = useCallback(async () => {
-    if (!currentVideo) return;
-    const actualTime = videoTimeRef.current;
-    const remaining = currentVideo.duration - actualTime;
-
-    // remaining <= 0 falls through here — clips last n seconds with warning
-    if (remaining < clipLength) {
-      if (currentVideo.duration < clipLength) {
-        toast.error(`Cannot save clip — video is only ${currentVideo.duration.toFixed(2)}s long`);
-        return;
-      }
-
-      const start = currentVideo.duration - clipLength;
-      const result = await window.electronAPI.createClip({
-        inputPath: currentVideo.path,
-        outputPath: '',
-        start,
-        duration: clipLength,
-      });
-
-      if (result.success) {
-        refreshGallery();
-        toast.warning(`Clipped last ${clipLength}s instead`);
-      } else if (result.error) {
-        toast.error(result.error);
-      }
-      return;
-    }
-
-    const result = await window.electronAPI.createClip({
-      inputPath: currentVideo.path,
-      outputPath: '',
-      start: actualTime,
-      duration: clipLength,
-    });
-
-    if (result.success) {
-      refreshGallery();
-      toast.success('Clip saved');
-    } else if (result.error) {
-      toast.error(result.error);
-    }
-  }, [currentVideo, clipLength, refreshGallery]);
+  // --- Progress Toasts ---
 
   useEffect(() => {
     return window.electronAPI.onConvertProgress((data) => {
@@ -182,7 +142,7 @@ function AppContent() {
       if (data.status === 'processing') {
         toast.loading(`Auto-captioning ${data.current}/${data.total} file(s)`, {
           duration: Infinity,
-          id: AUTO_CAPTION_TOAST_ID,
+          id: 'auto-caption-progress',
           action: {
             label: <CircleStop className="text-destructive h-4 w-4" />,
             onClick: () => {
@@ -193,7 +153,7 @@ function AppContent() {
         });
       } else if (data.status === 'done' || data.status === 'error') {
         if (data.current === data.total) {
-          toast.dismiss(AUTO_CAPTION_TOAST_ID);
+          toast.dismiss('auto-caption-progress');
         }
       }
     });
@@ -220,6 +180,8 @@ function AppContent() {
     });
   }, [currentVideo, currentTime, refreshGallery]);
 
+  // --- Keyboard Shortcuts ---
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (activeTab !== 'video') return;
@@ -236,22 +198,26 @@ function AppContent() {
         return;
       if (e.key === 'c' || e.key === 'C') {
         e.preventDefault();
-        handleClipAction();
+        handleClip();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, handleClipAction]);
+  }, [activeTab, handleClip]);
+
+  // --- Selection ---
+
+  const handleToggleSelectAll = useCallback(() => {
+    selectAll(!isAllSelected);
+  }, [selectAll, isAllSelected]);
+
+  // --- Delete Handlers ---
 
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteTarget) return;
     await deleteFile(deleteTarget);
     setDeleteTarget(null);
   }, [deleteTarget, deleteFile]);
-
-  const handleToggleSelectAll = useCallback(() => {
-    selectAll(!isAllSelected);
-  }, [selectAll, isAllSelected]);
 
   const handleBulkDelete = useCallback(() => {
     if (selectedFiles.size === 0) return;
@@ -272,14 +238,6 @@ function AppContent() {
     }
   }, [bulkDeleteCount, selectedFiles, dispatch, refreshGallery]);
 
-  const handleCloseExpanded = useCallback(() => {
-    dispatch({ type: 'SET_EXPANDED_FILE', payload: null });
-  }, [dispatch]);
-
-  const handleCloseVideo = useCallback(() => {
-    dispatch({ type: 'SET_VIDEO', payload: null });
-  }, [dispatch]);
-
   const handleDeleteExpandedFile = useCallback(async () => {
     if (!expandedDeleteTarget) return;
     await deleteFile(expandedDeleteTarget);
@@ -288,61 +246,22 @@ function AppContent() {
     refreshGallery();
   }, [expandedDeleteTarget, deleteFile, dispatch, refreshGallery]);
 
-  const loadAutoCaptionConfig = useCallback(async (): Promise<{
-    baseUrl: string;
-    model: string;
-    apiKey: string;
-  }> => {
-    const res = await window.electronAPI.getSetting(SETTINGS_KEYS.AUTO_CAPTION_CONFIG);
-    if (res.value) {
-      try {
-        return JSON.parse(res.value) as { baseUrl: string; model: string; apiKey: string };
-      } catch {
-        // fall through
-      }
-    }
-    return { baseUrl: 'http://localhost:8080', model: 'model', apiKey: 'DUMMY' };
-  }, []);
+  // --- Closers ---
 
-  const handleAutoCaption = useCallback(
-    async (filePath?: string) => {
-      const files = filePath ? [filePath] : Array.from(selectedFiles);
-      if (files.length === 0) return;
+  const handleCloseExpanded = useCallback(() => {
+    dispatch({ type: 'SET_EXPANDED_FILE', payload: null });
+  }, [dispatch]);
 
-      dispatch({ type: 'SET_AUTO_CAPTIONING', payload: true });
-
-      const config = await loadAutoCaptionConfig();
-
-      try {
-        const res = await window.electronAPI.autoCaptionRun({ files, config });
-        const results = res.results ?? [];
-        const succeeded = results.filter((r: AutoCaptionResult) => r.success).length;
-        const failed = results.filter((r: AutoCaptionResult) => !r.success).length;
-
-        toast.dismiss(AUTO_CAPTION_TOAST_ID);
-
-        if (failed > 0) {
-          toast.error(`Auto-caption failed for ${failed} file(s)`);
-        } else {
-          toast.info(`Auto-captioned ${succeeded} file(s)`);
-        }
-        refreshGallery();
-      } catch {
-        toast.dismiss(AUTO_CAPTION_TOAST_ID);
-        toast.error('Auto-caption failed');
-      } finally {
-        dispatch({ type: 'SET_AUTO_CAPTIONING', payload: false });
-      }
-    },
-    [selectedFiles, dispatch, loadAutoCaptionConfig, refreshGallery],
-  );
+  const handleCloseVideo = useCallback(() => {
+    dispatch({ type: 'SET_VIDEO', payload: null });
+  }, [dispatch]);
 
   return (
     <CaptionStoreProvider>
       <div className="dark bg-background text-foreground flex h-screen flex-col overflow-hidden">
         {/* Top Bar */}
         <TopBar
-          onClip={handleClipAction}
+          onClip={handleClip}
           onRefreshGallery={refreshGallery}
           onTabChange={handleTabChange}
           onOpenBulkConvert={() => {
@@ -351,7 +270,7 @@ function AppContent() {
           onOpenBulkEdit={() => dispatch({ type: 'SET_BULK_EDIT_DRAWER_OPEN', payload: true })}
           onToggleSelectAll={handleToggleSelectAll}
           onBulkDelete={handleBulkDelete}
-          onAutoCaption={() => handleAutoCaption()}
+          onAutoCaption={() => runAutoCaption()}
           onOpenAutoCaptionSettings={() =>
             dispatch({ type: 'SET_AUTO_CAPTION_DRAWER_OPEN', payload: true })
           }
@@ -373,7 +292,7 @@ function AppContent() {
             <ExpandedPlayer
               filePath={expandedFile}
               onClose={handleCloseExpanded}
-              onAutoCaption={handleAutoCaption}
+              onAutoCaption={() => runAutoCaption(expandedFile)}
               onDelete={() => setExpandedDeleteTarget(expandedFile)}
             />
           ) : activeTab === 'video' ? (
@@ -404,12 +323,10 @@ function AppContent() {
           )}
         </div>
 
-        {/* LLM API Settings Drawer */}
+        {/* Drawers */}
         <AutoCaptionDrawer
           onClose={() => dispatch({ type: 'SET_AUTO_CAPTION_DRAWER_OPEN', payload: false })}
         />
-
-        {/* Bulk Convert Drawer */}
         <BulkConvertDrawer
           onClose={() => {}}
           onConvertStart={(total) => {
@@ -417,11 +334,9 @@ function AppContent() {
             convertDoneRef.current = 0;
           }}
         />
-
-        {/* Bulk Edit Drawer */}
         <BulkEditDrawer onClose={() => {}} />
 
-        {/* Delete Confirmation Modal */}
+        {/* Delete Confirmation Modal (single file from gallery) */}
         {deleteTarget && (
           <DeleteConfirmModal
             fileName={galleryFiles.find((f) => f.path === deleteTarget)?.name ?? 'Unknown'}
@@ -430,7 +345,7 @@ function AppContent() {
           />
         )}
 
-        {/* Expanded Player Delete Confirmation Modal */}
+        {/* Delete Confirmation Modal (from expanded player) */}
         {expandedDeleteTarget && (
           <DeleteConfirmModal
             fileName={galleryFiles.find((f) => f.path === expandedDeleteTarget)?.name ?? 'Unknown'}

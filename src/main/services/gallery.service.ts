@@ -6,9 +6,7 @@ import type { GalleryFile } from '@shared/types';
 import { deleteFileWithMetadata } from '@main/utils';
 import { VIDEO_EXTENSIONS } from '@main/constants';
 import { getCaptionPath } from '@shared/utils';
-
-const PROJECT_ROOT = process.cwd();
-const OUTPUTS_DIR = path.join(PROJECT_ROOT, 'outputs');
+import { OUTPUTS_DIR } from '@main/paths';
 
 export function scanOutputs(): GalleryFile[] {
   if (!fs.existsSync(OUTPUTS_DIR)) {
