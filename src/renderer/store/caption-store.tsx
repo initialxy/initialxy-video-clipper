@@ -28,7 +28,7 @@ export function CaptionStoreProvider({ children }: { children: React.ReactNode }
       return next;
     });
 
-    // Debounced write to disk (2s)
+    // Debounced write to disk (500ms)
     const existingTimer = saveTimerRef.current.get(filePath);
     if (existingTimer) {
       clearTimeout(existingTimer);

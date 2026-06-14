@@ -35,7 +35,7 @@ export function BulkEditDrawer({ onClose }: BulkEditDrawerProps) {
   const [replaceText, setReplaceText] = useState('');
   const [isApplying, setIsApplying] = useState(false);
 
-  const applyToFiles = (text: string, mode: 'prepend' | 'append', checkExists: boolean) => {
+  const applyToFiles = async (text: string, mode: 'prepend' | 'append', checkExists: boolean) => {
     if (selectedFiles.size === 0 || !text.trim()) return;
 
     const files = Array.from(selectedFiles);
@@ -43,7 +43,7 @@ export function BulkEditDrawer({ onClose }: BulkEditDrawerProps) {
     const lowerText = trimmedText.toLowerCase();
 
     for (const filePath of files) {
-      store.ensureLoaded(filePath);
+      await store.ensureLoaded(filePath);
       let current = store.getCaption(filePath);
 
       if (checkExists && current.toLowerCase().includes(lowerText)) {
@@ -60,13 +60,13 @@ export function BulkEditDrawer({ onClose }: BulkEditDrawerProps) {
     }
   };
 
-  const handlePrepend = () => {
-    applyToFiles(editText, 'prepend', insertOnlyIfNotFound);
+  const handlePrepend = async () => {
+    await applyToFiles(editText, 'prepend', insertOnlyIfNotFound);
     setIsApplying(true);
   };
 
-  const handleAppend = () => {
-    applyToFiles(editText, 'append', insertOnlyIfNotFound);
+  const handleAppend = async () => {
+    await applyToFiles(editText, 'append', insertOnlyIfNotFound);
     setIsApplying(true);
   };
 

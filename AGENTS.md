@@ -136,7 +136,7 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 
 ### IPC Channels
 
-17 channels defined in `src/shared/ipc.ts`. `ElectronAPI` in `env.d.ts` derives types from `IPCPayloads`/`IPCReturns`.
+18 channels defined in `src/shared/ipc.ts`. `ElectronAPI` in `env.d.ts` derives types from `IPCPayloads`/`IPCReturns`.
 
 | Channel | Direction | Payload | Returns |
 |---------|-----------|---------|---------|
@@ -145,6 +145,7 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 | `convert:progress` | M→R | `{ file, current, total, status }` | — |
 | | | Progress uses `current/total` format (same as auto-caption). `current` = completed steps, `total` = total steps (doubled when flipped). Status is `done` only after all steps for a file complete. |
 | `convert:warn-no-changes` | M→R | — | — |
+| | | Triggered when bulk conversion settings are all "same as source" (no-op). Renderer listens for this and auto-clips the remaining video from current playback position. |
 | `auto-caption:run` | R→M | `{ files[], config: { baseUrl, model, apiKey } }` | `{ success, results? }` |
 | `auto-caption:progress` | M→R | `{ file, current, total, status }` | — |
 | `auto-caption:interrupt` | R→M | — | `{ cancelled }` |
@@ -159,6 +160,8 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 | `app:open-file` | R→M | `{}` | `{ filePath?, cancelled }` |
 | `settings:get` | R→M | `{ key }` | `{ value? }` |
 | `settings:set` | R→M | `{ key, value }` | `{ success }` |
+| `caption:changed` | M→R | `{ filePath, content }` | — |
+| | | Fired by main process when a caption is written (auto-caption, IPC write). Renderer's caption store listens to stay in sync. |
 
 ### Path Aliases
 
@@ -320,4 +323,5 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 - **Flipped copy** runs a second ffmpeg `hflip` step after encoding; captions copied with `left` ↔ `right` word swap via null-byte placeholder.
 - **Re-encode clipping** uses `-ss` after `-i` for frame accuracy (not stream copy).
 - **Auto-caption service** accepts `onCaptionChanged` callback instead of reaching into Electron directly — decoupled and testable.
+- **Auto-caption reasoning models** — service handles `reasoning_content` from reasoning models (DeepSeek R1, etc.) by extracting caption text after closing `<thinking>`/`<reasoning>` tags, falling back to the raw reasoning content if no separate caption is found.
 - **BulkEditDrawer** uses `useCaptionStore()` for reactive UI updates (reads/writes go through the store's debounce + IPC sync).
