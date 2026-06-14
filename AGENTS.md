@@ -41,8 +41,9 @@ src/
 │   ├── ipc-handlers.ts        # Thin IPC route delegates → services
 │   ├── ffmpeg.ts              # Pure command builders (buildClipCommand, buildConvertCommand, buildThumbnailCommand)
 │   ├── constants.ts           # VIDEO_EXTENSIONS
-│   ├── db.ts                  # JSON config file persistence
+│   ├── settings.ts           # JSON config file persistence (replaces old db.ts)
 │   ├── utils.ts               # Main-process utilities (safeUnlink, ensureDir, deleteFileWithMetadata)
+│   ├── paths.ts               # Centralized directory paths (OUTPUTS_DIR, CONVERTED_DIR, COUNTERS_FILE)
 │   └── services/
 │       ├── ffmpeg-executor.ts # Shared runFfmpeg (child_process spawn)
 │       ├── ffprobe.service.ts # getVideoInfo, checkFfmpeg
@@ -51,7 +52,7 @@ src/
 │       ├── gallery.service.ts # File scanning, thumbnail caching
 │       ├── caption.service.ts # Caption file CRUD
 │       ├── converted.service.ts # scanConverted (frame count scanning for converted/ directory)
-│       └── auto-caption.service.ts # Sequential LLM auto-captioning
+│       └── auto-caption.service.ts # Sequential LLM auto-captioning (accepts onCaptionChanged callback)
 ├── preload/
 │   └── index.ts               # ContextBridge (types from @shared/ipc)
 ├── renderer/                  # React frontend
@@ -78,9 +79,12 @@ src/
 │   ├── hooks/
 │   │   ├── useVideoPlayer.ts             # Playback state (play/pause/seek/mute/volume)
 │   │   ├── useVideoKeyboardShortcuts.ts  # Global keyboard shortcuts (Space, M, arrows, Escape)
-│   │   ├── useGallery.ts                 # Gallery file scanning & state
+│   │   ├── useGallery.ts                 # Gallery file scanning & state (refreshes on tab switch)
 │   │   ├── useLoadVideo.ts               # Shared video loading (getVideoInfo → SET_VIDEO → SET_TAB)
-│   │   └── useDebouncedCallback.ts       # Shared debounced callback wrapper
+│   │   ├── useDebouncedCallback.ts       # Shared debounced callback wrapper
+│   │   ├── useSettingsSync.ts           # Generic settings load-on-mount + save-on-change
+│   │   ├── useClipAction.ts             # Clip action with edge case handling
+│   │   └── useAutoCaption.ts            # Auto-caption orchestration (config + run + toast)
 │   ├── lib/utils.ts           # cn function
 │   ├── store/app-state.tsx    # Central state (context + useReducer)
 │   │   └── caption-store.tsx  # Reactive caption cache with debounced persistence (0.5s)
@@ -94,7 +98,8 @@ src/
 - **Service layer** — business logic in `src/main/services/`. IPC handlers are thin delegates.
 - **ffmpeg** — pure command builder (`ffmpeg.ts`) + separate executor (`ffmpeg-executor.ts`).
 - **State** — React context + `useReducer`. No external state libs.
-- **Settings** — JSON config file in main process, accessed via IPC.
+- **Settings** — JSON config file in main process, accessed via IPC. Renderer uses `useSettingsSync` hook for generic load/save synchronization.
+- **Paths** — Directory paths centralized in `src/main/paths.ts` (OUTPUTS_DIR, CONVERTED_DIR, COUNTERS_FILE). Services import from here instead of defining locally.
 - **UI primitives** — Base UI (`@base-ui/react`) exclusively. Never `@radix-ui/react-*`.
 - **No `any` in IPC** — everything typed from `src/shared/ipc.ts`.
 
@@ -314,3 +319,5 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 - **Keyboard shortcuts** registered via `window.addEventListener(..., { capture: true })` with `isInputFocused()` guard.
 - **Flipped copy** runs a second ffmpeg `hflip` step after encoding; captions copied with `left` ↔ `right` word swap via null-byte placeholder.
 - **Re-encode clipping** uses `-ss` after `-i` for frame accuracy (not stream copy).
+- **Auto-caption service** accepts `onCaptionChanged` callback instead of reaching into Electron directly — decoupled and testable.
+- **BulkEditDrawer** uses `useCaptionStore()` for reactive UI updates (reads/writes go through the store's debounce + IPC sync).
