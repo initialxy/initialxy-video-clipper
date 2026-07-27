@@ -137,7 +137,9 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
   - Each parameter is **optional** — the user may change only what they need while keeping everything else from the source.
   - **Codec**: Dropdown with a `"Same as source"` option (default). Other options: `libx264`, `libx265`, `libsvtav1`, `mpeg4`. A "clear" button resets to source.
   - **Resolution**: Width and height inputs with a `"Same as source"` toggle. When set, the app scales up to cover the target resolution (`force_original_aspect_ratio=increase`) and crops the excess to fill the frame without stretching (no letterboxing/pillarbox). A "clear" button resets to source.
-   - **Frame rate**: Numeric input for target fps (e.g., 24, 30, 60) with a `"Same as source"` toggle. When set, uses motion-compensated frame interpolation (`minterpolate=fps=X:mi_mode=mci`) in the video filter chain to generate intermediate frames rather than dropping/duplicating frames. A "clear" button resets to source.
+   - **Frame Control**: A "Frame Control" field with a left/right toggle to choose between two mutually exclusive modes:
+     - **Frame Rate** (default): Numeric input for target fps (e.g., 24, 30, 60) with a `"Same as source"` toggle. When set, uses motion-compensated frame interpolation (`minterpolate=fps=X:mi_mode=mci`) in the video filter chain to generate intermediate frames rather than dropping/duplicating frames. A "clear" button resets to source.
+     - **Total Frames**: Numeric input for an exact target frame count (e.g., 49, 121, 1441). When set, the service probes each source video to determine its actual frame count (via ffmpeg decode) and source fps, then calculates the precise effective fps as `targetFrames * sourceFps / sourceFrameCount`. An explicit `-t` duration is also set to guarantee the exact frame count. This mode is designed for video diffusion models that require an exact number of frames per clip.
   - **Bitrate**: Numeric input for target bitrate (e.g., `5000k`, `10M`) with a `"Same as source"` toggle. A "clear" button resets to source.
   - **Create flipped copy**: A checkbox option. When checked, after the encoding step (or file copy for no-op), a second ffmpeg step runs `-vf "hflip"` to create a horizontally flipped copy. Output file is named `<base>_flipped.<ext>`. The accompanying caption file is also copied with all occurrences of "left" ↔ "right" swapped (using a placeholder-based 3-step replace to avoid collision).
   - **Settings persistence**: The drawer remembers the last-used settings via JSON config file (`src/main/settings.ts`). When the user reopens the drawer, the previous settings are restored.
@@ -355,10 +357,11 @@ video-clipper/
   ```
 - **Bulk convert command template** (params omitted if "Same as source"):
   ```
-  ffmpeg -y -i <input> [-vf "scale=W:H:force_original_aspect_ratio=increase,crop=W:H,minterpolate=fps=X:mi_mode=mci"] [-c:v <codec>] [-b:v <bitrate>] -c:a copy <output>
+  ffmpeg -y -i <input> [-t <duration>] [-vf "scale=W:H:force_original_aspect_ratio=increase,crop=W:H,minterpolate=fps=X:mi_mode=mci"] [-c:v <codec>] [-b:v <bitrate>] -c:a copy <output>
   ```
   - Resolution: scales up to cover target (`force_original_aspect_ratio=increase`), then crops excess.
   - Frame rate: uses motion-compensated interpolation (`minterpolate`) combined into the `-vf` chain.
+  - Total frames mode: probes source frame count via ffmpeg decode, calculates `effectiveFps = targetFrames * sourceFps / sourceFrameCount`, and sets `-t duration` (`sourceFrameCount / sourceFps`) to guarantee exact output frame count.
   - If all params are "Same as source", skip ffmpeg entirely and copy the file directly.
 - **Thumbnail extraction**:
   ```
@@ -409,9 +412,9 @@ video-clipper/
 ### Settings Persistence
 
 - Use JSON config file (`src/main/settings.ts`) for persistent storage of app settings and preferences.
-- Store: bulk conversion settings (codec, resolution, fps, bitrate), clip length default, auto-caption configuration.
+- Store: bulk conversion settings (codec, resolution, fps mode, fps, total frames, bitrate), clip length default, auto-caption configuration.
 - Settings are loaded on app start and saved on change.
-- Settings keys: `clip_length`, `convert_codec`, `convert_width`, `convert_height`, `convert_fps`, `convert_bitrate`, `convert_flipped`, `AUTO_CAPTION_CONFIG` (object: `{ baseUrl: string, model: string, apiKey: string }`, defaults: `{ baseUrl: "http://localhost:8080", model: "model", apiKey: "DUMMY" }`).
+- Settings keys: `clip_length`, `convert_codec`, `convert_width`, `convert_height`, `convert_fps_mode` (`'fps'` | `'frames'`), `convert_fps`, `convert_total_frames`, `convert_bitrate`, `convert_flipped`, `AUTO_CAPTION_CONFIG` (object: `{ baseUrl: string, model: string, apiKey: string }`, defaults: `{ baseUrl: "http://localhost:8080", model: "model", apiKey: "DUMMY" }`).
 
 ### Auto-caption LLM Integration
 

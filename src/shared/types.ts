@@ -19,7 +19,9 @@ export interface ConvertSettings {
   codec: string; // "" means "same as source"
   width: number; // 0 means "same as source"
   height: number; // 0 means "same as source"
-  fps: number; // 0 means "same as source"
+  fps: number; // 0 means "same as source" (used when fpsMode === 'fps')
+  fpsMode: 'fps' | 'frames'; // which frame control mode is active
+  totalFrames: number; // 0 means not set (used when fpsMode === 'frames')
   bitrate: string; // "" means "same as source"
   flipped: boolean; // create a horizontally flipped copy
 }

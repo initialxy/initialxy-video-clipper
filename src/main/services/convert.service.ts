@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { buildConvertCommand, buildFlipCommand } from '@main/ffmpeg';
 import { runFfmpeg } from './ffmpeg-executor';
+import { getVideoInfo, getFrameCount } from './ffprobe.service';
 import { getCaptionPath } from '@shared/utils';
 import { ensureDir, safeUnlink } from '@main/utils';
 import { readCaption, writeCaption } from './caption.service';
@@ -10,7 +11,12 @@ import { CONVERTED_DIR } from '@main/paths';
 
 export function isNoOpConversion(settings: ConvertSettings): boolean {
   return (
-    !settings.codec && !settings.width && !settings.height && !settings.fps && !settings.bitrate
+    !settings.codec &&
+    !settings.width &&
+    !settings.height &&
+    !settings.fps &&
+    settings.totalFrames <= 0 &&
+    !settings.bitrate
   );
 }
 
@@ -64,7 +70,10 @@ async function flipFile(
   return { success: true };
 }
 
-function buildConvertOptions(settings: ConvertSettings): {
+function buildConvertOptions(
+  settings: ConvertSettings,
+  effectiveFps?: number,
+): {
   codec?: string;
   width?: number;
   height?: number;
@@ -83,7 +92,12 @@ function buildConvertOptions(settings: ConvertSettings): {
     options.width = settings.width;
     options.height = settings.height;
   }
-  if (settings.fps) options.fps = settings.fps;
+  // Use effectiveFps (calculated from totalFrames) or settings.fps (direct FPS mode)
+  if (effectiveFps) {
+    options.fps = effectiveFps;
+  } else if (settings.fps) {
+    options.fps = settings.fps;
+  }
   if (settings.bitrate) options.bitrate = settings.bitrate;
   return options;
 }
@@ -92,13 +106,14 @@ async function runMainOperation(
   inputPath: string,
   destPath: string,
   settings: ConvertSettings,
+  effectiveFps?: number,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     if (isNoOpConversion(settings)) {
       fs.copyFileSync(inputPath, destPath);
       return { success: true };
     }
-    const options = buildConvertOptions(settings);
+    const options = buildConvertOptions(settings, effectiveFps);
     const args = buildConvertCommand(inputPath, destPath, options);
     const result = await runFfmpeg(args);
     return { success: result.success, error: result.error };
@@ -139,10 +154,30 @@ export async function bulkConvert(
     const destPath = path.join(CONVERTED_DIR, fileName);
     let stepIndex = settings.flipped ? i * 2 : i;
 
+    // Calculate effective FPS when totalFrames mode is active
+    let effectiveFps: number | undefined;
+    if (settings.fpsMode === 'frames' && settings.totalFrames > 0) {
+      try {
+        const [info, sourceFrameCount] = await Promise.all([
+          getVideoInfo(file),
+          getFrameCount(file),
+        ]);
+        // targetFps = (totalFrames + 1) * sourceFps / sourceFrameCount
+        // Round up to nearest 0.1 to ensure at least targetFrames.
+        // + 1 because end frame end to be dropped.
+        if (sourceFrameCount > 0 && info.fps > 0) {
+          const rawFps = ((settings.totalFrames + 1) * info.fps) / sourceFrameCount;
+          effectiveFps = Math.ceil(rawFps * 10) / 10;
+        }
+      } catch {
+        // If probe fails, skip FPS calculation for this file
+      }
+    }
+
     emitProgress(fileName, stepIndex, totalSteps, 'converting', onProgress);
 
     // Main operation (copy or convert)
-    const mainResult = await runMainOperation(file, destPath, settings);
+    const mainResult = await runMainOperation(file, destPath, settings, effectiveFps);
     if (mainResult.success) {
       copyCaption(file, fileName);
     }

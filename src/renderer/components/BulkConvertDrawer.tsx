@@ -44,6 +44,8 @@ export function BulkConvertDrawer({ onClose, onConvertStart }: BulkConvertDrawer
     convertWidth,
     convertHeight,
     convertFps,
+    convertFpsMode,
+    convertTotalFrames,
     convertBitrate,
     convertFlipped,
   } = useAppState();
@@ -66,6 +68,8 @@ export function BulkConvertDrawer({ onClose, onConvertStart }: BulkConvertDrawer
         width: convertWidth,
         height: convertHeight,
         fps: convertFps,
+        fpsMode: convertFpsMode,
+        totalFrames: convertTotalFrames,
         bitrate: convertBitrate,
         flipped: convertFlipped,
       },
@@ -159,31 +163,97 @@ export function BulkConvertDrawer({ onClose, onConvertStart }: BulkConvertDrawer
               </Field>
 
               <Field>
-                <FieldLabel>Frame Rate</FieldLabel>
+                <FieldLabel>Frame Control</FieldLabel>
                 <FieldContent>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="fps"
-                      type="number"
-                      step="any"
-                      placeholder="Same as source"
-                      value={convertFps > 0 ? convertFps : ''}
-                      onChange={(e) =>
-                        dispatch({
-                          type: 'SET_CONVERT_FPS',
-                          payload: parseFloat(e.target.value) || 0,
-                        })
-                      }
-                    />
-                    {convertFps > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => dispatch({ type: 'SET_CONVERT_FPS', payload: 0 })}
-                        title="Reset to same as source"
+                  <div className="flex flex-col gap-2">
+                    {/* Mode toggle */}
+                    <div className="flex overflow-hidden rounded-lg border">
+                      <button
+                        type="button"
+                        className={cn(
+                          'flex-1 px-3 py-1.5 text-sm font-medium transition-colors',
+                          convertFpsMode === 'fps'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted hover:bg-muted/80',
+                        )}
+                        onClick={() => dispatch({ type: 'SET_CONVERT_FPS_MODE', payload: 'fps' })}
                       >
-                        <X className="h-3.5 w-3.5" />
-                      </Button>
+                        Frame Rate
+                      </button>
+                      <button
+                        type="button"
+                        className={cn(
+                          'flex-1 border-l px-3 py-1.5 text-sm font-medium transition-colors',
+                          convertFpsMode === 'frames'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted hover:bg-muted/80',
+                        )}
+                        onClick={() =>
+                          dispatch({ type: 'SET_CONVERT_FPS_MODE', payload: 'frames' })
+                        }
+                      >
+                        Total Frames
+                      </button>
+                    </div>
+
+                    {/* FPS input */}
+                    {convertFpsMode === 'fps' && (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="fps"
+                          type="number"
+                          step="any"
+                          placeholder="Same as source"
+                          value={convertFps > 0 ? convertFps : ''}
+                          onChange={(e) =>
+                            dispatch({
+                              type: 'SET_CONVERT_FPS',
+                              payload: parseFloat(e.target.value) || 0,
+                            })
+                          }
+                        />
+                        {convertFps > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() => dispatch({ type: 'SET_CONVERT_FPS', payload: 0 })}
+                            title="Reset to same as source"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Total frames input */}
+                    {convertFpsMode === 'frames' && (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="total-frames"
+                          type="number"
+                          step="1"
+                          placeholder="Exact frame count"
+                          value={convertTotalFrames > 0 ? convertTotalFrames : ''}
+                          onChange={(e) =>
+                            dispatch({
+                              type: 'SET_CONVERT_TOTAL_FRAMES',
+                              payload: parseInt(e.target.value, 10) || 0,
+                            })
+                          }
+                        />
+                        {convertTotalFrames > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() =>
+                              dispatch({ type: 'SET_CONVERT_TOTAL_FRAMES', payload: 0 })
+                            }
+                            title="Clear"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </FieldContent>
@@ -273,6 +343,8 @@ export function BulkConvertDrawer({ onClose, onConvertStart }: BulkConvertDrawer
               dispatch({ type: 'SET_CONVERT_WIDTH', payload: 0 });
               dispatch({ type: 'SET_CONVERT_HEIGHT', payload: 0 });
               dispatch({ type: 'SET_CONVERT_FPS', payload: 0 });
+              dispatch({ type: 'SET_CONVERT_FPS_MODE', payload: 'fps' });
+              dispatch({ type: 'SET_CONVERT_TOTAL_FRAMES', payload: 0 });
               dispatch({ type: 'SET_CONVERT_BITRATE', payload: '' });
               dispatch({ type: 'SET_CONVERT_FLIPPED', payload: false });
               setFrameCountFiles([]);

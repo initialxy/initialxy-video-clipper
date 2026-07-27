@@ -116,6 +116,8 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 | `convertWidth` | `number` | Target width for bulk convert (persisted via settings) |
 | `convertHeight` | `number` | Target height for bulk convert (persisted via settings) |
 | `convertFps` | `number` | Target frame rate for bulk convert (persisted via settings) |
+| `convertFpsMode` | `'fps' | 'frames'` | Frame control mode — fps or total frames (persisted via settings) |
+| `convertTotalFrames` | `number` | Target exact frame count for bulk convert (persisted via settings) |
 | `convertBitrate` | `string` | Target bitrate for bulk convert (persisted via settings) |
 | `convertFlipped` | `boolean` | Create flipped copy in bulk convert (persisted via settings) |
 | `galleryFiles` | `GalleryFile[]` | Scanned output files |
@@ -234,9 +236,9 @@ ffmpeg -y -i <INPUT> -ss <START> -t <DURATION> <OUTPUT>
 
 **Bulk conversion** (omit params for "Same as source"):
 ```
-ffmpeg -y -i <INPUT> [-vf "scale=W:H:force_original_aspect_ratio=increase,crop=W:H,minterpolate=fps=X:mi_mode=mci"] [-c:v <CODEC>] [-b:v <BITRATE>] -c:a copy <OUTPUT>
+ffmpeg -y -i <INPUT> [-t <DURATION>] [-vf "scale=W:H:force_original_aspect_ratio=increase,crop=W:H,minterpolate=fps=X:mi_mode=mci"] [-c:v <CODEC>] [-b:v <BITRATE>] -c:a copy <OUTPUT>
 ```
-Resolution: scales up to cover target, crops excess. Framerate: uses motion-compensated frame interpolation (`minterpolate`). Both combine into a single `-vf` argument. If all params are "Same as source", copy file directly.
+Resolution: scales up to cover target, crops excess. Framerate: uses motion-compensated frame interpolation (`minterpolate`). Both combine into a single `-vf` argument. **Total frames mode**: probes source frame count via ffmpeg decode, calculates `effectiveFps = targetFrames * sourceFps / sourceFrameCount`, and sets `-t duration` (`sourceFrameCount / sourceFps`) to guarantee exact output frame count. If all params are "Same as source", copy file directly.
 
 **Horizontal flip** (create a flipped copy):
 ```
@@ -306,7 +308,7 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 | **Video clipping** | Frame-accurate re-encode clipping with per-video counter persistence |
 | **Gallery** | Responsive grid with thumbnails, caption overlays, inline editing, bulk delete |
 | **Expanded player** | Full-size playback with caption editor (autosave, debounced) |
-| **Bulk conversion** | Optional codec/resolution/FPS/bitrate with motion-compensated interpolation, flipped copy support |
+| **Bulk conversion** | Optional codec/resolution/FPS/bitrate with motion-compensated interpolation, flipped copy support, total frames mode (exact frame count via source probe + ratio formula) |
 | **Frame count check** | ffprobe-based frame count scanning for converted/ directory, displayed in Bulk Convert drawer |
 | **Caption store** | Reactive cache with debounced persistence (500ms), IPC sync |
 | **Auto-caption** | Sequential LLM-powered captioning (OpenAI-compatible API), progress toast, interrupt support |
@@ -321,6 +323,7 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 - **Bulk convert toast** follows the same pattern: `toast.loading()` with `duration: Infinity` and a fixed ID, uses ref-based counting for completed steps, dismissal only when all files (including flipped copies) are fully processed.
 - **Keyboard shortcuts** registered via `window.addEventListener(..., { capture: true })` with `isInputFocused()` guard.
 - **Flipped copy** runs a second ffmpeg `hflip` step after encoding; captions copied with `left` ↔ `right` word swap via null-byte placeholder.
+- **Total frames mode** uses `getFrameCount()` (ffmpeg decode to null) to probe actual source frame count, then calculates precise effective fps via ratio formula: `targetFrames * sourceFps / sourceFrameCount`. An explicit `-t` duration is added to guarantee the exact frame count.
 - **Re-encode clipping** uses `-ss` after `-i` for frame accuracy (not stream copy).
 - **Auto-caption service** accepts `onCaptionChanged` callback instead of reaching into Electron directly — decoupled and testable.
 - **Auto-caption reasoning models** — service handles `reasoning_content` from reasoning models (DeepSeek R1, etc.) by extracting caption text after closing `<thinking>`/`<reasoning>` tags, falling back to the raw reasoning content if no separate caption is found.

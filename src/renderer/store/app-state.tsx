@@ -17,6 +17,8 @@ export interface AppState {
   convertWidth: number;
   convertHeight: number;
   convertFps: number;
+  convertFpsMode: 'fps' | 'frames';
+  convertTotalFrames: number;
   convertBitrate: string;
   convertFlipped: boolean;
   galleryFiles: GalleryFile[];
@@ -38,6 +40,8 @@ type AppAction =
   | { type: 'SET_CONVERT_WIDTH'; payload: number }
   | { type: 'SET_CONVERT_HEIGHT'; payload: number }
   | { type: 'SET_CONVERT_FPS'; payload: number }
+  | { type: 'SET_CONVERT_FPS_MODE'; payload: 'fps' | 'frames' }
+  | { type: 'SET_CONVERT_TOTAL_FRAMES'; payload: number }
   | { type: 'SET_CONVERT_BITRATE'; payload: string }
   | { type: 'SET_CONVERT_FLIPPED'; payload: boolean }
   | { type: 'SET_GALLERY_FILES'; payload: AppState['galleryFiles'] }
@@ -67,6 +71,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, convertHeight: action.payload };
     case 'SET_CONVERT_FPS':
       return { ...state, convertFps: action.payload };
+    case 'SET_CONVERT_FPS_MODE':
+      return { ...state, convertFpsMode: action.payload };
+    case 'SET_CONVERT_TOTAL_FRAMES':
+      return { ...state, convertTotalFrames: action.payload };
     case 'SET_CONVERT_BITRATE':
       return { ...state, convertBitrate: action.payload };
     case 'SET_CONVERT_FLIPPED':
@@ -114,6 +122,8 @@ const initialState: AppState = {
   convertWidth: 0,
   convertHeight: 0,
   convertFps: 0,
+  convertFpsMode: 'fps',
+  convertTotalFrames: 0,
   convertBitrate: '',
   convertFlipped: false,
   galleryFiles: [],
@@ -175,6 +185,23 @@ const SETTINGS_DEFS = [
     parse: (raw: string | undefined) => parseFloat(raw ?? '0') || 0,
     serialize: (v: unknown) => String(v),
     getValue: (s: AppState) => s.convertFps,
+  },
+  {
+    key: SETTINGS_KEYS.CONVERT_FPS_MODE,
+    actionType: 'SET_CONVERT_FPS_MODE' as const,
+    parse: (raw: string | undefined) => (raw === 'frames' ? 'frames' : 'fps'),
+    serialize: (v: unknown) => v as string,
+    getValue: (s: AppState) => s.convertFpsMode,
+  },
+  {
+    key: SETTINGS_KEYS.CONVERT_TOTAL_FRAMES,
+    actionType: 'SET_CONVERT_TOTAL_FRAMES' as const,
+    parse: (raw: string | undefined) => {
+      const v = parseInt(raw ?? '', 10);
+      return isNaN(v) || v <= 0 ? 0 : v;
+    },
+    serialize: (v: unknown) => ((v as number) ? String(v) : ''),
+    getValue: (s: AppState) => s.convertTotalFrames,
   },
   {
     key: SETTINGS_KEYS.CONVERT_BITRATE,

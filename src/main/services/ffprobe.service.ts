@@ -73,6 +73,41 @@ export function getVideoInfo(filePath: string): Promise<VideoInfo> {
 }
 
 /**
+ * Count the actual number of frames in a video file.
+ * Uses ffprobe -count_frames (single source of truth, shared with Check Frame Count feature).
+ */
+export function getFrameCount(filePath: string): Promise<number> {
+  return new Promise((resolve) => {
+    const proc = spawn('ffprobe', [
+      '-v',
+      'error',
+      '-count_frames',
+      '-select_streams',
+      'v:0',
+      '-show_entries',
+      'stream=nb_read_frames',
+      '-of',
+      'default=noprint_wrappers=1:nokey=1',
+      filePath,
+    ]);
+
+    let stdout = '';
+    proc.stdout.on('data', (chunk: Buffer) => {
+      stdout += chunk.toString();
+    });
+
+    proc.on('close', () => {
+      const count = parseInt(stdout.trim(), 10);
+      resolve(isNaN(count) ? 0 : count);
+    });
+
+    proc.on('error', () => {
+      resolve(0);
+    });
+  });
+}
+
+/**
  * Check if ffmpeg is available in PATH.
  */
 export function checkFfmpeg(): { available: boolean; path?: string } {
