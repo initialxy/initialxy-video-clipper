@@ -33,7 +33,6 @@ export function BulkEditDrawer({ onClose }: BulkEditDrawerProps) {
   const [insertOnlyIfNotFound, setInsertOnlyIfNotFound] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [replaceText, setReplaceText] = useState('');
-  const [isApplying, setIsApplying] = useState(false);
 
   const applyToFiles = async (text: string, mode: 'prepend' | 'append', checkExists: boolean) => {
     if (selectedFiles.size === 0 || !text.trim()) return;
@@ -62,12 +61,10 @@ export function BulkEditDrawer({ onClose }: BulkEditDrawerProps) {
 
   const handlePrepend = async () => {
     await applyToFiles(editText, 'prepend', insertOnlyIfNotFound);
-    setIsApplying(true);
   };
 
   const handleAppend = async () => {
     await applyToFiles(editText, 'append', insertOnlyIfNotFound);
-    setIsApplying(true);
   };
 
   const handleReplaceAll = () => {
@@ -86,8 +83,6 @@ export function BulkEditDrawer({ onClose }: BulkEditDrawerProps) {
         store.setCaption(filePath, current);
       }
     }
-
-    setIsApplying(true);
   };
 
   const handleClose = () => {
@@ -141,14 +136,14 @@ export function BulkEditDrawer({ onClose }: BulkEditDrawerProps) {
                   <div className="flex gap-2">
                     <Button
                       onClick={handlePrepend}
-                      disabled={isApplying || !editText.trim() || selectedFiles.size === 0}
+                      disabled={!editText.trim() || selectedFiles.size === 0}
                       className="flex-1"
                     >
                       Prepend
                     </Button>
                     <Button
                       onClick={handleAppend}
-                      disabled={isApplying || !editText.trim() || selectedFiles.size === 0}
+                      disabled={!editText.trim() || selectedFiles.size === 0}
                       className="flex-1"
                     >
                       Append
