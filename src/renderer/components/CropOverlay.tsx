@@ -126,21 +126,21 @@ export function CropOverlay({ onRegionChange, onCancel }: CropOverlayProps) {
     height: HANDLE_SIZE,
     borderRadius: '50%',
     backgroundColor: '#fff',
+    border: '2px solid rgba(0, 0, 0, 0.3)',
     transform: 'translate(-50%, -50%)',
     cursor: 'pointer',
     zIndex: 2,
-    pointerEvents: 'auto',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
   };
 
   // Dim rectangle base style
   const dimStyle: React.CSSProperties = {
     position: 'absolute',
     backgroundColor: 'rgba(0, 0, 0, 0.55)',
-    pointerEvents: 'auto',
   };
 
   return (
-    <div ref={containerRef} className="absolute inset-0 z-10" style={{ pointerEvents: 'none' }}>
+    <div ref={containerRef} className="absolute inset-0 z-10" style={{ pointerEvents: 'auto' }}>
       {/* Dim rectangles — cover areas outside crop region */}
       {/* Top strip */}
       {y1p > 0 && (

@@ -17,7 +17,7 @@ interface VideoPlayerProps {
   autoPlay?: boolean;
   filePath?: string;
   onReloadReady?: (reload: () => void) => void;
-  children?: ReactNode; // Rendered in overlay wrapper (e.g. CropOverlay)
+  children?: ReactNode; // Rendered inside video wrapper (e.g. CropOverlay)
 }
 
 export function VideoPlayer({
@@ -91,7 +91,12 @@ export function VideoPlayer({
   const aspectRatio = videoWidth > 0 && videoHeight > 0 ? `${videoWidth}/${videoHeight}` : '16/9';
 
   return (
-    <div className={cn('bg-card ring-foreground/10 flex flex-col rounded-lg ring-1', className)}>
+    <div
+      className={cn(
+        'bg-card ring-foreground/10 flex flex-col overflow-hidden rounded-lg ring-1',
+        className,
+      )}
+    >
       {/* Video area — flex fills available space, establishes container context */}
       <div
         className="relative flex min-h-0 flex-1 items-center justify-center bg-black"
@@ -102,43 +107,27 @@ export function VideoPlayer({
           } as React.CSSProperties
         }
       >
-        {/* Inner clipper — rounded corners + overflow:hidden for video area */}
-        <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-lg bg-black">
-          {/* Video wrapper — aspect ratio via container queries */}
-          <div
-            style={{
-              width: 'min(100cqw, 100cqh * var(--ratio))',
-              maxHeight: '100cqh',
-              aspectRatio: 'var(--ratio)',
-            }}
-          >
-            <video
-              ref={videoRef}
-              className="h-full w-full object-contain"
-              onClick={togglePlay}
-              onTimeUpdate={onTimeUpdate}
-              onPlay={onPlay}
-              onPause={onPause}
-              onEnded={onPause}
-              playsInline
-            />
-          </div>
+        {/* Video wrapper — maintains aspect ratio via container queries */}
+        <div
+          className="relative"
+          style={{
+            width: 'min(100cqw, 100cqh * var(--ratio))',
+            maxHeight: '100cqh',
+            aspectRatio: 'var(--ratio)',
+          }}
+        >
+          <video
+            ref={videoRef}
+            className="h-full w-full object-contain"
+            onClick={togglePlay}
+            onTimeUpdate={onTimeUpdate}
+            onPlay={onPlay}
+            onPause={onPause}
+            onEnded={onPause}
+            playsInline
+          />
+          {children}
         </div>
-
-        {/* Overlay wrapper — same size as video, only rendered when children present */}
-        {children && (
-          <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 10 }}>
-            <div
-              style={{
-                width: 'min(100cqw, 100cqh * var(--ratio))',
-                maxHeight: '100cqh',
-                aspectRatio: 'var(--ratio)',
-              }}
-            >
-              {children}
-            </div>
-          </div>
-        )}
 
         {/* Close button — positioned in video area, above overlay */}
         {onClose && (
