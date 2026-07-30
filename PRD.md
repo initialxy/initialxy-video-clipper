@@ -123,6 +123,16 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
 - **Auto-caption button**: A button labeled "Auto-caption" appears in the CaptionEditor card header (next to the delete button). Clicking it sends the current video's thumbnail to the LLM for captioning. During processing, the button is disabled.
 - Close button (X icon in the video player) or Escape key returns to gallery grid.
 - **Delete button**: A trash icon button in the CaptionEditor card header (next to the Auto-caption button) opens a confirmation modal to delete the expanded video file.
+- **Crop button**: A button labeled "Crop" (with `Crop` icon, secondary variant) appears in the CaptionEditor card header between Auto-caption and Delete. Clicking it enters crop mode:
+  - A crop overlay appears on top of the video with a white bounding box (initially full video size) and four circular drag handles at the corners.
+  - Areas outside the crop region are dimmed (semi-transparent black overlay using `clip-path: polygon(...)` with a frame-shaped hole).
+  - The crop bounding box and handles are positioned using pure CSS percentages — no pixel measurement or resize listeners. The overlay and VideoPlayer share a `position: relative` parent container, both sized `absolute inset-0`.
+  - Dragging a corner handle resizes the crop region. Handles cannot be dragged beyond the video boundaries.
+  - The "Crop" button becomes a "Save" button (with `Check` icon, default variant) and a "Cancel" button (with `X` icon, ghost variant, appears next to Save) in the CaptionEditor header.
+  - Clicking the dim overlay background or pressing Escape cancels crop mode (button reverts to "Crop").
+  - Clicking "Save" validates the crop region is actually smaller than the full video (both dimensions) and at least 16×16 pixels. If valid, crops the video via ffmpeg (`-vf "crop=w:h:x:y"`), replaces the original file, regenerates the thumbnail, refreshes the gallery, and exits crop mode. The video player reloads the cropped file.
+  - Crop pixel dimensions are computed from the proportion-based crop region using `video.videoWidth`/`video.videoHeight` (intrinsic video dimensions, not display size).
+  - No crop state is preserved between sessions — each crop starts at full video size.
 - **Tab switch closes player**: Switching from Gallery to Video tab automatically closes the expanded player.
 - **Video stops on close**: Video playback stops when the expanded player is closed.
 
@@ -153,7 +163,29 @@ Keyboard shortcuts work globally across both Video mode and the Expanded Player 
 
 ---
 
-### 8. Auto-caption (Gallery)
+### 8. Crop (Expanded Player)
+
+- **Activation**: "Crop" button in the CaptionEditor card header (Expanded Player only, not available in gallery grid or Video tab).
+- **Crop overlay**:
+  - Renders as a sibling of VideoPlayer inside a shared `position: relative` parent container.
+  - Both VideoPlayer and CropOverlay are `absolute inset-0` children, filling the container.
+  - Crop region stored internally as proportions `{ x1, y1, x2, y2 }` (each 0–1).
+  - Rendered entirely in CSS percentages: `left: ${x1*100}%`, `top: ${y1*100}%`, `width: ${(x2-x1)*100}%`, `height: ${(y2-y1)*100}%`.
+  - No `getBoundingClientRect()` measurement, no `resize` event listeners — CSS handles all adaptation.
+  - Dim overlay uses `clip-path: polygon(...)` with winding rule (outer rect clockwise + inner rect counter-clockwise) to create frame-shaped hole around crop region.
+  - Four circular drag handles (16px diameter, white with subtle shadow) at corners.
+  - Background click or Escape key cancels crop mode.
+- **Save validation**:
+  - Crop must be strictly smaller than source in at least one dimension (width or height).
+  - Minimum crop size: 16×16 pixels.
+  - On save: crop proportions converted to pixel coordinates using `video.videoWidth`/`video.videoHeight`.
+  - ffmpeg crops to temp file, atomically replaces original (`fs.renameSync`), regenerates thumbnail.
+  - Gallery refreshed, video player reloaded, crop mode exited.
+- **No persistence**: Crop region is not saved. Each crop session starts at full video size.
+
+---
+
+### 9. Auto-caption (Gallery)
 
 - **LLM Configuration**: Configurable via a slide-out drawer (Sheet, side="right") with fields for:
   - **Base URL** (e.g., `http://localhost:8080`) — default: `http://localhost:8080` (single string field, not separate URL + port)
@@ -367,10 +399,15 @@ video-clipper/
   ```
   ffmpeg -y -i <input> -frames:v 1 -q:v 2 <output>.jpg
   ```
+- **Crop command** (crop to pixel region, re-encode):
+  ```
+  ffmpeg -y -i <input> -vf "crop=w:h:x:y" -c:a copy <output>
+  ```
+  Crops the video to the specified pixel rectangle. Output replaces the original file. Thumbnail is regenerated afterward.
 
 ### IPC Architecture
 
-- **18 IPC channels** defined in `src/shared/ipc.ts`. `ElectronAPI` in `env.d.ts` derives types from `IPCPayloads` / `IPCReturns` — no `any` types.
+- **19 IPC channels** defined in `src/shared/ipc.ts`. `ElectronAPI` in `env.d.ts` derives types from `IPCPayloads` / `IPCReturns` — no `any` types.
 
 | Channel | Direction | Payload | Returns |
 |---------|-----------|---------|---------|
@@ -393,6 +430,7 @@ video-clipper/
 | `app:open-file` | R→M | `{}` | `{ filePath?, cancelled }` |
 | `settings:get` | R→M | `{ key }` | `{ value? }` |
 | `settings:set` | R→M | `{ key, value }` | `{ success }` |
+| `video:crop` | R→M | `{ filePath, crop: { x, y, width, height } }` | `{ success, error? }` |
 
 - Main process handles: ffmpeg execution, file system operations, drag-and-drop file resolution.
 - Renderer process handles: UI rendering, user input, video playback via HTML5 `<video>`.

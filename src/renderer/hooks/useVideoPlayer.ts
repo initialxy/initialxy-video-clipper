@@ -13,6 +13,8 @@ export function useVideoPlayer(filePath?: string, options?: UseVideoPlayerOption
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [videoDuration, setVideoDuration] = useState(0);
+  const [videoWidth, setVideoWidth] = useState(0);
+  const [videoHeight, setVideoHeight] = useState(0);
   const animFrameRef = useRef<number | null>(null);
   const isPlayingStateRef = useRef(false);
   const pendingSeekTimeRef = useRef<number | null>(null);
@@ -30,6 +32,8 @@ export function useVideoPlayer(filePath?: string, options?: UseVideoPlayerOption
 
     const onLoadedMetadata = () => {
       setVideoDuration(video.duration);
+      setVideoWidth(video.videoWidth);
+      setVideoHeight(video.videoHeight);
       if (useGlobalState) {
         const restoreTime =
           currentTimeRef.current > 0 && currentTimeRef.current < video.duration
@@ -173,6 +177,13 @@ export function useVideoPlayer(filePath?: string, options?: UseVideoPlayerOption
     const video = videoRef.current;
     return video ? video.currentTime : playerTime;
   }, [playerTime]);
+
+  const reload = useCallback(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.load();
+    }
+  }, []);
   useEffect(() => {
     return () => {
       stopAnimationLoop();
@@ -194,5 +205,8 @@ export function useVideoPlayer(filePath?: string, options?: UseVideoPlayerOption
     onTimeUpdate,
     onPlay,
     onPause,
+    reload,
+    videoWidth,
+    videoHeight,
   };
 }

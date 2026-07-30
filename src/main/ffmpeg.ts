@@ -90,3 +90,25 @@ export function buildThumbnailCommand(input: string, output: string): string[] {
 export function buildFlipCommand(input: string, output: string): string[] {
   return ['ffmpeg', '-y', '-i', input, '-vf', 'hflip', '-c:a', 'copy', output];
 }
+
+/**
+ * Build a video crop command.
+ * ffmpeg -y -i <INPUT> -vf "crop=w:h:x:y" -c:a copy <OUTPUT>
+ */
+export function buildCropCommand(
+  input: string,
+  output: string,
+  crop: { x: number; y: number; width: number; height: number },
+): string[] {
+  return [
+    'ffmpeg',
+    '-y',
+    '-i',
+    input,
+    '-vf',
+    `crop=${crop.width}:${crop.height}:${crop.x}:${crop.y}`,
+    '-c:a',
+    'copy',
+    output,
+  ];
+}

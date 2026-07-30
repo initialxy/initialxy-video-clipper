@@ -1,5 +1,6 @@
 import { Play, Pause, X } from 'lucide-react';
-import { useRef, useEffect, type MutableRefObject } from 'react';
+import type React from 'react';
+import { useRef, useEffect, type MutableRefObject, type ReactNode } from 'react';
 import { useVideoPlayer } from '@renderer/hooks/useVideoPlayer';
 import { useVideoKeyboardShortcuts } from '@renderer/hooks/useVideoKeyboardShortcuts';
 import { VolumeControl } from './VolumeControl';
@@ -15,6 +16,8 @@ interface VideoPlayerProps {
   currentTimeRef?: MutableRefObject<number>;
   autoPlay?: boolean;
   filePath?: string;
+  onReloadReady?: (reload: () => void) => void;
+  children?: ReactNode; // Rendered inside video wrapper (e.g. CropOverlay)
 }
 
 export function VideoPlayer({
@@ -23,6 +26,8 @@ export function VideoPlayer({
   currentTimeRef,
   autoPlay,
   filePath,
+  onReloadReady,
+  children,
 }: VideoPlayerProps) {
   const { currentVideo } = useAppState();
   const dispatch = useAppDispatch();
@@ -47,7 +52,15 @@ export function VideoPlayer({
     onTimeUpdate,
     onPlay,
     onPause,
+    reload: reloadVideo,
+    videoWidth,
+    videoHeight,
   } = player;
+
+  // Expose reload function to parent
+  useEffect(() => {
+    onReloadReady?.(reloadVideo);
+  }, [onReloadReady, reloadVideo]);
 
   useVideoKeyboardShortcuts({
     togglePlay,
@@ -74,6 +87,9 @@ export function VideoPlayer({
     }
   }, [currentTime, dispatch, isGlobalMode]);
 
+  // Aspect ratio from video intrinsic dimensions (fallback 16:9)
+  const aspectRatio = videoWidth > 0 && videoHeight > 0 ? `${videoWidth}/${videoHeight}` : '16/9';
+
   return (
     <div
       className={cn(
@@ -81,18 +97,39 @@ export function VideoPlayer({
         className,
       )}
     >
-      {/* Video area */}
-      <div className="relative flex min-h-0 flex-1 items-center justify-center bg-black">
-        <video
-          ref={videoRef}
-          className="h-full w-full object-contain"
-          onClick={togglePlay}
-          onTimeUpdate={onTimeUpdate}
-          onPlay={onPlay}
-          onPause={onPause}
-          onEnded={onPause}
-          playsInline
-        />
+      {/* Video area — flex fills available space, establishes container context */}
+      <div
+        className="relative flex min-h-0 flex-1 items-center justify-center bg-black"
+        style={
+          {
+            containerType: 'size',
+            '--ratio': aspectRatio,
+          } as React.CSSProperties
+        }
+      >
+        {/* Video wrapper — maintains aspect ratio via container queries */}
+        <div
+          className="relative"
+          style={{
+            width: 'min(100cqw, 100cqh * var(--ratio))',
+            maxHeight: '100cqh',
+            aspectRatio: 'var(--ratio)',
+          }}
+        >
+          <video
+            ref={videoRef}
+            className="h-full w-full object-contain"
+            onClick={togglePlay}
+            onTimeUpdate={onTimeUpdate}
+            onPlay={onPlay}
+            onPause={onPause}
+            onEnded={onPause}
+            playsInline
+          />
+          {children}
+        </div>
+
+        {/* Close button — positioned in video area, above overlay */}
         {onClose && (
           <Button
             variant="ghost"
@@ -102,7 +139,7 @@ export function VideoPlayer({
               onClose();
             }}
             title="Remove video"
-            className="text-muted-foreground hover:text-foreground absolute top-2 right-2"
+            className="text-muted-foreground hover:text-foreground absolute top-2 right-2 z-50"
           >
             <X className="h-4 w-4" />
           </Button>

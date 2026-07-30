@@ -39,7 +39,7 @@ src/
 ├── main/                      # Electron main process
 │   ├── index.ts               # Window creation, app lifecycle, CSP, remote debugging
 │   ├── ipc-handlers.ts        # Thin IPC route delegates → services
-│   ├── ffmpeg.ts              # Pure command builders (buildClipCommand, buildConvertCommand, buildThumbnailCommand)
+│   ├── ffmpeg.ts              # Pure command builders (buildClipCommand, buildConvertCommand, buildThumbnailCommand, buildCropCommand)
 │   ├── constants.ts           # VIDEO_EXTENSIONS
 │   ├── settings.ts           # JSON config file persistence (replaces old db.ts)
 │   ├── utils.ts               # Main-process utilities (safeUnlink, ensureDir, deleteFileWithMetadata)
@@ -52,7 +52,8 @@ src/
 │       ├── gallery.service.ts # File scanning, thumbnail caching
 │       ├── caption.service.ts # Caption file CRUD
 │       ├── converted.service.ts # scanConverted (frame count scanning for converted/ directory)
-│       └── auto-caption.service.ts # Sequential LLM auto-captioning (accepts onCaptionChanged callback)
+│       ├── auto-caption.service.ts # Sequential LLM auto-captioning (accepts onCaptionChanged callback)
+│       └── crop.service.ts      # Video crop (ffmpeg crop filter, replace original, regenerate thumbnail)
 ├── preload/
 │   └── index.ts               # ContextBridge (types from @shared/ipc)
 ├── renderer/                  # React frontend
@@ -70,6 +71,7 @@ src/
 │   │   ├── BulkConvertDrawer.tsx # Slide-out drawer for bulk conversion
 │   │   ├── DeleteConfirmModal.tsx # Confirmation modal for deletion
 │   │   ├── AutoCaptionDrawer.tsx # Slide-out drawer for LLM API settings
+│   │   ├── CropOverlay.tsx     # Draggable crop bounding box overlay (pure CSS %, shared parent with VideoPlayer)
 │   │   ├── BulkEditDrawer.tsx    # Slide-out drawer for bulk caption editing
 │   │   └── ui/                # shadcn/ui components (all Base UI primitives)
 │   │       ├── button.tsx, select.tsx, sheet.tsx, tabs.tsx, sonner.tsx
@@ -138,7 +140,7 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 
 ### IPC Channels
 
-18 channels defined in `src/shared/ipc.ts`. `ElectronAPI` in `env.d.ts` derives types from `IPCPayloads`/`IPCReturns`.
+19 channels defined in `src/shared/ipc.ts`. `ElectronAPI` in `env.d.ts` derives types from `IPCPayloads`/`IPCReturns`.
 
 | Channel | Direction | Payload | Returns |
 |---------|-----------|---------|---------|
@@ -164,6 +166,8 @@ Managed in `src/renderer/store/app-state.tsx` via context + `useReducer`:
 | `settings:set` | R→M | `{ key, value }` | `{ success }` |
 | `caption:changed` | M→R | `{ filePath, content }` | — |
 | | | Fired by main process when a caption is written (auto-caption, IPC write). Renderer's caption store listens to stay in sync. |
+| `video:crop` | R→M | `{ filePath, crop: { x, y, width, height } }` | `{ success, error? }` |
+| | | Crops a video to the specified pixel region, replaces the original file, and regenerates its thumbnail. |
 
 ### Path Aliases
 
@@ -251,6 +255,12 @@ Output file is named `<base>_flipped.<ext>`. Caption file is also copied with "l
 ffmpeg -y -i <INPUT> -frames:v 1 -q:v 2 <OUTPUT>.jpg
 ```
 
+**Crop** (crop to pixel region, re-encode):
+```
+ffmpeg -y -i <INPUT> -vf "crop=w:h:x:y" -c:a copy <OUTPUT>
+```
+Replaces the original file and regenerates the thumbnail. Uses temp file for atomic replace.
+
 ---
 
 ## Electron MCP Debug Guide
@@ -308,6 +318,7 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 | **Video clipping** | Frame-accurate re-encode clipping with per-video counter persistence |
 | **Gallery** | Responsive grid with thumbnails, caption overlays, inline editing, bulk delete |
 | **Expanded player** | Full-size playback with caption editor (autosave, debounced) |
+| **Crop** | Draggable crop bounding box in expanded player, ffmpeg crop filter, replaces original + regenerates thumbnail |
 | **Bulk conversion** | Optional codec/resolution/FPS/bitrate with motion-compensated interpolation, flipped copy support, total frames mode (exact frame count via source probe + ratio formula) |
 | **Frame count check** | ffprobe-based frame count scanning for converted/ directory, displayed in Bulk Convert drawer |
 | **Caption store** | Reactive cache with debounced persistence (500ms), IPC sync |
@@ -328,3 +339,6 @@ Prefer `electron_send_command_to_electron` with `get_page_structure` + `click_by
 - **Auto-caption service** accepts `onCaptionChanged` callback instead of reaching into Electron directly — decoupled and testable.
 - **Auto-caption reasoning models** — service handles `reasoning_content` from reasoning models (DeepSeek R1, etc.) by extracting caption text after closing `<thinking>`/`<reasoning>` tags, falling back to the raw reasoning content if no separate caption is found.
 - **BulkEditDrawer** uses `useCaptionStore()` for reactive UI updates (reads/writes go through the store's debounce + IPC sync).
+- **Crop overlay** uses pure CSS `%` positioning (no pixel measurement, no resize listeners) — crop region stored as proportions (0-1) internally, rendered as CSS percentages so it adapts automatically to container resize, caption editor expand/collapse, etc. CropOverlay and VideoPlayer share a `position: relative` parent container; both are `absolute inset-0` children. Dim overlay uses `clip-path: polygon(...)` with winding rule (outer clockwise + inner counter-clockwise) to create a frame-shaped hole.
+- **Crop save** converts proportion-based crop region to actual video pixel dimensions using `video.videoWidth`/`video.videoHeight`, validates crop is smaller than source and at least 16px in each dimension, then calls `video:crop` IPC which crops to temp file, atomically replaces original, and regenerates thumbnail.
+- **Crop button** in CaptionEditor: shows "Crop" (Crop icon, secondary variant) normally, switches to "Save" (Check icon, default variant) + "Cancel" (X icon, ghost) when in crop mode.

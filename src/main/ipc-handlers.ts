@@ -16,6 +16,7 @@ import { readCaption, writeCaption } from './services/caption.service';
 import { getSetting, setSetting } from './settings';
 import { getVideoInfo } from './services/ffprobe.service';
 import { runAutoCaption } from './services/auto-caption.service';
+import { cropVideo } from './services/crop.service';
 
 let autoCaptionCancelled = false;
 
@@ -150,6 +151,11 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC_CHANNELS.AUTO_CAPTION_INTERRUPT, async () => {
     autoCaptionCancelled = true;
     return { cancelled: true };
+  });
+
+  // video:crop
+  ipcMain.handle(IPC_CHANNELS.VIDEO_CROP, async (_event, payload) => {
+    return cropVideo(payload.filePath, payload.crop);
   });
 
   // auto-caption:run

@@ -246,6 +246,21 @@ function AppContent() {
     refreshGallery();
   }, [expandedDeleteTarget, deleteFile, dispatch, refreshGallery]);
 
+  // --- Crop Handler ---
+
+  const handleCrop = useCallback(
+    async (filePath: string, crop: { x: number; y: number; width: number; height: number }) => {
+      const result = await window.electronAPI.cropVideo({ filePath, crop });
+      if (result.success) {
+        refreshGallery();
+        toast.success('Video cropped');
+      } else {
+        toast.error(result.error ?? 'Crop failed');
+      }
+    },
+    [refreshGallery],
+  );
+
   // --- Closers ---
 
   const handleCloseExpanded = useCallback(() => {
@@ -294,6 +309,7 @@ function AppContent() {
               onClose={handleCloseExpanded}
               onAutoCaption={() => runAutoCaption(expandedFile)}
               onDelete={() => setExpandedDeleteTarget(expandedFile)}
+              onCrop={handleCrop}
             />
           ) : activeTab === 'video' ? (
             <div className="flex min-h-0 flex-1 flex-col p-4">

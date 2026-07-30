@@ -1,6 +1,6 @@
 import { Button } from '@renderer/components/ui/button';
 import { Card, CardHeader, CardTitle, CardAction, CardContent } from '@renderer/components/ui/card';
-import { ChevronDown, ChevronUp, ScanText, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Crop, ScanText, Trash2, X } from 'lucide-react';
 import { cn } from '@renderer/lib/utils';
 import { Textarea } from '@renderer/components/ui/textarea';
 import { useState, useCallback } from 'react';
@@ -11,6 +11,10 @@ interface CaptionEditorProps {
   isAutoCaptioning: boolean;
   onAutoCaption: () => void;
   onDelete: () => void;
+  isCropping: boolean;
+  onToggleCrop: () => void;
+  onCancelCrop?: () => void;
+  isCroppingDisabled?: boolean;
 }
 
 export function CaptionEditor({
@@ -19,6 +23,10 @@ export function CaptionEditor({
   isAutoCaptioning,
   onAutoCaption,
   onDelete,
+  isCropping,
+  onToggleCrop,
+  onCancelCrop,
+  isCroppingDisabled = false,
 }: CaptionEditorProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -44,6 +52,40 @@ export function CaptionEditor({
             <ScanText className="h-4 w-4" />
             <span>Auto-caption</span>
           </Button>
+          {isCropping ? (
+            <>
+              <Button
+                variant="default"
+                title="Save crop"
+                className="mt-0.5 shrink-0"
+                onClick={() => onToggleCrop()}
+                disabled={isCroppingDisabled}
+              >
+                <Check className="h-4 w-4" />
+                <span>Save</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                title="Cancel crop"
+                className="mt-0.5"
+                onClick={() => onCancelCrop?.()}
+                disabled={isCroppingDisabled}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="secondary"
+              title="Crop this video"
+              className="mt-0.5 shrink-0"
+              onClick={() => onToggleCrop()}
+            >
+              <Crop className="h-4 w-4" />
+              <span>Crop</span>
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"

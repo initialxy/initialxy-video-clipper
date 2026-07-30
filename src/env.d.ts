@@ -36,6 +36,9 @@ declare global {
       callback: (data: IPCPayloads['auto-caption:progress']) => void,
     ) => () => void;
     onCaptionChanged: (callback: (data: IPCPayloads['caption:changed']) => void) => () => void;
+
+    // Video crop
+    cropVideo: (payload: IPCPayloads['video:crop']) => Promise<IPCReturns['video:crop']>;
   }
 
   interface Window {

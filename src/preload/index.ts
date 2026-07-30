@@ -72,6 +72,9 @@ const electronAPI = {
     IPC_CHANNELS.AUTO_CAPTION_PROGRESS,
   ),
   onCaptionChanged: createListener<IPCPayloads['caption:changed']>(IPC_CHANNELS.CAPTION_CHANGED),
+
+  // Video crop
+  cropVideo: (payload: IPCPayloads['video:crop']) => ipcRenderer.invoke('video:crop', payload),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);

@@ -21,6 +21,7 @@ export const IPC_CHANNELS = {
   APP_OPEN_FILE: 'app:open-file',
   SETTINGS_GET: 'settings:get',
   SETTINGS_SET: 'settings:set',
+  VIDEO_CROP: 'video:crop',
 } as const;
 
 /** Payload types for each IPC channel */
@@ -74,6 +75,10 @@ export interface IPCPayloads {
   [IPC_CHANNELS.APP_OPEN_FILE]: {};
   [IPC_CHANNELS.SETTINGS_GET]: { key: string };
   [IPC_CHANNELS.SETTINGS_SET]: { key: string; value: string };
+  [IPC_CHANNELS.VIDEO_CROP]: {
+    filePath: string;
+    crop: { x: number; y: number; width: number; height: number };
+  };
 }
 
 /** Return types for each IPC channel */
@@ -107,4 +112,5 @@ export interface IPCReturns {
   [IPC_CHANNELS.APP_OPEN_FILE]: { filePath?: string; cancelled: boolean };
   [IPC_CHANNELS.SETTINGS_GET]: { value?: string };
   [IPC_CHANNELS.SETTINGS_SET]: { success: boolean };
+  [IPC_CHANNELS.VIDEO_CROP]: { success: boolean; error?: string };
 }
